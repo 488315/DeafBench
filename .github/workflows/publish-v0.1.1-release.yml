@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   publish:
-    if: github.actor == '488315' && github.ref == 'refs/heads/automation/publish-v0.1.1'
+    if: ${{ github.actor == '488315' && github.ref == 'refs/heads/automation/publish-v0.1.1' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
