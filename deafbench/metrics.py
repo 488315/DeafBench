@@ -14,7 +14,7 @@ def calculate_wer(references: List[str], predictions: List[str]) -> float:
         wer = jiwer.wer(refs, preds)
         return float(wer)
     except Exception:
-        return 0.0
+        return float('nan')
 
 def evaluate_critical_info(reference_item: Dict[str, Any], prediction_item: Dict[str, Any]) -> Dict[str, Any]:
     """
