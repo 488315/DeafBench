@@ -1,3 +1,4 @@
+import math
 import re
 from typing import List, Dict, Any, Optional
 import jiwer
@@ -131,7 +132,17 @@ def evaluate_dataset(aligned_data: List[Dict[str, Any]]) -> Dict[str, Any]:
             
         # Latency
         if "latency_ms" in pred and pred["latency_ms"] is not None:
-            latencies.append(float(pred["latency_ms"]))
+            try:
+                latency_ms = float(pred["latency_ms"])
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid latency_ms for sample {sample_id}: expected a finite non-negative number"
+                ) from exc
+            if not math.isfinite(latency_ms) or latency_ms < 0:
+                raise ValueError(
+                    f"Invalid latency_ms for sample {sample_id}: expected a finite non-negative number"
+                )
+            latencies.append(latency_ms)
             
     crit_recall = (matched_critical / total_critical * 100.0) if total_critical > 0 else 100.0
     sound_recall = (matched_sounds / total_sounds * 100.0) if total_sounds > 0 else 100.0
