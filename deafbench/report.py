@@ -1,5 +1,18 @@
 from typing import Dict, Any
 
+
+def _escape_markdown_table_cell(value: Any) -> str:
+    """Escape user-provided content for safe Markdown table cells."""
+    return (
+        str(value)
+        .replace("\\", "\\\\")
+        .replace("|", "\\|")
+        .replace("\r\n", "<br>")
+        .replace("\r", "<br>")
+        .replace("\n", "<br>")
+    )
+
+
 def generate_markdown_report(metrics: Dict[str, Any], ref_file: str, pred_file: str) -> str:
     """Generate Markdown report from metrics output."""
     lines = [
@@ -19,7 +32,7 @@ def generate_markdown_report(metrics: Dict[str, Any], ref_file: str, pred_file: 
     ]
     
     if metrics.get("speaker_accuracy") is not None:
-        lines.append(f"| **Speaker Attribution Accuracy** | {metrics['speaker_accuracy']:.1f}% |")
+        lines.append(f"| **Speaker Attribution Accuracy** | {metrics['speaker_accuracy']:>6.1f}% |")
     else:
         lines.append("| **Speaker Attribution Accuracy** | N/A |")
         
@@ -44,7 +57,9 @@ def generate_markdown_report(metrics: Dict[str, Any], ref_file: str, pred_file: 
         lines.append("| Sample ID | Missing Critical Term | Output Text |")
         lines.append("| --- | --- | --- |")
         for fail in failures:
-            lines.append(f"| `{fail['id']}` | **{fail['expected']}** | *{fail['predicted_text']}* |")
+            expected = _escape_markdown_table_cell(fail["expected"])
+            predicted_text = _escape_markdown_table_cell(fail["predicted_text"])
+            lines.append(f"| `{fail['id']}` | **{expected}** | *{predicted_text}* |")
             
     lines.append("")
     return "\n".join(lines)
