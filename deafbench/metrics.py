@@ -75,7 +75,7 @@ def evaluate_non_speech_info(reference_item: Dict[str, Any], prediction_item: Di
 def evaluate_speaker_attribution(reference_item: Dict[str, Any], prediction_item: Dict[str, Any]) -> Optional[bool]:
     """
     Evaluate speaker attribution if speaker tag is present in reference.
-    Returns True if correct, False if incorrect, None if omitted.
+    Returns None if the reference omits a speaker, False if the prediction omits or mismatches it, and True if correct.
     """
     ref_speaker = reference_item.get("speaker")
     if ref_speaker is None:
