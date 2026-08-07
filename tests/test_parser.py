@@ -37,3 +37,19 @@ def test_parse_jsonl_rejects_non_record_values(tmp_path, value):
 
     with pytest.raises(ValueError, match=r"line 1"):
         parse_jsonl(str(path))
+
+
+@pytest.mark.parametrize(
+    "record",
+    [
+        '{"id":"s1","text":null}',
+        '{"id":"s1","text":"hello","critical":"dose"}',
+        '{"id":"s1","text":"hello","sounds":"alarm"}',
+    ],
+)
+def test_parse_jsonl_rejects_invalid_field_types(tmp_path, record):
+    path = tmp_path / "input.jsonl"
+    path.write_text(record + "\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match=r"line 1"):
+        parse_jsonl(str(path))
