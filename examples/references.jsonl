@@ -1,0 +1,3 @@
+{"id": "sample-001", "text": "Kai needs 25 milligrams on Friday.", "critical": ["Kai", "25 milligrams", "Friday"], "sounds": [], "speaker": "Speaker 1"}
+{"id": "sample-002", "text": "Do not turn off the main valve! [alarm]", "critical": ["Do not turn off", "main valve"], "sounds": ["[alarm]"], "speaker": "Speaker 2"}
+{"id": "sample-003", "text": "Meeting moved to August 12. [laughter]", "critical": ["August 12"], "sounds": ["[laughter]"], "speaker": "Speaker 1"}

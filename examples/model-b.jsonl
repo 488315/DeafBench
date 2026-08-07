@@ -1,0 +1,3 @@
+{"id": "sample-001", "text": "Kai needs 25 milligrams on Friday.", "latency_ms": 950, "speaker": "Speaker 1"}
+{"id": "sample-002", "text": "Do not turn off the main valve! [alarm]", "latency_ms": 1250, "speaker": "Speaker 2"}
+{"id": "sample-003", "text": "Meeting moved to August 12. [cheering]", "latency_ms": 1050, "speaker": "Speaker 1"}

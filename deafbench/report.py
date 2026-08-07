@@ -1,0 +1,50 @@
+from typing import Dict, Any
+
+def generate_markdown_report(metrics: Dict[str, Any], ref_file: str, pred_file: str) -> str:
+    """Generate Markdown report from metrics output."""
+    lines = [
+        "# DeafBench Evaluation Report",
+        "",
+        f"- **Reference File:** `{ref_file}`",
+        f"- **Prediction File:** `{pred_file}`",
+        f"- **Total Samples:** {metrics['samples']}",
+        "",
+        "## Summary Metrics",
+        "",
+        "| Metric | Value |",
+        "| --- | --- |",
+        f"| **Word Error Rate (WER)** | {metrics['wer']:.1f}% |",
+        f"| **Critical Information Recall** | {metrics['critical_recall']:.1f}% ({metrics['matched_critical']}/{metrics['total_critical']}) |",
+        f"| **Non-Speech Information Recall** | {metrics['non_speech_recall']:.1f}% ({metrics['matched_sounds']}/{metrics['total_sounds']}) |",
+    ]
+    
+    if metrics.get("speaker_accuracy") is not None:
+        lines.append(f"| **Speaker Attribution Accuracy** | {metrics['speaker_accuracy']:.1f}% |")
+    else:
+        lines.append("| **Speaker Attribution Accuracy** | N/A |")
+        
+    if metrics.get("median_latency_ms") is not None:
+        latency_sec = metrics["median_latency_ms"] / 1000.0
+        lines.append(f"| **Median Latency** | {latency_sec:.2f}s ({metrics['median_latency_ms']:.0f} ms) |")
+    else:
+        lines.append("| **Median Latency** | N/A |")
+        
+    lines.extend([
+        "",
+        "## Critical Information Failures",
+        ""
+    ])
+    
+    failures = metrics.get("critical_failures", [])
+    if not failures:
+        lines.append("No critical information failures detected! 🎉")
+    else:
+        lines.append(f"Detected **{len(failures)}** critical information failures:")
+        lines.append("")
+        lines.append("| Sample ID | Missing Critical Term | Output Text |")
+        lines.append("| --- | --- | --- |")
+        for fail in failures:
+            lines.append(f"| `{fail['id']}` | **{fail['expected']}** | *{fail['predicted_text']}* |")
+            
+    lines.append("")
+    return "\n".join(lines)
