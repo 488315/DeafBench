@@ -29,14 +29,16 @@ def parse_jsonl(filepath: str) -> List[Dict[str, Any]]:
 
 def align_records(references: List[Dict[str, Any]], predictions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Align reference and prediction items by ID or position."""
+    use_id_alignment = any(item.get("id") is not None for item in references + predictions)
     pred_map = {p.get("id"): p for p in predictions if p.get("id") is not None}
     
     aligned = []
     for idx, ref in enumerate(references):
         ref_id = ref.get("id", f"sample-{idx+1}")
-        pred = pred_map.get(ref_id)
-        if pred is None and idx < len(predictions):
-            pred = predictions[idx]
+        if use_id_alignment:
+            pred = pred_map.get(ref_id)
+        else:
+            pred = predictions[idx] if idx < len(predictions) else None
         if pred is None:
             pred = {"id": ref_id, "text": ""}
         aligned.append({"reference": ref, "prediction": pred})
