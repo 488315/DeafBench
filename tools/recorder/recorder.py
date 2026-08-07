@@ -161,6 +161,7 @@ class RecorderApp:
         self.prompts = load_prompts(self.references_path)
         self.current_index = 0
         self.retry_mode = False
+        self._closing = False
         self.backend = backend if backend is not None else _sounddevice
         self.recorder = AudioRecorder(self.backend)
         self.devices: list[dict[str, Any]] = []
@@ -435,19 +436,26 @@ class RecorderApp:
         self.device_combo.config(state="disabled" if recording else "readonly")
 
     def _tick(self) -> None:
-        if self.recorder.is_recording:
-            self.duration_var.set(f"{self.recorder.duration:.1f} s")
-            self.level["value"] = self.recorder.peak_level * 100.0
-        else:
-            self.level["value"] = 0
-            if self.duration_var.get() != "0.0 s":
-                self.duration_var.set("0.0 s")
-        self.root.after(100, self._tick)
+        if self._closing:
+            return
+
+        try:
+            if self.recorder.is_recording:
+                self.duration_var.set(f"{self.recorder.duration:.1f} s")
+                self.level["value"] = self.recorder.peak_level * 100.0
+            else:
+                self.level["value"] = 0
+                if self.duration_var.get() != "0.0 s":
+                    self.duration_var.set("0.0 s")
+            self.root.after(100, self._tick)
+        except self.tk.TclError:
+            self._closing = True
 
     def _on_close(self) -> None:
         if self.recorder.is_recording:
             self.messagebox.showwarning("Recording in progress", "Stop the current recording before closing.")
             return
+        self._closing = True
         self.root.destroy()
 
 
