@@ -29,6 +29,7 @@ deafbench = "deafbench.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
+exclude = ["tools", "tools.*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
