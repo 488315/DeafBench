@@ -31,8 +31,7 @@ def evaluate_critical_info(reference_item: Dict[str, Any], prediction_item: Dict
     
     for term in critical_terms:
         norm_term = normalize_text(term)
-        # Check substring match in normalized predicted text
-        if norm_term and norm_term in norm_pred:
+        if norm_term and re.search(rf"(?<!\w){re.escape(norm_term)}(?!\w)", norm_pred):
             matched.append(term)
         else:
             missed.append(term)
