@@ -61,7 +61,7 @@ def evaluate_non_speech_info(reference_item: Dict[str, Any], prediction_item: Di
     
     for sound in sounds:
         norm_sound = normalize_text(sound)
-        if norm_sound and norm_sound in norm_pred:
+        if norm_sound and re.search(rf"(?<!\w){re.escape(norm_sound)}(?!\w)", norm_pred):
             matched.append(sound)
         else:
             missed.append(sound)
