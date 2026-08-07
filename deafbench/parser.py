@@ -34,8 +34,21 @@ def parse_jsonl(filepath: str) -> List[Dict[str, Any]]:
                 raise ValueError(f"Invalid JSON at line {line_num} in {filepath}: {e}")
     return data
 
+def _validate_unique_ids(items: List[Dict[str, Any]], label: str) -> None:
+    seen = set()
+    for item in items:
+        item_id = item.get("id")
+        if item_id is None:
+            continue
+        if item_id in seen:
+            raise ValueError(f"duplicate {label} id: {item_id}")
+        seen.add(item_id)
+
 def align_records(references: List[Dict[str, Any]], predictions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Align reference and prediction items by ID or position."""
+    _validate_unique_ids(references, "reference")
+    _validate_unique_ids(predictions, "prediction")
+
     use_id_alignment = any(item.get("id") is not None for item in references + predictions)
     pred_map = {p.get("id"): p for p in predictions if p.get("id") is not None}
     
