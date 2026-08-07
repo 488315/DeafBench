@@ -64,3 +64,20 @@ def test_report_write_error_exits_cleanly(tmp_path, capsys):
 
     assert exc_info.value.code == 1
     assert "Error writing report:" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("latency", ['"not-a-number"', "-1", '"nan"', '"inf"'])
+def test_compare_rejects_invalid_latency(tmp_path, capsys, latency):
+    references = tmp_path / "references.jsonl"
+    predictions = tmp_path / "predictions.jsonl"
+    references.write_text('{"id":"s1","text":"hello"}\n', encoding="utf-8")
+    predictions.write_text(
+        f'{{"id":"s1","text":"hello","latency_ms":{latency}}}\n',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(SystemExit) as exc_info:
+        main(["compare", str(references), str(predictions)])
+
+    assert exc_info.value.code == 1
+    assert "Invalid latency_ms for sample s1" in capsys.readouterr().err
