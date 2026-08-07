@@ -22,6 +22,13 @@ def parse_jsonl(filepath: str) -> List[Dict[str, Any]]:
                 item = json.loads(line)
                 if not isinstance(item, dict):
                     raise ValueError(f"Invalid JSON record at line {line_num} in {filepath}: expected object")
+                if "text" in item and not isinstance(item["text"], str):
+                    raise ValueError(f"Invalid JSON record at line {line_num} in {filepath}: text must be a string")
+                for field in ("critical", "sounds"):
+                    if field in item and not isinstance(item[field], list):
+                        raise ValueError(
+                            f"Invalid JSON record at line {line_num} in {filepath}: {field} must be a list"
+                        )
                 data.append(item)
             except json.JSONDecodeError as e:
                 raise ValueError(f"Invalid JSON at line {line_num} in {filepath}: {e}")
