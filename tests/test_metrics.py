@@ -35,6 +35,13 @@ def test_non_speech_eval():
     assert res["matched"] == ["[alarm]"]
     assert res["missed"] == ["[laughter]"]
 
+def test_non_speech_does_not_match_partial_token():
+    ref = {"sounds": ["[alarm]"]}
+    pred = {"text": "Hear the [alarm]-tone go off"}
+    res = evaluate_non_speech_info(ref, pred)
+    assert res["matched"] == []
+    assert res["missed"] == ["[alarm]"]
+
 def test_speaker_attribution():
     ref = {"speaker": "Speaker 1"}
     pred1 = {"speaker": "speaker 1"}
