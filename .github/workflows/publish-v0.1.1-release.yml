@@ -1,11 +1,9 @@
 name: Publish DeafBench v0.1.1 release
 
 on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
+  push:
+    branches:
+      - "automation/publish-v0.1.1"
     paths:
       - ".github/workflows/publish-v0.1.1-release.yml"
 
@@ -14,7 +12,7 @@ permissions:
 
 jobs:
   publish:
-    if: github.event.pull_request.head.repo.full_name == github.repository && github.actor == '488315'
+    if: github.actor == '488315' && github.ref == 'refs/heads/automation/publish-v0.1.1'
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
