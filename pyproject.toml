@@ -14,6 +14,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+recorder = [
+    "numpy>=1.26",
+    "sounddevice>=0.5.1",
+]
 test = [
     "numpy>=1.26",
     "pytest>=8.0",
