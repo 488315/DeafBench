@@ -46,6 +46,7 @@ class AudioRecorder:
         self._channels = 1
         self._started_at: float | None = None
         self._peak_level = 0.0
+        self._callback_statuses: list[str] = []
         self._lock = threading.Lock()
 
     @property
@@ -81,15 +82,14 @@ class AudioRecorder:
         self._channels = channels
         self._blocks = []
         self._peak_level = 0.0
+        self._callback_statuses = []
 
-        def callback(indata, frames, time_info, status):
+        def callback(indata, frames, time_info, status) -> None:
             del frames, time_info
-            if status:
-                # PortAudio status flags are informational here. A hard stream
-                # failure is surfaced by sounddevice itself.
-                pass
             block = np.asarray(indata, dtype=np.int16).copy()
             with self._lock:
+                if status:
+                    self._callback_statuses.append(str(status))
                 self._blocks.append(block)
                 if block.size:
                     self._peak_level = min(
@@ -125,10 +125,14 @@ class AudioRecorder:
 
         with self._lock:
             blocks = list(self._blocks)
+            statuses = list(self._callback_statuses)
             self._blocks.clear()
+            self._callback_statuses.clear()
             self._peak_level = 0.0
         self._started_at = None
 
+        if statuses:
+            raise RuntimeError("Audio capture reported status: " + "; ".join(statuses))
         if not blocks:
             return np.empty((0, self._channels), dtype=np.int16)
         return np.concatenate(blocks, axis=0)
