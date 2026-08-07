@@ -18,8 +18,7 @@ Thank you for your interest in contributing to DeafBench!
    # Linux/macOS:
    source .venv/bin/activate
 
-   pip install -e .
-   pip install pytest
+   pip install -e ".[test]"
    ```
 
 3. Run tests:
