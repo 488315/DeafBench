@@ -20,6 +20,13 @@ def test_critical_info_eval():
     assert res["matched"] == ["Friday"]
     assert len(res["missed"]) == 2
 
+def test_critical_info_does_not_match_numeric_substring():
+    ref = {"critical": ["25"]}
+    pred = {"text": "The dose is 125 milligrams."}
+    res = evaluate_critical_info(ref, pred)
+    assert res["matched"] == []
+    assert res["missed"] == ["25"]
+
 def test_non_speech_eval():
     ref = {"sounds": ["[alarm]", "[laughter]"]}
     pred = {"text": "Hear the [alarm] go off"}
