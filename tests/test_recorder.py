@@ -13,6 +13,7 @@ from tools.recorder.core import (
     next_unrecorded_index,
     output_path,
 )
+from tools.recorder.recorder import AudioRecorder, resolve_dataset_paths
 
 
 def _write_jsonl(path, records):
@@ -165,3 +166,70 @@ def test_atomic_write_wav_replaces_existing_file_only_after_success(tmp_path, mo
     monkeypatch.setattr("tools.recorder.core.os.replace", real_replace)
     atomic_write_wav(path, new)
     assert path.read_bytes() != original_bytes
+
+
+class _FakeStream:
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+        self.started = False
+        self.stopped = False
+        self.closed = False
+
+    def start(self):
+        self.started = True
+
+    def stop(self):
+        self.stopped = True
+
+    def close(self):
+        self.closed = True
+
+
+class _FakeAudioBackend:
+    def __init__(self):
+        self.checked = None
+        self.stream = None
+
+    def check_input_settings(self, **kwargs):
+        self.checked = kwargs
+
+    def InputStream(self, **kwargs):
+        self.stream = _FakeStream(**kwargs)
+        return self.stream
+
+
+def test_audio_recorder_configures_48khz_int16_stream():
+    backend = _FakeAudioBackend()
+    recorder = AudioRecorder(backend=backend)
+
+    recorder.start(device_index=4, channels=2)
+
+    assert backend.checked == {
+        "device": 4,
+        "channels": 2,
+        "dtype": "int16",
+        "samplerate": 48000,
+    }
+    assert backend.stream.started is True
+    assert backend.stream.kwargs["device"] == 4
+    assert backend.stream.kwargs["channels"] == 2
+    assert backend.stream.kwargs["dtype"] == "int16"
+    assert backend.stream.kwargs["samplerate"] == 48000
+
+    backend.stream.kwargs["callback"](
+        np.array([[100, 300], [200, 400]], dtype=np.int16),
+        2,
+        None,
+        None,
+    )
+    captured = recorder.stop()
+
+    assert backend.stream.stopped is True
+    assert backend.stream.closed is True
+    assert captured.tolist() == [[100, 300], [200, 400]]
+
+
+def test_resolve_dataset_paths_uses_core_v1_layout(tmp_path):
+    references, audio_dir = resolve_dataset_paths(tmp_path)
+    assert references == tmp_path / "benchmarks" / "core-v1" / "references.jsonl"
+    assert audio_dir == tmp_path / "benchmarks" / "core-v1" / "audio"
