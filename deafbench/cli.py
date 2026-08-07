@@ -66,7 +66,11 @@ def main(args: Optional[List[str]] = None) -> None:
         sys.exit(1)
         
     aligned = align_records(references, predictions)
-    metrics = evaluate_dataset(aligned)
+    try:
+        metrics = evaluate_dataset(aligned)
+    except ValueError as e:
+        print(f"Error evaluating dataset: {e}", file=sys.stderr)
+        sys.exit(1)
     
     if parsed.command == "compare":
         print(format_terminal_output(metrics))
