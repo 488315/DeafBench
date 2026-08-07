@@ -72,8 +72,12 @@ def main(args: Optional[List[str]] = None) -> None:
         print(format_terminal_output(metrics))
     elif parsed.command == "report":
         md = generate_markdown_report(metrics, parsed.references, parsed.predictions)
-        with open(parsed.output, "w", encoding="utf-8") as f:
-            f.write(md)
+        try:
+            with open(parsed.output, "w", encoding="utf-8") as f:
+                f.write(md)
+        except OSError as e:
+            print(f"Error writing report: {e}", file=sys.stderr)
+            sys.exit(1)
         print(f"Report successfully saved to {parsed.output}")
 
 if __name__ == "__main__":
