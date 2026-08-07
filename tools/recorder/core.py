@@ -16,6 +16,16 @@ DEFAULT_SAMPLE_RATE = 48_000
 DEFAULT_DEVICE_NEEDLE = "Voicemeeter Out B3"
 
 
+def _is_safe_sample_id(sample_id: object) -> bool:
+    if not isinstance(sample_id, str) or not sample_id.strip():
+        return False
+    if sample_id != sample_id.strip():
+        return False
+    if sample_id in {".", ".."}:
+        return False
+    return not any(separator in sample_id for separator in ("/", "\\", ":"))
+
+
 def load_prompts(path: Path) -> list[dict[str, Any]]:
     """Load and validate recorder prompts from a JSONL file."""
     prompts: list[dict[str, Any]] = []
@@ -36,8 +46,8 @@ def load_prompts(path: Path) -> list[dict[str, Any]]:
                 raise ValueError(f"Invalid record on line {line_number}: expected an object")
 
             sample_id = record.get("id")
-            if not isinstance(sample_id, str) or not sample_id.strip():
-                raise ValueError(f"Invalid id on line {line_number}: expected a non-empty string")
+            if not _is_safe_sample_id(sample_id):
+                raise ValueError(f"Invalid id on line {line_number}: expected a safe file name")
 
             text = record.get("text")
             if not isinstance(text, str):
@@ -57,6 +67,8 @@ def load_prompts(path: Path) -> list[dict[str, Any]]:
 
 def output_path(audio_dir: Path, sample_id: str) -> Path:
     """Return the expected WAV path for a sample ID."""
+    if not _is_safe_sample_id(sample_id):
+        raise ValueError("Invalid sample ID: expected a safe file name")
     return Path(audio_dir) / f"{sample_id}.wav"
 
 
