@@ -11,8 +11,8 @@ def test_transcribe_directory_writes_sorted_prediction_jsonl(tmp_path):
     output = tmp_path / "model-a.jsonl"
 
     transcripts = {
-        "core-001.wav": "First transcript.",
-        "core-002.wav": "Second transcript.",
+        "core-001.wav": "  First transcript.  ",
+        "core-002.wav": "\tSecond transcript.\n",
     }
 
     records = transcribe_directory(
@@ -22,7 +22,7 @@ def test_transcribe_directory_writes_sorted_prediction_jsonl(tmp_path):
     )
 
     assert records == [
-        {"id": "core-001", "text": "First transcript."},
-        {"id": "core-002", "text": "Second transcript."},
+        {"id": "core-001", "text": "  First transcript.  "},
+        {"id": "core-002", "text": "\tSecond transcript.\n"},
     ]
     assert [json.loads(line) for line in output.read_text(encoding="utf-8").splitlines()] == records
