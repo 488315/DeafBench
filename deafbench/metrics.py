@@ -149,6 +149,11 @@ def _normalize_critical_text(text: str) -> str:
     text = text.lower()
     text = re.sub(r"(?<=\d),(?=\d)", "", text)
     text = re.sub(r"\b([ap])\s*\.?\s*m\.?(?!\w)", r"\1m", text)
+    text = re.sub(
+        rf"\b(hundred|thousand|million)\s+and\s+(?={_NUMBER_WORD_PATTERN}\b)",
+        r"\1 ",
+        text,
+    )
     text = re.sub(r"\$(\d+)(?:\.(\d{1,2}))?", _replace_money, text)
     text = re.sub(
         r"\b(\d{1,2})[.:](\d{2})\s*(am|pm)\b",
@@ -193,6 +198,11 @@ def _normalize_critical_text(text: str) -> str:
     text = re.sub(
         rf"\b{_NUMBER_WORD_PATTERN}(?:[\s-]+{_NUMBER_WORD_PATTERN})*\b",
         _replace_number_words,
+        text,
+    )
+    text = re.sub(
+        r"\b(dollars?)\s+and\s+(?=\d+\s+cents?\b)",
+        r"\1 ",
         text,
     )
     return normalize_text(text)
