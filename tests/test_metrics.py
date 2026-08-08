@@ -34,6 +34,8 @@ def test_critical_info_does_not_match_numeric_substring():
         ("47 dollars", "The total is $47.83."),
         ("83 cents", "The total is $47.83."),
         ("$47.83", "The total is forty seven dollars and eighty three cents."),
+        ("$47.00", "The total is 47 dollars."),
+        ("47 dollars", "The total is $47.00."),
         ("125 dollars", "The invoice total is one hundred and twenty five dollars."),
         ("9 AM", "The meeting starts at 9am."),
         ("9 AM", "The meeting starts at 9:00 AM."),
