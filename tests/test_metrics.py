@@ -190,3 +190,24 @@ def test_evaluate_dataset_collects_non_speech_failures():
             "predicted_text": "Please wait here. [alarm]",
         }
     ]
+
+
+def test_evaluate_dataset_uses_aligned_id_for_non_speech_failure():
+    refs = [
+        {
+            "text": "Please wait here.",
+            "critical": [],
+            "sounds": ["[alarm]"],
+        }
+    ]
+    preds = [{"id": "sample-1", "text": "Please wait here."}]
+
+    metrics = evaluate_dataset(align_records(refs, preds))
+
+    assert metrics["non_speech_failures"] == [
+        {
+            "id": "sample-1",
+            "expected": "[alarm]",
+            "predicted_text": "Please wait here.",
+        }
+    ]
