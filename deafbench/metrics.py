@@ -215,6 +215,46 @@ def _normalize_critical_text(text: str) -> str:
     return normalize_text(text)
 
 
+def _normalize_identifier_text(text: str) -> str:
+    """Normalize spoken identifier separators without erasing literal ones."""
+    text = re.sub(
+        r"\b([a-z0-9]+)\s+underscore\s+([a-z0-9]+)\b",
+        r"\1_\2",
+        text.lower(),
+    )
+    return _normalize_critical_text(text)
+
+
+def _contains_normalized_term(norm_term: str, norm_pred: str) -> bool:
+    if not norm_term:
+        return False
+    return bool(re.search(rf"(?<!\w){re.escape(norm_term)}(?!\w)", norm_pred))
+
+
+def _looks_like_identifier_term(term: str, norm_term: str) -> bool:
+    lowered = term.lower()
+    if "_" in term or " underscore " in lowered:
+        return True
+    return bool(re.fullmatch(r"[a-z]+\s*\d+", norm_term))
+
+
+def _contains_identifier_term(norm_term: str, norm_pred: str) -> bool:
+    if _contains_normalized_term(norm_term, norm_pred):
+        return True
+
+    compact_match = re.fullmatch(r"([a-z]+)\s*(\d+)", norm_term)
+    if not compact_match:
+        return False
+
+    prefix, digits = compact_match.groups()
+    return bool(
+        re.search(
+            rf"(?<!\w){re.escape(prefix)}\s*{re.escape(digits)}(?!\w)",
+            norm_pred,
+        )
+    )
+
+
 def calculate_wer(references: List[str], predictions: List[str]) -> float:
     """Calculate Word Error Rate (WER) using jiwer."""
     if not references:
@@ -237,6 +277,7 @@ def evaluate_critical_info(reference_item: Dict[str, Any], prediction_item: Dict
     critical_terms = reference_item.get("critical", [])
     pred_text = prediction_item.get("text", "")
     norm_pred = _normalize_critical_text(pred_text)
+    identifier_norm_pred = None
     
     matched = []
     missed = []
@@ -244,7 +285,15 @@ def evaluate_critical_info(reference_item: Dict[str, Any], prediction_item: Dict
     
     for term in critical_terms:
         norm_term = _normalize_critical_text(term)
-        if norm_term and re.search(rf"(?<!\w){re.escape(norm_term)}(?!\w)", norm_pred):
+        is_match = _contains_normalized_term(norm_term, norm_pred)
+
+        if not is_match and _looks_like_identifier_term(term, norm_term):
+            if identifier_norm_pred is None:
+                identifier_norm_pred = _normalize_identifier_text(pred_text)
+            identifier_norm_term = _normalize_identifier_text(term)
+            is_match = _contains_identifier_term(identifier_norm_term, identifier_norm_pred)
+
+        if is_match:
             matched.append(term)
         else:
             missed.append(term)
