@@ -5,8 +5,9 @@ from collections.abc import Callable
 from pathlib import Path
 
 
-AUDIO_DIR = Path("benchmarks/core-v1/audio")
-OUTPUT = Path("benchmarks/core-v1/model-a.jsonl")
+REPO_ROOT = Path(__file__).resolve().parents[1]
+AUDIO_DIR = REPO_ROOT / "benchmarks" / "core-v1" / "audio"
+OUTPUT = REPO_ROOT / "benchmarks" / "core-v1" / "model-a.jsonl"
 
 
 def transcribe_directory(
