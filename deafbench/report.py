@@ -28,8 +28,15 @@ def generate_markdown_report(metrics: Dict[str, Any], ref_file: str, pred_file: 
         "| --- | --- |",
         f"| **Word Error Rate (WER)** | {metrics['wer']:.1f}% |",
         f"| **Critical Information Recall** | {metrics['critical_recall']:.1f}% ({metrics['matched_critical']}/{metrics['total_critical']}) |",
-        f"| **Non-Speech Information Recall** | {metrics['non_speech_recall']:.1f}% ({metrics['matched_sounds']}/{metrics['total_sounds']}) |",
     ]
+
+    if metrics.get("non_speech_recall") is not None:
+        lines.append(
+            f"| **Non-Speech Information Recall** | {metrics['non_speech_recall']:.1f}% "
+            f"({metrics['matched_sounds']}/{metrics['total_sounds']}) |"
+        )
+    else:
+        lines.append("| **Non-Speech Information Recall** | N/A |")
     
     if metrics.get("speaker_accuracy") is not None:
         lines.append(f"| **Speaker Attribution Accuracy** | {metrics['speaker_accuracy']:>6.1f}% |")
