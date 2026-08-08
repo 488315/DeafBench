@@ -95,3 +95,12 @@ def test_recorder_command_forwards_dataset_to_lazy_launcher(monkeypatch):
     main(["recorder", "--dataset", "non-speech-v1"])
 
     assert calls == [["--dataset", "non-speech-v1"]]
+
+
+def test_recorder_command_returns_launcher_status(monkeypatch):
+    monkeypatch.setattr(
+        "deafbench.cli._run_recorder",
+        lambda _recorder_args: 7,
+    )
+
+    assert main(["recorder"]) == 7
