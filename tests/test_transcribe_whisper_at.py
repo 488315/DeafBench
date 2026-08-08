@@ -76,6 +76,23 @@ def test_extract_audio_tags_maps_audioset_labels_to_deafbench_sounds():
     ]
 
 
+def test_extract_audio_tags_keeps_broad_labels_raw_only():
+    parsed = [
+        {
+            "audio tags": [
+                ("Door", 1.5),
+                ("Sliding door", 1.2),
+                ("Telephone", 1.0),
+            ]
+        }
+    ]
+
+    raw_tags, sounds = extract_audio_tags(parsed)
+
+    assert raw_tags == ["Door", "Sliding door", "Telephone"]
+    assert sounds == []
+
+
 def test_transcribe_directory_writes_structured_model_b_predictions(tmp_path):
     audio_dir = tmp_path / "audio"
     audio_dir.mkdir()
