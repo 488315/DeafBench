@@ -27,6 +27,43 @@ def test_critical_info_does_not_match_numeric_substring():
     assert res["matched"] == []
     assert res["missed"] == ["25"]
 
+@pytest.mark.parametrize(
+    ("critical", "prediction"),
+    [
+        ("twenty three", "The batch contains 23 samples."),
+        ("47 dollars", "The total is $47.83."),
+        ("83 cents", "The total is $47.83."),
+        ("9 AM", "The meeting starts at 9am."),
+        ("11:45 PM", "The migration starts at 11.45pm."),
+        ("five point eight", "Install version 5.8 before opening the project."),
+        ("192 dot 168 dot 1 dot 25", "The server address is 192.168.1.25."),
+        ("seven four nine two six eight one", "The delivery number is 7492681."),
+        ("one hundred twenty five dollars", "The invoice total is $125.40."),
+        ("forty cents", "The invoice total is $125.40."),
+        ("deployed version two point four", "The developer deployed version 2.4."),
+    ],
+)
+def test_critical_info_matches_semantic_numeric_equivalents(critical, prediction):
+    res = evaluate_critical_info({"critical": [critical]}, {"text": prediction})
+
+    assert res["matched"] == [critical]
+    assert res["missed"] == []
+
+@pytest.mark.parametrize(
+    ("critical", "prediction"),
+    [
+        ("2:15 PM", "The appointment is at 12.15pm."),
+        ("47 dollars", "The total is $147.83."),
+        ("version two point four", "The deployed version is 24."),
+        ("192 dot 168 dot 1 dot 25", "The server address is 192.168.1.250."),
+    ],
+)
+def test_critical_info_keeps_distinct_numeric_values_separate(critical, prediction):
+    res = evaluate_critical_info({"critical": [critical]}, {"text": prediction})
+
+    assert res["matched"] == []
+    assert res["missed"] == [critical]
+
 def test_non_speech_eval():
     ref = {"sounds": ["[alarm]", "[laughter]"]}
     pred = {"text": "Hear the [alarm] go off"}
