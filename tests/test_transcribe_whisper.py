@@ -1,4 +1,5 @@
 import json
+import sys
 import wave
 from pathlib import Path
 
@@ -146,3 +147,24 @@ def test_resolve_dataset_paths_supports_non_speech_v1(tmp_path):
     assert references == dataset_dir / "references.jsonl"
     assert audio_dir == dataset_dir / "audio"
     assert output == dataset_dir / "model-a.jsonl"
+
+
+@pytest.mark.parametrize("dataset", ["C:temp", "bad:name"])
+def test_resolve_dataset_paths_rejects_drive_qualified_names(tmp_path, dataset):
+    with pytest.raises(ValueError, match="Invalid dataset name"):
+        resolve_dataset_paths(tmp_path, dataset)
+
+
+def test_main_reports_invalid_dataset_as_parser_error(tmp_path, monkeypatch, capsys):
+    monkeypatch.setitem(sys.modules, "whisper", object())
+
+    with pytest.raises(SystemExit) as exc_info:
+        transcribe_whisper.main([
+            "--repo-root",
+            str(tmp_path),
+            "--dataset",
+            "C:temp",
+        ])
+
+    assert exc_info.value.code == 2
+    assert "Invalid dataset name" in capsys.readouterr().err
