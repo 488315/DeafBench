@@ -66,7 +66,9 @@ def generate_markdown_report(metrics: Dict[str, Any], ref_file: str, pred_file: 
         lines.append("| --- | --- | --- |")
         for fail in failures:
             expected = _escape_markdown_table_cell(fail["expected"])
-            predicted_text = _escape_markdown_table_cell(fail["predicted_text"])
+            predicted_text = _escape_markdown_table_cell(
+                str(fail["predicted_text"]).strip()
+            )
             lines.append(f"| `{fail['id']}` | **{expected}** | *{predicted_text}* |")
 
     if metrics.get("total_sounds", 0) > 0:
@@ -89,7 +91,9 @@ def generate_markdown_report(metrics: Dict[str, Any], ref_file: str, pred_file: 
             for fail in sound_failures:
                 sample_id = _escape_markdown_table_cell(fail["id"])
                 expected = _escape_markdown_table_cell(fail["expected"])
-                predicted_text = _escape_markdown_table_cell(fail["predicted_text"])
+                predicted_text = _escape_markdown_table_cell(
+                    str(fail["predicted_text"]).strip()
+                )
                 lines.append(f"| `{sample_id}` | **{expected}** | *{predicted_text}* |")
 
     lines.append("")
