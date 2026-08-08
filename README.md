@@ -4,6 +4,16 @@ Evaluate what ASR metrics miss.
 
 DeafBench is an open-source benchmark for measuring AI caption failures that matter to Deaf and hard-of-hearing users.
 
+## Why DeafBench?
+
+I'm Deaf, I use cochlear implants, and I have an IT background, so I look at captioning the same way I'd troubleshoot a system: if it drops the part that matters, a good-looking metric does not mean much.
+
+The captioning systems I personally struggle with most are Google Chrome Live Caption and Android Live Caption through Android System Intelligence. Google Gemini can also have a hard time understanding me when I speak. My speech isn't always clear, but I still try my best to speak, and I want speech systems to be tested for that real-world accessibility gap instead of only clean audio.
+
+DeafBench is an **ASR benchmark for Deaf and hard-of-hearing captions** built for **caption evaluation beyond word error rate (WER)**. It checks what speech-to-text and automatic speech recognition systems preserve, including critical information, environmental sound captions, speaker attribution, and latency.
+
+The goal is simple: compare ASR and audio-captioning systems based on what a Deaf or hard-of-hearing user actually gets, not just how close the transcript is word for word.
+
 ## OpenAI Whisper turbo results
 
 `Model A` uses OpenAI Whisper `turbo` through `tools/transcribe_whisper.py`.
