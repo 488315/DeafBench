@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from tools import transcribe_whisper
-from tools.transcribe_whisper import transcribe_directory
+from tools.transcribe_whisper import resolve_dataset_paths, transcribe_directory
 
 
 def _write_wav(path, *, channels=1, sample_width=2, sample_rate=48_000):
@@ -41,12 +41,31 @@ def test_transcribe_directory_writes_sorted_prediction_jsonl(tmp_path):
     assert [json.loads(line) for line in output.read_text(encoding="utf-8").splitlines()] == records
 
 
+def test_transcribe_directory_accepts_non_core_sample_ids(tmp_path):
+    audio_dir = tmp_path / "audio"
+    audio_dir.mkdir()
+    _write_wav(audio_dir / "ns-002.wav")
+    _write_wav(audio_dir / "ns-001.wav")
+    output = tmp_path / "model-a.jsonl"
+
+    records = transcribe_directory(
+        audio_dir,
+        output,
+        lambda path: f"Transcript for {path.stem}",
+    )
+
+    assert records == [
+        {"id": "ns-001", "text": "Transcript for ns-001"},
+        {"id": "ns-002", "text": "Transcript for ns-002"},
+    ]
+
+
 def test_transcribe_directory_rejects_empty_audio_dir(tmp_path):
     audio_dir = tmp_path / "audio"
     audio_dir.mkdir()
     output = tmp_path / "model-a.jsonl"
 
-    with pytest.raises(FileNotFoundError, match="No core WAV files found"):
+    with pytest.raises(FileNotFoundError, match="No WAV files found"):
         transcribe_directory(audio_dir, output, lambda path: "unused")
 
     assert not output.exists()
@@ -118,3 +137,12 @@ def test_default_paths_are_anchored_to_repo_root():
 
     assert transcribe_whisper.AUDIO_DIR == repo_root / "benchmarks" / "core-v1" / "audio"
     assert transcribe_whisper.OUTPUT == repo_root / "benchmarks" / "core-v1" / "model-a.jsonl"
+
+
+def test_resolve_dataset_paths_supports_non_speech_v1(tmp_path):
+    references, audio_dir, output = resolve_dataset_paths(tmp_path, "non-speech-v1")
+
+    dataset_dir = tmp_path / "benchmarks" / "non-speech-v1"
+    assert references == dataset_dir / "references.jsonl"
+    assert audio_dir == dataset_dir / "audio"
+    assert output == dataset_dir / "model-a.jsonl"
