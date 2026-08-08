@@ -4,23 +4,19 @@ Evaluate what ASR metrics miss.
 
 DeafBench is an open-source benchmark for measuring AI caption failures that matter to Deaf and hard-of-hearing users.
 
-## OpenAI Whisper turbo results
+```text
+Traditional ASR benchmark:
 
-`Model A` is generated with OpenAI Whisper using `whisper.load_model("turbo")` through `tools/transcribe_whisper.py`.
+Model A: 7.8% WER
+Model B: 8.1% WER
 
-| Benchmark | Samples | WER | Critical Information Recall | Non-Speech Information Recall |
-| --- | ---: | ---: | ---: | ---: |
-| **Core v1** | 25 | **23.4%** | **88.7% (55/62)** | **N/A** |
-| **Non-speech v1** | 12 | **2.0%** | **95.0% (19/20)** | **0.0% (0/19)** |
+DeafBench:
 
-The non-speech result is the clearest example of why DeafBench exists: Whisper achieved only **2.0% WER** and preserved **95.0% of critical speech information**, while detecting **0 of 19** required environmental sound events.
+Model A: 72% critical information preserved
+Model B: 96% critical information preserved
+```
 
-The full measured reports are stored at:
-
-- `benchmarks/core-v1/model-a-report.md`
-- `benchmarks/non-speech-v1/model-a-report.md`
-
-Two systems can have similar Word Error Rate (WER) while producing very different accessibility outcomes. DeafBench highlights critical information loss (names, numbers, negations, dates, technical terms) and non-speech annotations that traditional WER obscures.
+Two models can have similar Word Error Rate (WER) while producing very different accessibility outcomes. DeafBench highlights critical information loss (names, numbers, negations, dates, technical terms) and non-speech annotations that traditional WER obscures.
 
 ---
 
@@ -68,23 +64,6 @@ Median Latency             1.4s
 ```bash
 deafbench report examples/references.jsonl examples/model-a.jsonl --output report.md
 ```
-
-### OpenAI Whisper transcription
-
-Install OpenAI Whisper, then generate `model-a.jsonl` for a benchmark dataset:
-
-```powershell
-python -m pip install -U openai-whisper
-python tools\transcribe_whisper.py --dataset core-v1
-```
-
-For the non-speech benchmark:
-
-```powershell
-python tools\transcribe_whisper.py --dataset non-speech-v1
-```
-
-The included transcription helper currently uses the English `turbo` model and writes predictions to the selected benchmark directory.
 
 ### Non-speech v1 recording workflow
 
