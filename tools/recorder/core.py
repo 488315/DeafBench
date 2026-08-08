@@ -1,7 +1,6 @@
 """Compatibility exports for the packaged DeafBench recorder core."""
 
-import os
-
+from deafbench.recorder import core as _core
 from deafbench.recorder.core import (
     DEFAULT_DEVICE_NEEDLE,
     DEFAULT_SAMPLE_RATE,
@@ -18,6 +17,9 @@ from deafbench.recorder.core import (
     synthesize_sound_event,
 )
 
+
+# Preserve the legacy monkeypatch seam while the packaged core owns the write.
+os = _core.os
 
 __all__ = [
     "DEFAULT_DEVICE_NEEDLE",
