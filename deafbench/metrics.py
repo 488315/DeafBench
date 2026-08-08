@@ -364,6 +364,7 @@ def evaluate_dataset(aligned_data: List[Dict[str, Any]]) -> Dict[str, Any]:
     
     total_sounds = 0
     matched_sounds = 0
+    all_sound_failures = []
     
     speaker_evals = []
     latencies = []
@@ -388,6 +389,12 @@ def evaluate_dataset(aligned_data: List[Dict[str, Any]]) -> Dict[str, Any]:
         sound_res = evaluate_non_speech_info(ref, pred)
         total_sounds += sound_res["total"]
         matched_sounds += len(sound_res["matched"])
+        for sound in sound_res["missed"]:
+            all_sound_failures.append({
+                "id": sample_id,
+                "expected": sound,
+                "predicted_text": pred.get("text", "")
+            })
         
         # Speaker
         spk_res = evaluate_speaker_attribution(ref, pred)
@@ -431,6 +438,7 @@ def evaluate_dataset(aligned_data: List[Dict[str, Any]]) -> Dict[str, Any]:
         "non_speech_recall": sound_recall,
         "total_sounds": total_sounds,
         "matched_sounds": matched_sounds,
+        "non_speech_failures": all_sound_failures,
         "speaker_accuracy": speaker_acc,
         "median_latency_ms": median_latency
     }
