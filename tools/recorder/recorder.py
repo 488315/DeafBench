@@ -33,7 +33,9 @@ FORMAT_TEXT = "48 kHz · 16-bit PCM · mono"
 
 def resolve_dataset_paths(repo_root: Path, dataset: str = "core-v1") -> tuple[Path, Path]:
     """Return reference and audio paths for a named benchmark dataset."""
-    if not dataset or dataset in {".", ".."} or any(separator in dataset for separator in ("/", "\\")):
+    if not dataset or dataset in {".", ".."} or any(
+        separator in dataset for separator in ("/", "\\", ":")
+    ):
         raise ValueError("Invalid dataset name")
     dataset_dir = Path(repo_root) / "benchmarks" / dataset
     return dataset_dir / "references.jsonl", dataset_dir / "audio"
@@ -495,13 +497,18 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    try:
+        default_references, default_audio_dir = resolve_dataset_paths(args.repo_root, args.dataset)
+    except ValueError as exc:
+        parser.error(str(exc))
+
     if _sounddevice is None:
         raise SystemExit(
             "sounddevice is not installed. Run: python -m pip install -r tools/recorder/requirements.txt"
         )
 
-    default_references, default_audio_dir = resolve_dataset_paths(args.repo_root, args.dataset)
     references_path = args.references or default_references
     audio_dir = args.audio_dir or default_audio_dir
 
