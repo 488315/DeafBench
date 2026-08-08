@@ -67,6 +67,28 @@ def generate_markdown_report(metrics: Dict[str, Any], ref_file: str, pred_file: 
             expected = _escape_markdown_table_cell(fail["expected"])
             predicted_text = _escape_markdown_table_cell(fail["predicted_text"])
             lines.append(f"| `{fail['id']}` | **{expected}** | *{predicted_text}* |")
+
+    if metrics.get("total_sounds", 0) > 0:
+        lines.extend([
+            "",
+            "## Non-Speech Information Failures",
+            "",
+        ])
+        sound_failures = metrics.get("non_speech_failures", [])
+        if not sound_failures:
+            lines.append("No non-speech information failures detected! 🎉")
+        else:
+            noun = "failure" if len(sound_failures) == 1 else "failures"
+            lines.append(
+                f"Detected **{len(sound_failures)}** non-speech information {noun}:"
+            )
+            lines.append("")
+            lines.append("| Sample ID | Missing Sound Event | Output Text |")
+            lines.append("| --- | --- | --- |")
+            for fail in sound_failures:
+                expected = _escape_markdown_table_cell(fail["expected"])
+                predicted_text = _escape_markdown_table_cell(fail["predicted_text"])
+                lines.append(f"| `{fail['id']}` | **{expected}** | *{predicted_text}* |")
             
     lines.append("")
     return "\n".join(lines)
