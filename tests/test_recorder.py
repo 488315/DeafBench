@@ -14,7 +14,7 @@ from tools.recorder.core import (
     next_unrecorded_index,
     output_path,
 )
-from tools.recorder.recorder import AudioRecorder, resolve_dataset_paths
+from tools.recorder.recorder import AudioRecorder, RecorderApp, resolve_dataset_paths
 
 
 def _write_jsonl(path, records):
@@ -269,3 +269,36 @@ def test_main_reports_invalid_dataset_as_parser_error(tmp_path, monkeypatch, cap
 
     assert exc_info.value.code == 2
     assert "Invalid dataset name" in capsys.readouterr().err
+
+
+class _FakeRecording:
+    is_recording = True
+
+    def stop(self):
+        self.is_recording = False
+        return np.array([[100], [-100]], dtype=np.int16)
+
+
+class _FakeStatusVar:
+    def __init__(self):
+        self.value = ""
+
+    def set(self, value):
+        self.value = value
+
+
+def test_retrying_final_sample_reports_replaced_status(tmp_path):
+    app = RecorderApp.__new__(RecorderApp)
+    app.recorder = _FakeRecording()
+    app.prompts = [{"id": "ns-001", "text": "Prompt", "sounds": []}]
+    app.current_index = 0
+    app.retry_mode = True
+    app.audio_dir = tmp_path
+    app.status_var = _FakeStatusVar()
+    app._refresh_sample_list = lambda: None
+    app._update_controls = lambda: None
+
+    atomic_write_wav(tmp_path / "ns-001.wav", np.array([[1]], dtype=np.int16))
+    app.stop_recording()
+
+    assert app.status_var.value == "Replaced ns-001. No later samples remain."
