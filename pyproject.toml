@@ -47,6 +47,7 @@ markers = [
 [tool.coverage.run]
 branch = true
 source = ["deafbench"]
+omit = ["deafbench/recorder/app.py"]
 
 [tool.coverage.report]
 show_missing = true
