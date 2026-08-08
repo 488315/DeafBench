@@ -31,6 +31,9 @@ deafbench = "deafbench.cli:main"
 where = ["."]
 exclude = ["tools", "tools.*"]
 
+[tool.setuptools.package-data]
+"deafbench.recorder.data" = ["*.jsonl"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
