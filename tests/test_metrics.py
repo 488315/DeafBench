@@ -155,3 +155,16 @@ def test_evaluate_dataset():
     assert metrics["critical_recall"] == 100.0
     assert metrics["speaker_accuracy"] == 100.0
     assert metrics["median_latency_ms"] == 500.0
+
+
+def test_evaluate_dataset_leaves_non_speech_unscored_without_reference_sounds():
+    refs = [
+        {"id": "s1", "text": "Hello world.", "critical": [], "sounds": []}
+    ]
+    preds = [{"id": "s1", "text": "Hello world."}]
+
+    metrics = evaluate_dataset(align_records(refs, preds))
+
+    assert metrics["total_sounds"] == 0
+    assert metrics["matched_sounds"] == 0
+    assert metrics["non_speech_recall"] is None
