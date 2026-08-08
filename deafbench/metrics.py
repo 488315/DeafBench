@@ -53,6 +53,17 @@ _DIGIT_WORDS = {
 }
 _DIGIT_WORD_PATTERN = "(?:" + "|".join(_DIGIT_WORDS) + ")"
 _NUMBER_WORD_PATTERN = "(?:" + "|".join((*_NUMBER_VALUES, *_NUMBER_SCALES)) + ")"
+_HOUR_WORD_PATTERN = "(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)"
+_ONES_WORD_PATTERN = "(?:one|two|three|four|five|six|seven|eight|nine)"
+_TEEN_WORD_PATTERN = "(?:ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)"
+_TENS_WORD_PATTERN = "(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)"
+_MINUTE_WORD_PATTERN = (
+    rf"(?:zero|{_ONES_WORD_PATTERN}|{_TEEN_WORD_PATTERN}|"
+    rf"{_TENS_WORD_PATTERN}(?:[\s-]+{_ONES_WORD_PATTERN})?)"
+)
+_YEAR_SUFFIX_PATTERN = (
+    rf"(?:{_TEEN_WORD_PATTERN}|{_TENS_WORD_PATTERN}(?:[\s-]+{_ONES_WORD_PATTERN})?)"
+)
 
 
 def _parse_number_words(words: List[str]) -> int:
@@ -76,6 +87,19 @@ def _replace_money(match: re.Match[str]) -> str:
     if cents is not None:
         normalized += f" {int(cents.ljust(2, '0'))} cents"
     return normalized
+
+
+def _replace_spoken_time(match: re.Match[str]) -> str:
+    hour = _NUMBER_VALUES[match.group("hour")]
+    minute_words = re.split(r"[\s-]+", match.group("minute"))
+    minute = _parse_number_words(minute_words)
+    return f"{hour} colon {minute:02d} {match.group('meridiem')}"
+
+
+def _replace_spoken_year(match: re.Match[str]) -> str:
+    century = _NUMBER_VALUES[match.group("century")] * 100
+    suffix_words = re.split(r"[\s-]+", match.group("suffix"))
+    return str(century + _parse_number_words(suffix_words))
 
 
 def _replace_spoken_digits(match: re.Match[str]) -> str:
@@ -113,6 +137,19 @@ def _normalize_critical_text(text: str) -> str:
     )
     text = re.sub(r"\b(\d{1,2})\s*(am|pm)\b", r"\1 \2", text)
     text = re.sub(r"\b(\d{1,2}):(\d{2})\b", r"\1 colon \2", text)
+    text = re.sub(
+        rf"\b(?P<hour>{_HOUR_WORD_PATTERN})[\s-]+"
+        rf"(?P<minute>{_MINUTE_WORD_PATTERN})\s*"
+        r"(?P<meridiem>am|pm)\b",
+        _replace_spoken_time,
+        text,
+    )
+    text = re.sub(
+        rf"\b(?P<century>nineteen|twenty)[\s-]+"
+        rf"(?P<suffix>{_YEAR_SUFFIX_PATTERN})\b",
+        _replace_spoken_year,
+        text,
+    )
     text = re.sub(
         r"(?<=\bversion\s)\d+(?:\.\d+)+\b",
         _replace_dotted_version,
