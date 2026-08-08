@@ -62,3 +62,4 @@ def test_packaged_recorder_returns_failure_when_sounddevice_is_missing(
 
     assert result == 1
     assert "deafbench[recorder]" in capsys.readouterr().err
+    assert not (tmp_path / "benchmarks").exists()
