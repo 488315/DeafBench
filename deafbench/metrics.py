@@ -85,7 +85,9 @@ def _replace_money(match: re.Match[str]) -> str:
     cents = match.group(2)
     normalized = f"{dollars} dollars"
     if cents is not None:
-        normalized += f" {int(cents.ljust(2, '0'))} cents"
+        cents_value = int(cents.ljust(2, "0"))
+        if cents_value:
+            normalized += f" {cents_value} cents"
     return normalized
 
 
