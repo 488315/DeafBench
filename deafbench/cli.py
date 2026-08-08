@@ -5,6 +5,7 @@ from .parser import parse_jsonl, align_records
 from .metrics import evaluate_dataset
 from .report import generate_markdown_report
 
+
 def format_terminal_output(metrics: dict) -> str:
     lines = [
         "DeafBench v0.1",
@@ -36,6 +37,32 @@ def format_terminal_output(metrics: dict) -> str:
         
     return "\n".join(lines)
 
+
+def _run_recorder(recorder_args: list[str]) -> int:
+    """Lazy-load and run the optional recorder runtime."""
+    try:
+        from .recorder.app import main as recorder_main
+    except ModuleNotFoundError as exc:
+        if exc.name == "numpy":
+            raise SystemExit(
+                'Recorder dependencies are not installed. Run: python -m pip install "deafbench[recorder]"'
+            ) from exc
+        raise
+    return recorder_main(recorder_args)
+
+
+def _build_recorder_args(parsed: argparse.Namespace) -> list[str]:
+    recorder_args = ["--dataset", parsed.dataset]
+    for option, value in (
+        ("--repo-root", parsed.repo_root),
+        ("--references", parsed.recorder_references),
+        ("--audio-dir", parsed.audio_dir),
+    ):
+        if value is not None:
+            recorder_args.extend([option, value])
+    return recorder_args
+
+
 def main(args: Optional[List[str]] = None) -> None:
     parser = argparse.ArgumentParser(
         prog="deafbench",
@@ -59,8 +86,22 @@ def main(args: Optional[List[str]] = None) -> None:
     report_parser.add_argument("references", help="Path to reference JSONL file")
     report_parser.add_argument("predictions", help="Path to predictions JSONL file")
     report_parser.add_argument("-o", "--output", help="Output markdown file path", default="report.md")
+
+    # recorder command
+    recorder_parser = subparsers.add_parser(
+        "recorder",
+        help="Launch the DeafBench dataset recorder."
+    )
+    recorder_parser.add_argument("--dataset", default="core-v1", help="Benchmark directory under benchmarks/")
+    recorder_parser.add_argument("--repo-root", help="Workspace root for benchmark files")
+    recorder_parser.add_argument("--references", dest="recorder_references", help="Reference JSONL override")
+    recorder_parser.add_argument("--audio-dir", help="Recorded WAV output directory")
     
     parsed = parser.parse_args(args)
+
+    if parsed.command == "recorder":
+        _run_recorder(_build_recorder_args(parsed))
+        return
     
     try:
         references = parse_jsonl(parsed.references)
@@ -87,6 +128,7 @@ def main(args: Optional[List[str]] = None) -> None:
             print(f"Error writing report: {e}", file=sys.stderr)
             sys.exit(1)
         print(f"Report successfully saved to {parsed.output}")
+
 
 if __name__ == "__main__":
     main()
