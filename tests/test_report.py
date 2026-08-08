@@ -69,3 +69,28 @@ def test_report_lists_non_speech_failures():
     assert "## Non-Speech Information Failures" in report
     assert "Detected **1** non-speech information failure:" in report
     assert "| `ns-001` | **[door closes]** | *Please wait here. [alarm]* |" in report
+
+
+def test_report_escapes_non_speech_failure_sample_ids():
+    metrics = {
+        "samples": 1,
+        "wer": 0.0,
+        "critical_recall": 100.0,
+        "matched_critical": 0,
+        "total_critical": 0,
+        "non_speech_recall": 0.0,
+        "matched_sounds": 0,
+        "total_sounds": 1,
+        "critical_failures": [],
+        "non_speech_failures": [
+            {
+                "id": "ns|001\npart",
+                "expected": "[alarm]",
+                "predicted_text": "Please wait here.",
+            }
+        ],
+    }
+
+    report = generate_markdown_report(metrics, "refs.jsonl", "preds.jsonl")
+
+    assert "| `ns\\|001<br>part` | **[alarm]** | *Please wait here.* |" in report
