@@ -215,3 +215,26 @@ def test_script_runs_directly_without_repo_root_on_python_path(tmp_path):
 
     assert result.returncode == 2
     assert "Invalid dataset name" in result.stderr
+
+
+@pytest.mark.parametrize("value", ["0", "-0.4", "0.5"])
+def test_main_rejects_invalid_at_time_res_before_model_loading(
+    tmp_path,
+    monkeypatch,
+    capsys,
+    value,
+):
+    monkeypatch.setitem(sys.modules, "whisper_at", object())
+
+    with pytest.raises(SystemExit) as exc_info:
+        transcribe_whisper_at.main([
+            "--repo-root",
+            str(tmp_path),
+            "--dataset",
+            "core-v1",
+            "--at-time-res",
+            value,
+        ])
+
+    assert exc_info.value.code == 2
+    assert "at-time-res" in capsys.readouterr().err.lower()
