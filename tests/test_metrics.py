@@ -168,3 +168,25 @@ def test_evaluate_dataset_leaves_non_speech_unscored_without_reference_sounds():
     assert metrics["total_sounds"] == 0
     assert metrics["matched_sounds"] == 0
     assert metrics["non_speech_recall"] is None
+
+
+def test_evaluate_dataset_collects_non_speech_failures():
+    refs = [
+        {
+            "id": "ns-001",
+            "text": "Please wait here.",
+            "critical": [],
+            "sounds": ["[alarm]", "[door closes]"],
+        }
+    ]
+    preds = [{"id": "ns-001", "text": "Please wait here. [alarm]"}]
+
+    metrics = evaluate_dataset(align_records(refs, preds))
+
+    assert metrics["non_speech_failures"] == [
+        {
+            "id": "ns-001",
+            "expected": "[door closes]",
+            "predicted_text": "Please wait here. [alarm]",
+        }
+    ]
