@@ -5,11 +5,18 @@ from collections.abc import Callable, Iterable
 from pathlib import Path
 from typing import Any
 
-from tools.transcribe_whisper import (
-    _atomic_write_jsonl,
-    _load_reference_ids,
-    _validate_wav_format,
-)
+try:
+    from tools.transcribe_whisper import (
+        _atomic_write_jsonl,
+        _load_reference_ids,
+        _validate_wav_format,
+    )
+except ModuleNotFoundError:
+    from transcribe_whisper import (
+        _atomic_write_jsonl,
+        _load_reference_ids,
+        _validate_wav_format,
+    )
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
