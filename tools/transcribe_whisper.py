@@ -14,9 +14,13 @@ def transcribe_directory(
     output: Path,
     transcribe: Callable[[Path], str],
 ) -> list[dict[str, str]]:
+    wav_paths = sorted(audio_dir.glob("core-*.wav"))
+    if not wav_paths:
+        raise FileNotFoundError(f"No core WAV files found in {audio_dir}")
+
     records: list[dict[str, str]] = []
 
-    for wav in sorted(audio_dir.glob("core-*.wav")):
+    for wav in wav_paths:
         text = transcribe(wav)
         record = {"id": wav.stem, "text": text}
         records.append(record)
