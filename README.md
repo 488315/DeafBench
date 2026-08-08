@@ -13,7 +13,7 @@ DeafBench is an open-source benchmark for measuring AI caption failures that mat
 | **Core v1** | 25 | **23.4%** | **88.7% (55/62)** | **N/A** |
 | **Non-speech v1** | 12 | **2.0%** | **95.0% (19/20)** | **0.0% (0/19)** |
 
-This is why DeafBench exists: Whisper got **2.0% WER** and **95.0% critical information recall**, but detected **0 of 19** environmental sound events.
+This is why DeafBench exists: Whisper got **2.0% WER** and **95.0% critical information recall**, but captioned **0 of 19** environmental sound events.
 
 Full reports:
 
