@@ -88,6 +88,18 @@ def _replace_number_words(match: re.Match[str]) -> str:
     return str(_parse_number_words(words))
 
 
+def _replace_ipv4(match: re.Match[str]) -> str:
+    candidate = match.group(0)
+    octets = candidate.split(".")
+    if all(0 <= int(octet) <= 255 for octet in octets):
+        return candidate.replace(".", " dot ")
+    return candidate
+
+
+def _replace_dotted_version(match: re.Match[str]) -> str:
+    return match.group(0).replace(".", " point ")
+
+
 def _normalize_critical_text(text: str) -> str:
     """Normalize semantically equivalent numeric forms for critical matching."""
     text = text.lower()
@@ -102,11 +114,16 @@ def _normalize_critical_text(text: str) -> str:
     text = re.sub(r"\b(\d{1,2})\s*(am|pm)\b", r"\1 \2", text)
     text = re.sub(r"\b(\d{1,2}):(\d{2})\b", r"\1 colon \2", text)
     text = re.sub(
-        r"\b\d{1,3}(?:\.\d{1,3}){3}\b",
-        lambda match: match.group(0).replace(".", " dot "),
+        r"(?<=\bversion\s)\d+(?:\.\d+)+\b",
+        _replace_dotted_version,
         text,
     )
-    text = re.sub(r"\b(\d+)\.(\d+)\b", r"\1 point \2", text)
+    text = re.sub(
+        r"\b\d{1,3}(?:\.\d{1,3}){3}\b",
+        _replace_ipv4,
+        text,
+    )
+    text = re.sub(r"\b\d+(?:\.\d+)+\b", _replace_dotted_version, text)
     text = re.sub(
         rf"\b{_DIGIT_WORD_PATTERN}(?:[\s-]+{_DIGIT_WORD_PATTERN})+\b",
         _replace_spoken_digits,
