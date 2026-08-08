@@ -13,8 +13,12 @@ def format_terminal_output(metrics: dict) -> str:
         "",
         f"WER                       {metrics['wer']:>6.1f}%",
         f"Critical Information      {metrics['critical_recall']:>6.1f}%",
-        f"Non-Speech Information    {metrics['non_speech_recall']:>6.1f}%",
     ]
+
+    if metrics.get("non_speech_recall") is not None:
+        lines.append(f"Non-Speech Information    {metrics['non_speech_recall']:>6.1f}%")
+    else:
+        lines.append(f"Non-Speech Information    {'N/A':>6}")
     
     if metrics.get("speaker_accuracy") is not None:
         lines.append(f"Speaker Attribution       {metrics['speaker_accuracy']:>6.1f}%")
