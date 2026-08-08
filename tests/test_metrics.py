@@ -102,10 +102,14 @@ def test_critical_info_matches_spoken_identifier_equivalents(critical, predictio
     assert res["matched"] == [critical]
     assert res["missed"] == []
 
-def test_identifier_normalization_keeps_meaningful_word_spaces_strict():
-    critical = "Office Guest"
-    prediction = "The Wi-Fi network name is OfficeGuest."
-
+@pytest.mark.parametrize(
+    ("critical", "prediction"),
+    [
+        ("Office Guest", "The Wi-Fi network name is OfficeGuest."),
+        ("dev_user twenty three", "My username is devuser23."),
+    ],
+)
+def test_identifier_normalization_keeps_meaningful_separators_strict(critical, prediction):
     res = evaluate_critical_info({"critical": [critical]}, {"text": prediction})
 
     assert res["matched"] == []
