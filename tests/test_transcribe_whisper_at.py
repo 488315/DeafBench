@@ -1,4 +1,6 @@
 import json
+import os
+import subprocess
 import sys
 import types
 import wave
@@ -178,3 +180,21 @@ def test_main_rejects_invalid_dataset_before_import(tmp_path, monkeypatch, capsy
 
     assert exc_info.value.code == 2
     assert "Invalid dataset name" in capsys.readouterr().err
+
+
+def test_script_runs_directly_without_repo_root_on_python_path(tmp_path):
+    script = Path(transcribe_whisper_at.__file__).resolve()
+    env = os.environ.copy()
+    env["PYTHONPATH"] = ""
+
+    result = subprocess.run(
+        [sys.executable, "-S", str(script), "--dataset", "C:temp"],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 2
+    assert "Invalid dataset name" in result.stderr
