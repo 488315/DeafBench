@@ -83,6 +83,34 @@ def test_critical_info_keeps_distinct_numeric_values_separate(critical, predicti
     assert res["matched"] == []
     assert res["missed"] == [critical]
 
+@pytest.mark.parametrize(
+    ("critical", "prediction"),
+    [
+        (
+            "dev_user twenty three",
+            "My username is dev underscore user 23 and the reset code is 481926.",
+        ),
+        (
+            "alpha seven nine",
+            "The connection code is Alpha79.",
+        ),
+    ],
+)
+def test_critical_info_matches_spoken_identifier_equivalents(critical, prediction):
+    res = evaluate_critical_info({"critical": [critical]}, {"text": prediction})
+
+    assert res["matched"] == [critical]
+    assert res["missed"] == []
+
+def test_identifier_normalization_keeps_meaningful_word_spaces_strict():
+    critical = "Office Guest"
+    prediction = "The Wi-Fi network name is OfficeGuest."
+
+    res = evaluate_critical_info({"critical": [critical]}, {"text": prediction})
+
+    assert res["matched"] == []
+    assert res["missed"] == [critical]
+
 def test_non_speech_eval():
     ref = {"sounds": ["[alarm]", "[laughter]"]}
     pred = {"text": "Hear the [alarm] go off"}
