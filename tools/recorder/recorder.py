@@ -434,14 +434,14 @@ class RecorderApp:
             next_index = self.current_index + 1
 
         event_text = f" with {len(sound_labels)} appended sound event{'s' if len(sound_labels) != 1 else ''}" if sound_labels else ""
+        action = "Replaced" if was_retry else "Saved"
         if next_index is not None:
             self._select_sample(next_index)
-            action = "Replaced" if was_retry else "Saved"
             self.status_var.set(
                 f"{action} {sample_id}{event_text}. Ready for {self.prompts[next_index]['id']}."
             )
         else:
-            self.status_var.set(f"Saved {sample_id}{event_text}. No later samples remain.")
+            self.status_var.set(f"{action} {sample_id}{event_text}. No later samples remain.")
         self._update_controls()
 
     def _update_controls(self) -> None:
