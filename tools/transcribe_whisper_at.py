@@ -67,6 +67,7 @@ def resolve_dataset_paths(
 
 
 def _iter_parsed_segments(parsed: Any) -> Iterable[dict[str, Any]]:
+    """Yield dictionary segments from Whisper-AT parsed output."""
     if isinstance(parsed, dict):
         yield parsed
         return
@@ -165,6 +166,7 @@ def transcribe_directory(
 
 
 def _parse_at_time_res(value: str) -> float:
+    """Parse a positive Whisper-AT time resolution in 0.4-second steps."""
     try:
         parsed = float(value)
     except ValueError as exc:
@@ -184,6 +186,7 @@ def _parse_at_time_res(value: str) -> float:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build the command-line parser for the Whisper-AT Model B runner."""
     parser = argparse.ArgumentParser(
         description="Transcribe DeafBench benchmark WAV files with Whisper-AT"
     )
@@ -204,6 +207,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> None:
+    """Run Whisper-AT transcription and audio tagging for one dataset."""
     parser = build_parser()
     args = parser.parse_args(argv)
 
@@ -230,6 +234,7 @@ def main(argv: list[str] | None = None) -> None:
     include_class_list = list(range(AUDIOSET_CLASS_COUNT))
 
     def transcribe(wav: Path) -> dict[str, Any]:
+        """Transcribe one WAV and return structured sound predictions."""
         print(f"Transcribing {wav.stem}...")
         result = model.transcribe(
             str(wav),
