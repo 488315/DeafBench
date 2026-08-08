@@ -126,7 +126,6 @@ def test_main_keeps_audio_tags_separate_from_asr_text(tmp_path, monkeypatch):
             return {"text": " Please remain seated. "}
 
     fake_module = types.SimpleNamespace()
-    fake_module.load_model = lambda name: calls.setdefault("model", name) or FakeModel()
     fake_module.load_model = lambda name: (calls.__setitem__("model", name) or FakeModel())
 
     def parse_at_label(result, **kwargs):
