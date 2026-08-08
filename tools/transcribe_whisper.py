@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import tempfile
@@ -12,6 +13,18 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 REFERENCES = REPO_ROOT / "benchmarks" / "core-v1" / "references.jsonl"
 AUDIO_DIR = REPO_ROOT / "benchmarks" / "core-v1" / "audio"
 OUTPUT = REPO_ROOT / "benchmarks" / "core-v1" / "model-a.jsonl"
+
+
+def resolve_dataset_paths(repo_root: Path, dataset: str = "core-v1") -> tuple[Path, Path, Path]:
+    """Return references, audio, and prediction paths for a named benchmark."""
+    if not dataset or dataset in {".", ".."} or any(separator in dataset for separator in ("/", "\\")):
+        raise ValueError("Invalid dataset name")
+    dataset_dir = Path(repo_root) / "benchmarks" / dataset
+    return (
+        dataset_dir / "references.jsonl",
+        dataset_dir / "audio",
+        dataset_dir / "model-a.jsonl",
+    )
 
 
 def _load_reference_ids(path: Path) -> set[str]:
@@ -98,9 +111,9 @@ def transcribe_directory(
     *,
     references: Path | None = None,
 ) -> list[dict[str, str]]:
-    wav_paths = sorted(audio_dir.glob("core-*.wav"))
+    wav_paths = sorted(Path(audio_dir).glob("*.wav"))
     if not wav_paths:
-        raise FileNotFoundError(f"No core WAV files found in {audio_dir}")
+        raise FileNotFoundError(f"No WAV files found in {audio_dir}")
 
     if references is not None:
         reference_ids = _load_reference_ids(references)
@@ -127,13 +140,32 @@ def transcribe_directory(
     return records
 
 
-def main() -> None:
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Transcribe DeafBench benchmark WAV files with Whisper")
+    parser.add_argument("--repo-root", type=Path, default=REPO_ROOT)
+    parser.add_argument("--dataset", default="core-v1", help="Benchmark directory under benchmarks/")
+    parser.add_argument("--references", type=Path)
+    parser.add_argument("--audio-dir", type=Path)
+    parser.add_argument("--output", type=Path)
+    return parser
+
+
+def main(argv: list[str] | None = None) -> None:
+    args = build_parser().parse_args(argv)
     try:
         import whisper
     except ImportError as exc:
         raise SystemExit(
             "Whisper is not installed. Run: python -m pip install -U openai-whisper"
         ) from exc
+
+    default_references, default_audio_dir, default_output = resolve_dataset_paths(
+        args.repo_root,
+        args.dataset,
+    )
+    references = args.references or default_references
+    audio_dir = args.audio_dir or default_audio_dir
+    output = args.output or default_output
 
     model = whisper.load_model("turbo")
 
@@ -150,12 +182,12 @@ def main() -> None:
         return text
 
     records = transcribe_directory(
-        AUDIO_DIR,
-        OUTPUT,
+        audio_dir,
+        output,
         transcribe,
-        references=REFERENCES,
+        references=references,
     )
-    print(f"\nSaved {len(records)} predictions to {OUTPUT}")
+    print(f"\nSaved {len(records)} predictions to {output}")
 
 
 if __name__ == "__main__":
