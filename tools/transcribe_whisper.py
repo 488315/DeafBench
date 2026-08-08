@@ -17,7 +17,7 @@ def transcribe_directory(
     records: list[dict[str, str]] = []
 
     for wav in sorted(audio_dir.glob("core-*.wav")):
-        text = transcribe(wav).strip()
+        text = transcribe(wav)
         record = {"id": wav.stem, "text": text}
         records.append(record)
 
@@ -47,7 +47,7 @@ def main() -> None:
             task="transcribe",
             verbose=False,
         )
-        text = str(result["text"]).strip()
+        text = result["text"]
         print(f"  {text}")
         return text
 
