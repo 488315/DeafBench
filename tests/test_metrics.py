@@ -35,6 +35,8 @@ def test_critical_info_does_not_match_numeric_substring():
         ("83 cents", "The total is $47.83."),
         ("9 AM", "The meeting starts at 9am."),
         ("11:45 PM", "The migration starts at 11.45pm."),
+        ("11:45 PM", "The migration starts at eleven forty five PM."),
+        ("2024", "The release shipped in twenty twenty four."),
         ("five point eight", "Install version 5.8 before opening the project."),
         (
             "version one point two point three point four",
@@ -60,6 +62,8 @@ def test_critical_info_matches_semantic_numeric_equivalents(critical, prediction
         ("47 dollars", "The total is $147.83."),
         ("version two point four", "The deployed version is 24."),
         ("192 dot 168 dot 1 dot 25", "The server address is 192.168.1.250."),
+        ("56 PM", "The migration starts at eleven forty five PM."),
+        ("44", "The release shipped in twenty twenty four."),
     ],
 )
 def test_critical_info_keeps_distinct_numeric_values_separate(critical, prediction):
