@@ -43,6 +43,33 @@ def test_transcribe_directory_rejects_empty_audio_dir(tmp_path):
     assert not output.exists()
 
 
+def test_transcribe_directory_rejects_reference_audio_id_mismatch(tmp_path):
+    audio_dir = tmp_path / "audio"
+    audio_dir.mkdir()
+    (audio_dir / "core-001.wav").write_bytes(b"wav")
+    (audio_dir / "core-002.wav").write_bytes(b"wav")
+    references = tmp_path / "references.jsonl"
+    references.write_text(
+        '{"id":"core-001","text":"First"}\n'
+        '{"id":"core-003","text":"Third"}\n',
+        encoding="utf-8",
+    )
+    output = tmp_path / "model-a.jsonl"
+
+    def fail_transcribe(_path):
+        raise AssertionError("transcription must not start for an invalid dataset")
+
+    with pytest.raises(ValueError, match="Reference/audio ID mismatch"):
+        transcribe_directory(
+            audio_dir,
+            output,
+            fail_transcribe,
+            references=references,
+        )
+
+    assert not output.exists()
+
+
 def test_default_paths_are_anchored_to_repo_root():
     repo_root = Path(transcribe_whisper.__file__).resolve().parents[1]
 
