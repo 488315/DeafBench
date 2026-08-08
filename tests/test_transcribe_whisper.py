@@ -1,7 +1,9 @@
 import json
+from pathlib import Path
 
 import pytest
 
+from tools import transcribe_whisper
 from tools.transcribe_whisper import transcribe_directory
 
 
@@ -39,3 +41,10 @@ def test_transcribe_directory_rejects_empty_audio_dir(tmp_path):
         transcribe_directory(audio_dir, output, lambda path: "unused")
 
     assert not output.exists()
+
+
+def test_default_paths_are_anchored_to_repo_root():
+    repo_root = Path(transcribe_whisper.__file__).resolve().parents[1]
+
+    assert transcribe_whisper.AUDIO_DIR == repo_root / "benchmarks" / "core-v1" / "audio"
+    assert transcribe_whisper.OUTPUT == repo_root / "benchmarks" / "core-v1" / "model-a.jsonl"
