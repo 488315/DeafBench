@@ -144,6 +144,11 @@ def _replace_dotted_version(match: re.Match[str]) -> str:
     return match.group(0).replace(".", " point ")
 
 
+def _replace_contextual_version(match: re.Match[str]) -> str:
+    version = match.group(2).replace(".", " point ")
+    return f"{match.group(1)} {version}"
+
+
 def _normalize_critical_text(text: str) -> str:
     """Normalize semantically equivalent numeric forms for critical matching."""
     text = text.lower()
@@ -180,8 +185,8 @@ def _normalize_critical_text(text: str) -> str:
         text,
     )
     text = re.sub(
-        r"(?<=\bversion\s)\d+(?:\.\d+)+\b",
-        _replace_dotted_version,
+        r"\b(version|release)\s+(\d+(?:\.\d+)+)\b",
+        _replace_contextual_version,
         text,
     )
     text = re.sub(
