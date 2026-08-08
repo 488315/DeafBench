@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import tempfile
+import wave
 from collections.abc import Callable
 from pathlib import Path
 
@@ -42,6 +43,27 @@ def _load_reference_ids(path: Path) -> set[str]:
         raise ValueError(f"No reference records found in {path}")
 
     return reference_ids
+
+
+def _validate_wav_format(path: Path) -> None:
+    expected = "48 kHz, 16-bit PCM, mono"
+
+    try:
+        with wave.open(str(path), "rb") as wav_file:
+            channels = wav_file.getnchannels()
+            sample_width = wav_file.getsampwidth()
+            sample_rate = wav_file.getframerate()
+            compression = wav_file.getcomptype()
+    except (EOFError, wave.Error) as exc:
+        raise ValueError(f"Invalid WAV format for {path.name}: expected {expected}") from exc
+
+    if (
+        channels != 1
+        or sample_width != 2
+        or sample_rate != 48_000
+        or compression != "NONE"
+    ):
+        raise ValueError(f"Invalid WAV format for {path.name}: expected {expected}")
 
 
 def _atomic_write_jsonl(output: Path, records: list[dict[str, str]]) -> None:
@@ -90,6 +112,9 @@ def transcribe_directory(
                 "Reference/audio ID mismatch: "
                 f"missing WAVs={missing_wavs}; extra WAVs={extra_wavs}"
             )
+
+    for wav in wav_paths:
+        _validate_wav_format(wav)
 
     records: list[dict[str, str]] = []
 
