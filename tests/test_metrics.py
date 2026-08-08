@@ -34,6 +34,8 @@ def test_critical_info_does_not_match_numeric_substring():
         ("47 dollars", "The total is $47.83."),
         ("83 cents", "The total is $47.83."),
         ("9 AM", "The meeting starts at 9am."),
+        ("9 AM", "The meeting starts at 9:00 AM."),
+        ("9 AM", "The meeting starts at 09:00 AM."),
         ("11:45 PM", "The migration starts at 11.45pm."),
         ("11:45 PM", "The migration starts at eleven forty five PM."),
         ("2024", "The release shipped in twenty twenty four."),
