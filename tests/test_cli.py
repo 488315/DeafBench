@@ -82,3 +82,16 @@ def test_compare_rejects_invalid_latency(tmp_path, capsys, latency):
 
     assert exc_info.value.code == 1
     assert "Invalid latency_ms for sample s1" in capsys.readouterr().err
+
+
+def test_recorder_command_forwards_dataset_to_lazy_launcher(monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        "deafbench.cli._run_recorder",
+        lambda recorder_args: calls.append(recorder_args),
+        raising=False,
+    )
+
+    main(["recorder", "--dataset", "non-speech-v1"])
+
+    assert calls == [["--dataset", "non-speech-v1"]]
