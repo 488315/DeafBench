@@ -86,9 +86,10 @@ def generate_markdown_report(metrics: Dict[str, Any], ref_file: str, pred_file: 
             lines.append("| Sample ID | Missing Sound Event | Output Text |")
             lines.append("| --- | --- | --- |")
             for fail in sound_failures:
+                sample_id = _escape_markdown_table_cell(fail["id"])
                 expected = _escape_markdown_table_cell(fail["expected"])
                 predicted_text = _escape_markdown_table_cell(fail["predicted_text"])
-                lines.append(f"| `{fail['id']}` | **{expected}** | *{predicted_text}* |")
+                lines.append(f"| `{sample_id}` | **{expected}** | *{predicted_text}* |")
             
     lines.append("")
     return "\n".join(lines)
