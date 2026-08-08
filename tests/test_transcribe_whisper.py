@@ -70,6 +70,24 @@ def test_transcribe_directory_rejects_reference_audio_id_mismatch(tmp_path):
     assert not output.exists()
 
 
+def test_transcribe_directory_preserves_existing_output_on_write_failure(tmp_path, monkeypatch):
+    audio_dir = tmp_path / "audio"
+    audio_dir.mkdir()
+    (audio_dir / "core-001.wav").write_bytes(b"wav")
+    output = tmp_path / "model-a.jsonl"
+    output.write_text("previous successful output\n", encoding="utf-8")
+
+    def fail_dumps(*_args, **_kwargs):
+        raise RuntimeError("serialization failed")
+
+    monkeypatch.setattr(transcribe_whisper.json, "dumps", fail_dumps)
+
+    with pytest.raises(RuntimeError, match="serialization failed"):
+        transcribe_directory(audio_dir, output, lambda _path: "Transcript")
+
+    assert output.read_text(encoding="utf-8") == "previous successful output\n"
+
+
 def test_default_paths_are_anchored_to_repo_root():
     repo_root = Path(transcribe_whisper.__file__).resolve().parents[1]
 
