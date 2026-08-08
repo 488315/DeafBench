@@ -25,6 +25,7 @@ DEFAULT_MODEL = "medium.en"
 DEFAULT_AT_TIME_RES = 10.0
 DEFAULT_TOP_K = 5
 DEFAULT_P_THRESHOLD = -1.0
+AUDIOSET_CLASS_COUNT = 527
 
 AUDIOSET_TO_DEAFBENCH = {
     "Alarm": "[alarm]",
@@ -226,6 +227,7 @@ def main(argv: list[str] | None = None) -> None:
         ) from exc
 
     model = whisper.load_model(args.model)
+    include_class_list = list(range(AUDIOSET_CLASS_COUNT))
 
     def transcribe(wav: Path) -> dict[str, Any]:
         print(f"Transcribing {wav.stem}...")
@@ -241,7 +243,7 @@ def main(argv: list[str] | None = None) -> None:
             language="follow_asr",
             top_k=args.top_k,
             p_threshold=args.p_threshold,
-            include_class_list=list(range(527)),
+            include_class_list=include_class_list,
         )
         raw_tags, sounds = extract_audio_tags(parsed)
         text = result["text"]
