@@ -119,3 +119,35 @@ def test_report_uses_singular_critical_failure_wording():
 
     assert "Detected **1** critical information failure:" in report
     assert "Detected **1** critical information failures:" not in report
+
+
+def test_report_trims_failure_output_for_emphasis():
+    metrics = {
+        "samples": 1,
+        "wer": 0.0,
+        "critical_recall": 0.0,
+        "matched_critical": 0,
+        "total_critical": 1,
+        "non_speech_recall": 0.0,
+        "matched_sounds": 0,
+        "total_sounds": 1,
+        "critical_failures": [
+            {
+                "id": "sample-1",
+                "expected": "safe exit",
+                "predicted_text": "  nearest safe access  ",
+            }
+        ],
+        "non_speech_failures": [
+            {
+                "id": "sample-1",
+                "expected": "[alarm]",
+                "predicted_text": "  nearest safe access  ",
+            }
+        ],
+    }
+
+    report = generate_markdown_report(metrics, "refs.jsonl", "preds.jsonl")
+
+    assert report.count("*nearest safe access*") == 2
+    assert "*  nearest safe access  *" not in report
