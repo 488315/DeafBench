@@ -65,6 +65,11 @@ def load_prompts(path: Path) -> list[dict[str, Any]]:
             sounds = record.get("sounds", [])
             if not isinstance(sounds, list) or not all(isinstance(label, str) for label in sounds):
                 raise ValueError(f"Invalid sounds on line {line_number}: expected a list of strings")
+            unsupported = [label for label in sounds if label not in SUPPORTED_SOUND_EVENTS]
+            if unsupported:
+                raise ValueError(
+                    f"Unsupported sound event on line {line_number}: {unsupported[0]}"
+                )
 
             if sample_id in seen_ids:
                 raise ValueError(f"Duplicate sample ID: {sample_id}")
