@@ -96,6 +96,37 @@ python tools\transcribe_whisper.py --dataset non-speech-v1
 
 The helper uses Whisper `turbo` in English and writes predictions into the selected benchmark directory.
 
+### Whisper-AT Model B
+
+Model B uses [Whisper-AT](https://github.com/YuanGongND/whisper-at) to keep speech recognition and audio-event tagging in one run. DeafBench stores the ASR transcript in `text`, mapped benchmark sound events in `sounds`, and the original Whisper-AT AudioSet labels in `audio_tags`. Keeping sound labels out of `text` means environmental-sound scoring does not change the speech WER.
+
+Whisper-AT documents this Windows installation workaround:
+
+```powershell
+python -m pip install numba numpy torch tqdm more-itertools tiktoken==0.3.3
+python -m pip install --no-deps whisper-at
+```
+
+Whisper-AT also requires `ffmpeg`. Check the upstream Whisper-AT README if its installation requirements change.
+
+Generate Model B predictions for both current benchmarks:
+
+```powershell
+python tools\transcribe_whisper_at.py --dataset core-v1
+python tools\transcribe_whisper_at.py --dataset non-speech-v1
+```
+
+The runner defaults to Whisper-AT `medium.en`. Model A uses Whisper `turbo`, so this comparison measures the complete captioning systems rather than isolating only the audio-tagging layer.
+
+Generate the reports after Model B finishes:
+
+```powershell
+deafbench report benchmarks\core-v1\references.jsonl benchmarks\core-v1\model-b.jsonl --output benchmarks\core-v1\model-b-report.md
+deafbench report benchmarks\non-speech-v1\references.jsonl benchmarks\non-speech-v1\model-b.jsonl --output benchmarks\non-speech-v1\model-b-report.md
+```
+
+Measured Model B numbers should only be added to this README after those runs are completed.
+
 ### Non-speech v1 recording workflow
 
 `non-speech-v1` stays separate from Core v1. Each reference has one or more `sounds` labels. The GUI shows those labels before recording. When you press **Stop**, the recorder synthesizes each sound and appends it after the speech in label order.
