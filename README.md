@@ -42,6 +42,13 @@ WER does not tell the full accessibility story. DeafBench also measures critical
 pip install deafbench
 ```
 
+Install the recorder extra if you want to capture benchmark audio:
+
+```powershell
+python -m pip install "deafbench[recorder]"
+deafbench recorder
+```
+
 Or install locally for development:
 
 ```bash
@@ -132,9 +139,11 @@ Measured Model B numbers should only be added to this README after those runs ar
 `non-speech-v1` stays separate from Core v1. Each reference has one or more `sounds` labels. The GUI shows those labels before recording. When you press **Stop**, the recorder synthesizes each sound and appends it after the speech in label order.
 
 ```powershell
-python -m pip install -r tools\recorder\requirements.txt
-python -m tools.recorder.recorder --dataset non-speech-v1
+python -m pip install "deafbench[recorder]"
+deafbench recorder --dataset non-speech-v1
 ```
+
+`deafbench recorder` can run outside a source checkout. It defaults to Core v1 and seeds `benchmarks\<dataset>\references.jsonl` in the current directory when the bundled benchmark is not already there. Existing references are left alone, and recordings go to `benchmarks\<dataset>\audio`.
 
 For example:
 
