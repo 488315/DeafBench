@@ -89,11 +89,31 @@ def _replace_money(match: re.Match[str]) -> str:
     return normalized
 
 
+def _replace_numeric_meridiem_time(match: re.Match[str]) -> str:
+    hour = int(match.group(1))
+    minute = int(match.group(2))
+    meridiem = match.group(3)
+    if minute == 0:
+        return f"{hour} {meridiem}"
+    return f"{hour} colon {minute:02d} {meridiem}"
+
+
+def _replace_numeric_hour_meridiem(match: re.Match[str]) -> str:
+    return f"{int(match.group(1))} {match.group(2)}"
+
+
+def _replace_numeric_time(match: re.Match[str]) -> str:
+    return f"{int(match.group(1))} colon {int(match.group(2)):02d}"
+
+
 def _replace_spoken_time(match: re.Match[str]) -> str:
     hour = _NUMBER_VALUES[match.group("hour")]
     minute_words = re.split(r"[\s-]+", match.group("minute"))
     minute = _parse_number_words(minute_words)
-    return f"{hour} colon {minute:02d} {match.group('meridiem')}"
+    meridiem = match.group("meridiem")
+    if minute == 0:
+        return f"{hour} {meridiem}"
+    return f"{hour} colon {minute:02d} {meridiem}"
 
 
 def _replace_spoken_year(match: re.Match[str]) -> str:
@@ -132,11 +152,15 @@ def _normalize_critical_text(text: str) -> str:
     text = re.sub(r"\$(\d+)(?:\.(\d{1,2}))?", _replace_money, text)
     text = re.sub(
         r"\b(\d{1,2})[.:](\d{2})\s*(am|pm)\b",
-        r"\1 colon \2 \3",
+        _replace_numeric_meridiem_time,
         text,
     )
-    text = re.sub(r"\b(\d{1,2})\s*(am|pm)\b", r"\1 \2", text)
-    text = re.sub(r"\b(\d{1,2}):(\d{2})\b", r"\1 colon \2", text)
+    text = re.sub(
+        r"\b(\d{1,2})\s*(am|pm)\b",
+        _replace_numeric_hour_meridiem,
+        text,
+    )
+    text = re.sub(r"\b(\d{1,2}):(\d{2})\b", _replace_numeric_time, text)
     text = re.sub(
         rf"\b(?P<hour>{_HOUR_WORD_PATTERN})[\s-]+"
         rf"(?P<minute>{_MINUTE_WORD_PATTERN})\s*"
