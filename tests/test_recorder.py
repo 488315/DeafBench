@@ -4,6 +4,7 @@ import wave
 import numpy as np
 import pytest
 
+from tools.recorder import recorder as recorder_module
 from tools.recorder.core import (
     atomic_write_wav,
     downmix_to_mono,
@@ -66,6 +67,20 @@ def test_load_prompts_rejects_duplicate_ids(tmp_path):
     ])
 
     with pytest.raises(ValueError, match="Duplicate sample ID: core-001"):
+        load_prompts(path)
+
+
+def test_load_prompts_rejects_unsupported_sound_labels(tmp_path):
+    path = tmp_path / "references.jsonl"
+    _write_jsonl(path, [
+        {
+            "id": "ns-001",
+            "text": "Read this sentence.",
+            "sounds": ["[unknown]"],
+        }
+    ])
+
+    with pytest.raises(ValueError, match=r"Unsupported sound event.*\[unknown\]"):
         load_prompts(path)
 
 
@@ -233,3 +248,24 @@ def test_resolve_dataset_paths_uses_core_v1_layout(tmp_path):
     references, audio_dir = resolve_dataset_paths(tmp_path)
     assert references == tmp_path / "benchmarks" / "core-v1" / "references.jsonl"
     assert audio_dir == tmp_path / "benchmarks" / "core-v1" / "audio"
+
+
+@pytest.mark.parametrize("dataset", ["C:temp", "bad:name"])
+def test_resolve_dataset_paths_rejects_drive_qualified_names(tmp_path, dataset):
+    with pytest.raises(ValueError, match="Invalid dataset name"):
+        resolve_dataset_paths(tmp_path, dataset)
+
+
+def test_main_reports_invalid_dataset_as_parser_error(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(recorder_module, "_sounddevice", object())
+
+    with pytest.raises(SystemExit) as exc_info:
+        recorder_module.main([
+            "--repo-root",
+            str(tmp_path),
+            "--dataset",
+            "C:temp",
+        ])
+
+    assert exc_info.value.code == 2
+    assert "Invalid dataset name" in capsys.readouterr().err
