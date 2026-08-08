@@ -6,21 +6,21 @@ DeafBench is an open-source benchmark for measuring AI caption failures that mat
 
 ## OpenAI Whisper turbo results
 
-`Model A` is generated with OpenAI Whisper using `whisper.load_model("turbo")` through `tools/transcribe_whisper.py`.
+`Model A` uses OpenAI Whisper `turbo` through `tools/transcribe_whisper.py`.
 
 | Benchmark | Samples | WER | Critical Information Recall | Non-Speech Information Recall |
 | --- | ---: | ---: | ---: | ---: |
 | **Core v1** | 25 | **23.4%** | **88.7% (55/62)** | **N/A** |
 | **Non-speech v1** | 12 | **2.0%** | **95.0% (19/20)** | **0.0% (0/19)** |
 
-The non-speech result is the clearest example of why DeafBench exists: Whisper achieved only **2.0% WER** and preserved **95.0% of critical speech information**, while detecting **0 of 19** required environmental sound events.
+This is why DeafBench exists: Whisper got **2.0% WER** and **95.0% critical information recall**, but detected **0 of 19** environmental sound events.
 
-The full measured reports are stored at:
+Full reports:
 
 - `benchmarks/core-v1/model-a-report.md`
 - `benchmarks/non-speech-v1/model-a-report.md`
 
-Two systems can have similar Word Error Rate (WER) while producing very different accessibility outcomes. DeafBench highlights critical information loss (names, numbers, negations, dates, technical terms) and non-speech annotations that traditional WER obscures.
+WER does not tell the full accessibility story. DeafBench also measures critical information loss and non-speech events that WER misses.
 
 ---
 
@@ -71,39 +71,43 @@ deafbench report examples/references.jsonl examples/model-a.jsonl --output repor
 
 ### OpenAI Whisper transcription
 
-Install OpenAI Whisper, then generate `model-a.jsonl` for a benchmark dataset:
+Install OpenAI Whisper and generate `model-a.jsonl` for Core v1:
 
 ```powershell
 python -m pip install -U openai-whisper
 python tools\transcribe_whisper.py --dataset core-v1
 ```
 
-For the non-speech benchmark:
+Run the same helper for non-speech v1:
 
 ```powershell
 python tools\transcribe_whisper.py --dataset non-speech-v1
 ```
 
-The included transcription helper currently uses the English `turbo` model and writes predictions to the selected benchmark directory.
+The helper uses Whisper `turbo` in English and writes predictions into the selected benchmark directory.
 
 ### Non-speech v1 recording workflow
 
-`non-speech-v1` keeps its acoustic-event benchmark separate from the Core v1 baseline. Each reference record contains one or more `sounds` labels. The recorder shows those labels in the GUI and, when you press **Stop**, appends the matching deterministic synthetic sound events after the recorded speech in the same order as the labels.
+`non-speech-v1` stays separate from Core v1. Each reference has one or more `sounds` labels. The GUI shows those labels before recording. When you press **Stop**, the recorder synthesizes each sound and appends it after the speech in label order.
 
 ```powershell
 python -m pip install -r tools\recorder\requirements.txt
 python -m tools.recorder.recorder --dataset non-speech-v1
 ```
 
-For example, a prompt with:
+For example:
 
 ```json
 "sounds": ["[phone rings]", "[knock]"]
 ```
 
-is saved as recorded speech, a short gap, the synthetic phone ring, another gap, then the synthetic knock.
+produces:
 
-Transcribe and score the completed set with:
+```text
+recorded speech → short gap → phone ring → short gap → knock
+```
+
+Transcribe and score it with:
 
 ```powershell
 python tools\transcribe_whisper.py --dataset non-speech-v1
