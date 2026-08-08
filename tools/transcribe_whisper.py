@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 from collections.abc import Callable
 from pathlib import Path
 
@@ -42,6 +44,31 @@ def _load_reference_ids(path: Path) -> set[str]:
     return reference_ids
 
 
+def _atomic_write_jsonl(output: Path, records: list[dict[str, str]]) -> None:
+    destination = Path(output)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+
+    temp_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            prefix=f".{destination.name}-",
+            suffix=".tmp",
+            dir=destination.parent,
+            delete=False,
+        ) as handle:
+            temp_path = Path(handle.name)
+            for record in records:
+                handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+        os.replace(temp_path, destination)
+        temp_path = None
+    finally:
+        if temp_path is not None:
+            temp_path.unlink(missing_ok=True)
+
+
 def transcribe_directory(
     audio_dir: Path,
     output: Path,
@@ -71,11 +98,7 @@ def transcribe_directory(
         record = {"id": wav.stem, "text": text}
         records.append(record)
 
-    output.parent.mkdir(parents=True, exist_ok=True)
-    with output.open("w", encoding="utf-8") as handle:
-        for record in records:
-            handle.write(json.dumps(record, ensure_ascii=False) + "\n")
-
+    _atomic_write_jsonl(output, records)
     return records
 
 
