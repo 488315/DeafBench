@@ -372,7 +372,11 @@ def evaluate_dataset(aligned_data: List[Dict[str, Any]]) -> Dict[str, Any]:
     for item in aligned_data:
         ref = item["reference"]
         pred = item["prediction"]
-        sample_id = ref.get("id", "unknown")
+        sample_id = ref.get("id")
+        if sample_id is None:
+            sample_id = pred.get("id")
+        if sample_id is None:
+            sample_id = "unknown"
         
         # Critical
         crit_res = evaluate_critical_info(ref, pred)
