@@ -515,9 +515,20 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     try:
-        default_references, default_audio_dir = resolve_dataset_paths(args.repo_root, args.dataset)
+        _default_references, default_audio_dir = resolve_dataset_paths(
+            args.repo_root,
+            args.dataset,
+        )
     except ValueError as exc:
         parser.error(str(exc))
+
+    if _sounddevice is None:
+        print(
+            'Recorder dependencies are not installed. Run: '
+            'python -m pip install "deafbench[recorder]"',
+            file=sys.stderr,
+        )
+        return 1
 
     if args.references is None:
         try:
@@ -533,14 +544,6 @@ def main(argv: list[str] | None = None) -> int:
             parser.error(f"References file not found: {references_path}")
 
     audio_dir = args.audio_dir or default_audio_dir
-
-    if _sounddevice is None:
-        print(
-            'Recorder dependencies are not installed. Run: '
-            'python -m pip install "deafbench[recorder]"',
-            file=sys.stderr,
-        )
-        return 1
 
     import tkinter as tk
     from tkinter import messagebox
