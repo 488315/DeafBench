@@ -17,7 +17,9 @@ OUTPUT = REPO_ROOT / "benchmarks" / "core-v1" / "model-a.jsonl"
 
 def resolve_dataset_paths(repo_root: Path, dataset: str = "core-v1") -> tuple[Path, Path, Path]:
     """Return references, audio, and prediction paths for a named benchmark."""
-    if not dataset or dataset in {".", ".."} or any(separator in dataset for separator in ("/", "\\")):
+    if not dataset or dataset in {".", ".."} or any(
+        separator in dataset for separator in ("/", "\\", ":")
+    ):
         raise ValueError("Invalid dataset name")
     dataset_dir = Path(repo_root) / "benchmarks" / dataset
     return (
@@ -151,21 +153,26 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> None:
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    try:
+        default_references, default_audio_dir, default_output = resolve_dataset_paths(
+            args.repo_root,
+            args.dataset,
+        )
+    except ValueError as exc:
+        parser.error(str(exc))
+
+    references = args.references or default_references
+    audio_dir = args.audio_dir or default_audio_dir
+    output = args.output or default_output
+
     try:
         import whisper
     except ImportError as exc:
         raise SystemExit(
             "Whisper is not installed. Run: python -m pip install -U openai-whisper"
         ) from exc
-
-    default_references, default_audio_dir, default_output = resolve_dataset_paths(
-        args.repo_root,
-        args.dataset,
-    )
-    references = args.references or default_references
-    audio_dir = args.audio_dir or default_audio_dir
-    output = args.output or default_output
 
     model = whisper.load_model("turbo")
 
