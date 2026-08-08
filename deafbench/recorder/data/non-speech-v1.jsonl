@@ -1,0 +1,12 @@
+{"id":"ns-001","text":"Please remain seated until the announcement is finished.","critical":["remain seated"],"sounds":["[alarm]"]}
+{"id":"ns-002","text":"Taylor is waiting in the hallway near the front desk.","critical":["Taylor","front desk"],"sounds":["[door closes]"]}
+{"id":"ns-003","text":"The support desk will call you back after the meeting.","critical":["support desk","after the meeting"],"sounds":["[phone rings]"]}
+{"id":"ns-004","text":"Someone is waiting outside the office for Morgan.","critical":["outside the office","Morgan"],"sounds":["[knock]"]}
+{"id":"ns-005","text":"The application finished installing the security update.","critical":["security update"],"sounds":["[error notification]"]}
+{"id":"ns-006","text":"Leave the area using the nearest safe exit.","critical":["nearest safe exit"],"sounds":["[siren]"]}
+{"id":"ns-007","text":"Jordan placed the package beside the blue chair.","critical":["Jordan","blue chair"],"sounds":["[alarm]","[door closes]"]}
+{"id":"ns-008","text":"The meeting will continue after the short interruption.","critical":["meeting will continue"],"sounds":["[phone rings]","[knock]"]}
+{"id":"ns-009","text":"The database backup completed successfully at midnight.","critical":["backup completed successfully","midnight"],"sounds":["[error notification]","[alarm]"]}
+{"id":"ns-010","text":"Casey should wait by the elevator on the second floor.","critical":["Casey","second floor"],"sounds":["[siren]","[phone rings]"]}
+{"id":"ns-011","text":"Check the front entrance before leaving the building.","critical":["front entrance","before leaving"],"sounds":["[knock]","[door closes]"]}
+{"id":"ns-012","text":"The emergency instructions are posted beside the reception desk.","critical":["emergency instructions","reception desk"],"sounds":["[alarm]","[phone rings]","[knock]"]}
