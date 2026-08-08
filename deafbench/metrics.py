@@ -409,7 +409,7 @@ def evaluate_dataset(aligned_data: List[Dict[str, Any]]) -> Dict[str, Any]:
             latencies.append(latency_ms)
             
     crit_recall = (matched_critical / total_critical * 100.0) if total_critical > 0 else 100.0
-    sound_recall = (matched_sounds / total_sounds * 100.0) if total_sounds > 0 else 100.0
+    sound_recall = (matched_sounds / total_sounds * 100.0) if total_sounds > 0 else None
     speaker_acc = (sum(speaker_evals) / len(speaker_evals) * 100.0) if speaker_evals else None
     
     median_latency = None
