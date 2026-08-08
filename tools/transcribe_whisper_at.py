@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import math
 from collections.abc import Callable, Iterable
 from pathlib import Path
 from typing import Any
@@ -162,6 +163,25 @@ def transcribe_directory(
     return records
 
 
+def _parse_at_time_res(value: str) -> float:
+    try:
+        parsed = float(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(
+            "must be a positive multiple of 0.4"
+        ) from exc
+
+    units = parsed / 0.4
+    if (
+        not math.isfinite(parsed)
+        or parsed <= 0
+        or not math.isclose(units, round(units), rel_tol=0.0, abs_tol=1e-9)
+    ):
+        raise argparse.ArgumentTypeError("must be a positive multiple of 0.4")
+
+    return parsed
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Transcribe DeafBench benchmark WAV files with Whisper-AT"
@@ -172,7 +192,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--audio-dir", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--model", default=DEFAULT_MODEL)
-    parser.add_argument("--at-time-res", type=float, default=DEFAULT_AT_TIME_RES)
+    parser.add_argument(
+        "--at-time-res",
+        type=_parse_at_time_res,
+        default=DEFAULT_AT_TIME_RES,
+    )
     parser.add_argument("--top-k", type=int, default=DEFAULT_TOP_K)
     parser.add_argument("--p-threshold", type=float, default=DEFAULT_P_THRESHOLD)
     return parser
