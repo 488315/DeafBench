@@ -1,3 +1,5 @@
+import runpy
+
 import pytest
 
 from deafbench.cli import main
@@ -88,8 +90,7 @@ def test_recorder_command_forwards_dataset_to_lazy_launcher(monkeypatch):
     calls = []
     monkeypatch.setattr(
         "deafbench.cli._run_recorder",
-        lambda recorder_args: calls.append(recorder_args),
-        raising=False,
+        calls.append,
     )
 
     main(["recorder", "--dataset", "non-speech-v1"])
@@ -104,3 +105,12 @@ def test_recorder_command_returns_launcher_status(monkeypatch):
     )
 
     assert main(["recorder"]) == 7
+
+
+def test_module_entrypoint_propagates_main_status(monkeypatch):
+    monkeypatch.setattr("deafbench.cli.main", lambda _args=None: 7)
+
+    with pytest.raises(SystemExit) as exc_info:
+        runpy.run_module("deafbench", run_name="__main__")
+
+    assert exc_info.value.code == 7
