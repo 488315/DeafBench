@@ -94,6 +94,10 @@ def test_critical_info_keeps_distinct_numeric_values_separate(critical, predicti
             "alpha seven nine",
             "The connection code is Alpha79.",
         ),
+        (
+            "dev_user_23",
+            "My username is dev underscore user underscore 23.",
+        ),
     ],
 )
 def test_critical_info_matches_spoken_identifier_equivalents(critical, prediction):
