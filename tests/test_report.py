@@ -94,3 +94,28 @@ def test_report_escapes_non_speech_failure_sample_ids():
     report = generate_markdown_report(metrics, "refs.jsonl", "preds.jsonl")
 
     assert "| `ns\\|001<br>part` | **[alarm]** | *Please wait here.* |" in report
+
+
+def test_report_uses_singular_critical_failure_wording():
+    metrics = {
+        "samples": 1,
+        "wer": 0.0,
+        "critical_recall": 0.0,
+        "matched_critical": 0,
+        "total_critical": 1,
+        "non_speech_recall": None,
+        "matched_sounds": 0,
+        "total_sounds": 0,
+        "critical_failures": [
+            {
+                "id": "ns-006",
+                "expected": "nearest safe exit",
+                "predicted_text": "Leave the area using the nearest safe access.",
+            }
+        ],
+    }
+
+    report = generate_markdown_report(metrics, "refs.jsonl", "preds.jsonl")
+
+    assert "Detected **1** critical information failure:" in report
+    assert "Detected **1** critical information failures:" not in report
