@@ -218,8 +218,8 @@ def _normalize_critical_text(text: str) -> str:
 def _normalize_identifier_text(text: str) -> str:
     """Normalize spoken identifier separators without erasing literal ones."""
     text = re.sub(
-        r"\b([a-z0-9]+)\s+underscore\s+([a-z0-9]+)\b",
-        r"\1_\2",
+        r"(?<=[a-z0-9])\s+underscore\s+(?=[a-z0-9])",
+        "_",
         text.lower(),
     )
     return _normalize_critical_text(text)
