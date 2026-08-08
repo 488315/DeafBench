@@ -1,5 +1,7 @@
 """Compatibility exports for the packaged DeafBench recorder core."""
 
+import os
+
 from deafbench.recorder.core import (
     DEFAULT_DEVICE_NEEDLE,
     DEFAULT_SAMPLE_RATE,
