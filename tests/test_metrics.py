@@ -211,3 +211,17 @@ def test_evaluate_dataset_uses_aligned_id_for_non_speech_failure():
             "predicted_text": "Please wait here.",
         }
     ]
+
+
+def test_non_speech_eval_accepts_structured_prediction_sounds():
+    ref = {"sounds": ["[alarm]", "[door closes]"]}
+    pred = {
+        "text": "Please remain seated.",
+        "sounds": ["[alarm]"],
+    }
+
+    res = evaluate_non_speech_info(ref, pred)
+
+    assert res["total"] == 2
+    assert res["matched"] == ["[alarm]"]
+    assert res["missed"] == ["[door closes]"]
