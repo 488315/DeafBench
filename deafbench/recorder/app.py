@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import argparse
-import importlib.resources as resources
+import sys
 import threading
 import time
 from pathlib import Path
@@ -12,6 +12,7 @@ from typing import Any
 import numpy as np
 
 from .core import (
+    DEFAULT_DEVICE_NEEDLE,
     DEFAULT_SAMPLE_RATE,
     append_sound_events,
     atomic_write_wav,
@@ -21,6 +22,7 @@ from .core import (
     next_unrecorded_index,
     output_path,
 )
+from .workspace import ensure_dataset_workspace, resolve_dataset_paths
 
 
 try:
@@ -30,41 +32,13 @@ except ImportError:  # pragma: no cover - exercised on user machines
 
 
 FORMAT_TEXT = "48 kHz · 16-bit PCM · mono"
-BUNDLED_DATA_PACKAGE = "deafbench.recorder.data"
-
-
-def resolve_dataset_paths(repo_root: Path, dataset: str = "core-v1") -> tuple[Path, Path]:
-    """Return reference and audio paths for a named benchmark dataset."""
-    if not dataset or dataset in {".", ".."} or any(
-        separator in dataset for separator in ("/", "\\", ":")
-    ):
-        raise ValueError("Invalid dataset name")
-    dataset_dir = Path(repo_root) / "benchmarks" / dataset
-    return dataset_dir / "references.jsonl", dataset_dir / "audio"
-
-
-def ensure_dataset_workspace(repo_root: Path, dataset: str = "core-v1") -> tuple[Path, Path]:
-    """Ensure an installed recorder workspace has a reference JSONL file."""
-    references_path, audio_dir = resolve_dataset_paths(repo_root, dataset)
-    if references_path.is_file():
-        return references_path, audio_dir
-
-    resource = resources.files(BUNDLED_DATA_PACKAGE).joinpath(f"{dataset}.jsonl")
-    if not resource.is_file():
-        raise FileNotFoundError(
-            f"No references found for dataset {dataset}. "
-            "Use --references with an existing JSONL file."
-        )
-
-    references_path.parent.mkdir(parents=True, exist_ok=True)
-    references_path.write_text(resource.read_text(encoding="utf-8"), encoding="utf-8")
-    return references_path, audio_dir
 
 
 class AudioRecorder:
     """Small sounddevice wrapper with no GUI dependencies."""
 
     def __init__(self, backend: Any = None) -> None:
+        """Initialize the recorder with an optional sounddevice-compatible backend."""
         self.backend = backend if backend is not None else _sounddevice
         self._stream = None
         self._blocks: list[np.ndarray] = []
@@ -76,20 +50,24 @@ class AudioRecorder:
 
     @property
     def is_recording(self) -> bool:
+        """Return whether an input stream is currently active."""
         return self._stream is not None
 
     @property
     def duration(self) -> float:
+        """Return the elapsed capture duration in seconds."""
         if self._started_at is None:
             return 0.0
         return max(0.0, time.monotonic() - self._started_at)
 
     @property
     def peak_level(self) -> float:
+        """Return the latest normalized input peak level."""
         with self._lock:
             return self._peak_level
 
     def start(self, device_index: int, channels: int) -> None:
+        """Start capturing int16 PCM from the selected input device."""
         if self.backend is None:
             raise RuntimeError("sounddevice is not installed")
         if self.is_recording:
@@ -110,6 +88,7 @@ class AudioRecorder:
         self._callback_statuses = []
 
         def callback(indata, frames, time_info, status) -> None:
+            """Collect one audio callback block and track capture status."""
             del frames, time_info
             block = np.asarray(indata, dtype=np.int16).copy()
             with self._lock:
@@ -138,6 +117,7 @@ class AudioRecorder:
         self._started_at = time.monotonic()
 
     def stop(self) -> np.ndarray:
+        """Stop capture and return blocks only when PortAudio reported no status flags."""
         if self._stream is None:
             raise RuntimeError("No recording is in progress")
 
@@ -173,6 +153,7 @@ class RecorderApp:
         audio_dir: Path,
         backend: Any = None,
     ) -> None:
+        """Initialize the recorder window, prompts, and available audio devices."""
         import tkinter as tk
         from tkinter import messagebox, ttk
 
@@ -204,6 +185,7 @@ class RecorderApp:
         self._tick()
 
     def _build_ui(self) -> None:
+        """Construct the Tk recorder controls and status views."""
         tk = self.tk
         ttk = self.ttk
 
@@ -303,6 +285,7 @@ class RecorderApp:
         self.record_button.pack(side="right", padx=(0, 8))
 
     def _load_devices(self) -> None:
+        """Enumerate input devices and choose the preferred virtual input when present."""
         if self.backend is None:
             self.status_var.set("Install recorder dependencies to access audio devices")
             self.device_combo["values"] = []
@@ -332,24 +315,27 @@ class RecorderApp:
             self.status_var.set(f"Selected {self.devices[preferred]['name']}")
         elif labels:
             self.device_combo.set("")
-            self.status_var.set("Voicemeeter Out B3 not found. Select an input device.")
+            self.status_var.set(f"{DEFAULT_DEVICE_NEEDLE} not found. Select an input device.")
         else:
             self.status_var.set("No input-capable audio devices found")
         self._update_controls()
 
     def _selected_device_index(self) -> int | None:
+        """Return the selected backend device index, if any."""
         position = self.device_combo.current()
         if position < 0 or position >= len(self.device_indices):
             return None
         return self.device_indices[position]
 
     def _selected_capture_channels(self, device_index: int) -> int:
+        """Choose mono or stereo capture based on the selected device capability."""
         max_channels = int(self.devices[device_index].get("max_input_channels", 0) or 0)
         if max_channels < 1:
             raise RuntimeError("Selected device has no input channels")
         return 2 if max_channels >= 2 else 1
 
     def _refresh_sample_list(self) -> None:
+        """Refresh sample completion markers while preserving selection."""
         selected = self.current_index
         self.sample_list.delete(0, self.tk.END)
         for prompt in self.prompts:
@@ -361,6 +347,7 @@ class RecorderApp:
         self.sample_list.see(selected)
 
     def _select_sample(self, index: int) -> None:
+        """Select a prompt when navigation is valid and recording is idle."""
         if not 0 <= index < len(self.prompts):
             return
         if self.recorder.is_recording:
@@ -376,17 +363,21 @@ class RecorderApp:
         self._update_controls()
 
     def _on_sample_selected(self, _event: Any) -> None:
+        """Handle sample-list selection events."""
         selected = self.sample_list.curselection()
         if selected:
             self._select_sample(int(selected[0]))
 
     def previous_sample(self) -> None:
+        """Navigate to the previous prompt."""
         self._select_sample(self.current_index - 1)
 
     def next_sample(self) -> None:
+        """Navigate to the next prompt."""
         self._select_sample(self.current_index + 1)
 
     def retry_selected(self) -> None:
+        """Begin a replacement take for an already-recorded sample."""
         sample_id = str(self.prompts[self.current_index]["id"])
         if not is_recorded(self.audio_dir, sample_id):
             self.status_var.set("This sample has no recording yet. Use Record.")
@@ -396,6 +387,7 @@ class RecorderApp:
         self._start_capture()
 
     def start_recording(self) -> None:
+        """Start a new take for the selected unrecorded sample."""
         sample_id = str(self.prompts[self.current_index]["id"])
         if is_recorded(self.audio_dir, sample_id):
             self.status_var.set("Recording already exists. Use Retry to replace it.")
@@ -404,6 +396,7 @@ class RecorderApp:
         self._start_capture()
 
     def _start_capture(self) -> None:
+        """Start capture using the selected input device."""
         device_index = self._selected_device_index()
         if device_index is None:
             self.messagebox.showerror("Recording input", "Select an input device before recording.")
@@ -425,6 +418,7 @@ class RecorderApp:
         self._update_controls()
 
     def stop_recording(self) -> None:
+        """Stop capture, append configured sound events, and save the WAV atomically."""
         if not self.recorder.is_recording:
             return
 
@@ -465,6 +459,7 @@ class RecorderApp:
         self._update_controls()
 
     def _update_controls(self) -> None:
+        """Enable or disable controls for the current recorder state."""
         recording = self.recorder.is_recording
         sample_id = str(self.prompts[self.current_index]["id"])
         recorded = is_recorded(self.audio_dir, sample_id)
@@ -480,6 +475,7 @@ class RecorderApp:
         self.device_combo.config(state="disabled" if recording else "readonly")
 
     def _tick(self) -> None:
+        """Refresh the duration and peak meter while the window is open."""
         if self._closing:
             return
 
@@ -496,6 +492,7 @@ class RecorderApp:
             self._closing = True
 
     def _on_close(self) -> None:
+        """Close the window only when no take is in progress."""
         if self.recorder.is_recording:
             self.messagebox.showwarning("Recording in progress", "Stop the current recording before closing.")
             return
@@ -538,9 +535,12 @@ def main(argv: list[str] | None = None) -> int:
     audio_dir = args.audio_dir or default_audio_dir
 
     if _sounddevice is None:
-        raise SystemExit(
-            'Recorder dependencies are not installed. Run: python -m pip install "deafbench[recorder]"'
+        print(
+            'Recorder dependencies are not installed. Run: '
+            'python -m pip install "deafbench[recorder]"',
+            file=sys.stderr,
         )
+        return 1
 
     import tkinter as tk
     from tkinter import messagebox
