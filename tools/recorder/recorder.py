@@ -12,6 +12,7 @@ import numpy as np
 
 from .core import (
     DEFAULT_SAMPLE_RATE,
+    append_sound_events,
     atomic_write_wav,
     find_preferred_input_device,
     is_recorded,
@@ -30,9 +31,11 @@ except ImportError:  # pragma: no cover - exercised on user machines
 FORMAT_TEXT = "48 kHz · 16-bit PCM · mono"
 
 
-def resolve_dataset_paths(repo_root: Path) -> tuple[Path, Path]:
-    """Return the default Core v1 references and audio paths."""
-    dataset_dir = Path(repo_root) / "benchmarks" / "core-v1"
+def resolve_dataset_paths(repo_root: Path, dataset: str = "core-v1") -> tuple[Path, Path]:
+    """Return reference and audio paths for a named benchmark dataset."""
+    if not dataset or dataset in {".", ".."} or any(separator in dataset for separator in ("/", "\\")):
+        raise ValueError("Invalid dataset name")
+    dataset_dir = Path(repo_root) / "benchmarks" / dataset
     return dataset_dir / "references.jsonl", dataset_dir / "audio"
 
 
@@ -167,9 +170,9 @@ class RecorderApp:
         self.devices: list[dict[str, Any]] = []
         self.device_indices: list[int] = []
 
-        self.root.title("DeafBench Dataset Recorder")
-        self.root.geometry("1040x650")
-        self.root.minsize(860, 540)
+        self.root.title(f"DeafBench Dataset Recorder · {self.references_path.parent.name}")
+        self.root.geometry("1040x720")
+        self.root.minsize(860, 610)
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
 
         self._build_ui()
@@ -223,10 +226,21 @@ class RecorderApp:
             font=("Segoe UI", 22),
             wraplength=680,
             justify="left",
-        ).grid(row=1, column=0, sticky="ew", pady=(18, 26))
+        ).grid(row=1, column=0, sticky="ew", pady=(18, 20))
+
+        sound_frame = ttk.LabelFrame(main, text="Sound events appended after Stop", padding=10)
+        sound_frame.grid(row=2, column=0, sticky="ew", pady=(0, 14))
+        sound_frame.columnconfigure(0, weight=1)
+        self.sound_events_var = tk.StringVar(value="None (speech only)")
+        ttk.Label(
+            sound_frame,
+            textvariable=self.sound_events_var,
+            wraplength=680,
+            justify="left",
+        ).grid(row=0, column=0, sticky="w")
 
         device_frame = ttk.LabelFrame(main, text="Recording input", padding=12)
-        device_frame.grid(row=2, column=0, sticky="ew")
+        device_frame.grid(row=3, column=0, sticky="ew")
         device_frame.columnconfigure(0, weight=1)
 
         self.device_var = tk.StringVar()
@@ -241,7 +255,7 @@ class RecorderApp:
         ttk.Label(device_frame, text=FORMAT_TEXT).grid(row=1, column=0, sticky="w", pady=(8, 0))
 
         meter_frame = ttk.Frame(main)
-        meter_frame.grid(row=3, column=0, sticky="ew", pady=(18, 0))
+        meter_frame.grid(row=4, column=0, sticky="ew", pady=(18, 0))
         meter_frame.columnconfigure(0, weight=1)
         self.level = ttk.Progressbar(meter_frame, maximum=100, mode="determinate")
         self.level.grid(row=0, column=0, sticky="ew")
@@ -251,10 +265,10 @@ class RecorderApp:
         )
 
         self.status_var = tk.StringVar(value="Ready")
-        ttk.Label(main, textvariable=self.status_var).grid(row=4, column=0, sticky="w", pady=(10, 0))
+        ttk.Label(main, textvariable=self.status_var).grid(row=5, column=0, sticky="w", pady=(10, 0))
 
         controls = ttk.Frame(main)
-        controls.grid(row=5, column=0, sticky="ew", pady=(28, 0))
+        controls.grid(row=6, column=0, sticky="ew", pady=(28, 0))
         self.previous_button = ttk.Button(controls, text="Previous", command=self.previous_sample)
         self.previous_button.pack(side="left")
         self.next_button = ttk.Button(controls, text="Next", command=self.next_sample)
@@ -333,6 +347,8 @@ class RecorderApp:
         prompt = self.prompts[index]
         self.sample_id_var.set(str(prompt["id"]))
         self.prompt_var.set(str(prompt["text"]))
+        sound_labels = list(prompt.get("sounds", []))
+        self.sound_events_var.set(" → ".join(sound_labels) if sound_labels else "None (speech only)")
         self.retry_mode = False
         self._refresh_sample_list()
         self._update_controls()
@@ -390,13 +406,16 @@ class RecorderApp:
         if not self.recorder.is_recording:
             return
 
-        sample_id = str(self.prompts[self.current_index]["id"])
+        prompt = self.prompts[self.current_index]
+        sample_id = str(prompt["id"])
+        sound_labels = list(prompt.get("sounds", []))
         try:
             captured = self.recorder.stop()
             if captured.shape[0] == 0:
                 raise RuntimeError("No audio was captured. Please try again.")
+            completed_audio = append_sound_events(captured, sound_labels)
             destination = output_path(self.audio_dir, sample_id)
-            atomic_write_wav(destination, captured)
+            atomic_write_wav(destination, completed_audio)
         except Exception as exc:
             self.retry_mode = False
             self.messagebox.showerror("Could not save recording", str(exc))
@@ -412,12 +431,15 @@ class RecorderApp:
         if next_index is None and self.current_index + 1 < len(self.prompts):
             next_index = self.current_index + 1
 
+        event_text = f" with {len(sound_labels)} appended sound event{'s' if len(sound_labels) != 1 else ''}" if sound_labels else ""
         if next_index is not None:
             self._select_sample(next_index)
             action = "Replaced" if was_retry else "Saved"
-            self.status_var.set(f"{action} {sample_id}. Ready for {self.prompts[next_index]['id']}.")
+            self.status_var.set(
+                f"{action} {sample_id}{event_text}. Ready for {self.prompts[next_index]['id']}."
+            )
         else:
-            self.status_var.set(f"Saved {sample_id}. No later samples remain.")
+            self.status_var.set(f"Saved {sample_id}{event_text}. No later samples remain.")
         self._update_controls()
 
     def _update_controls(self) -> None:
@@ -466,6 +488,7 @@ def _default_repo_root() -> Path:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Record DeafBench benchmark prompts")
     parser.add_argument("--repo-root", type=Path, default=_default_repo_root())
+    parser.add_argument("--dataset", default="core-v1", help="Benchmark directory under benchmarks/")
     parser.add_argument("--references", type=Path)
     parser.add_argument("--audio-dir", type=Path)
     return parser
@@ -478,7 +501,7 @@ def main(argv: list[str] | None = None) -> int:
             "sounddevice is not installed. Run: python -m pip install -r tools/recorder/requirements.txt"
         )
 
-    default_references, default_audio_dir = resolve_dataset_paths(args.repo_root)
+    default_references, default_audio_dir = resolve_dataset_paths(args.repo_root, args.dataset)
     references_path = args.references or default_references
     audio_dir = args.audio_dir or default_audio_dir
 
