@@ -33,6 +33,8 @@ def test_critical_info_does_not_match_numeric_substring():
         ("twenty three", "The batch contains 23 samples."),
         ("47 dollars", "The total is $47.83."),
         ("83 cents", "The total is $47.83."),
+        ("$47.83", "The total is forty seven dollars and eighty three cents."),
+        ("125 dollars", "The invoice total is one hundred and twenty five dollars."),
         ("9 AM", "The meeting starts at 9am."),
         ("9 AM", "The meeting starts at 9:00 AM."),
         ("9 AM", "The meeting starts at 09:00 AM."),
@@ -66,6 +68,7 @@ def test_critical_info_matches_semantic_numeric_equivalents(critical, prediction
         ("192 dot 168 dot 1 dot 25", "The server address is 192.168.1.250."),
         ("56 PM", "The migration starts at eleven forty five PM."),
         ("44", "The release shipped in twenty twenty four."),
+        ("3", "The values are one and two."),
     ],
 )
 def test_critical_info_keeps_distinct_numeric_values_separate(critical, prediction):
