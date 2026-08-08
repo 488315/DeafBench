@@ -274,16 +274,16 @@ def test_main_reports_invalid_dataset_as_parser_error(tmp_path, monkeypatch, cap
 class _FakeRecording:
     is_recording = True
 
-    def stop(self):
+    def stop(self) -> np.ndarray:
         self.is_recording = False
         return np.array([[100], [-100]], dtype=np.int16)
 
 
 class _FakeStatusVar:
-    def __init__(self):
+    def __init__(self) -> None:
         self.value = ""
 
-    def set(self, value):
+    def set(self, value: str) -> None:
         self.value = value
 
 
@@ -298,7 +298,10 @@ def test_retrying_final_sample_reports_replaced_status(tmp_path):
     app._refresh_sample_list = lambda: None
     app._update_controls = lambda: None
 
-    atomic_write_wav(tmp_path / "ns-001.wav", np.array([[1]], dtype=np.int16))
+    output = tmp_path / "ns-001.wav"
+    atomic_write_wav(output, np.array([[1]], dtype=np.int16))
+    previous_bytes = output.read_bytes()
     app.stop_recording()
 
+    assert output.read_bytes() != previous_bytes
     assert app.status_var.value == "Replaced ns-001. No later samples remain."
