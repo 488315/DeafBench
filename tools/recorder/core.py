@@ -14,6 +14,15 @@ import numpy as np
 
 DEFAULT_SAMPLE_RATE = 48_000
 DEFAULT_DEVICE_NEEDLE = "Voicemeeter Out B3"
+SOUND_EVENT_GAP_MS = 250
+SUPPORTED_SOUND_EVENTS = (
+    "[alarm]",
+    "[door closes]",
+    "[phone rings]",
+    "[knock]",
+    "[error notification]",
+    "[siren]",
+)
 
 
 def _is_safe_sample_id(sample_id: object) -> bool:
@@ -52,6 +61,10 @@ def load_prompts(path: Path) -> list[dict[str, Any]]:
             text = record.get("text")
             if not isinstance(text, str):
                 raise ValueError(f"Invalid text on line {line_number}: expected a string")
+
+            sounds = record.get("sounds", [])
+            if not isinstance(sounds, list) or not all(isinstance(label, str) for label in sounds):
+                raise ValueError(f"Invalid sounds on line {line_number}: expected a list of strings")
 
             if sample_id in seen_ids:
                 raise ValueError(f"Duplicate sample ID: {sample_id}")
@@ -120,6 +133,121 @@ def downmix_to_mono(samples: np.ndarray) -> np.ndarray:
 
     clipped = np.clip(mono, np.iinfo(np.int16).min, np.iinfo(np.int16).max)
     return clipped.astype(np.int16, copy=False)
+
+
+def _silence(duration_seconds: float) -> np.ndarray:
+    frames = max(0, int(round(DEFAULT_SAMPLE_RATE * duration_seconds)))
+    return np.zeros((frames, 1), dtype=np.int16)
+
+
+def _pcm(signal: np.ndarray) -> np.ndarray:
+    clipped = np.clip(np.asarray(signal, dtype=np.float64), -1.0, 1.0)
+    return np.rint(clipped * 32767.0).astype(np.int16).reshape(-1, 1)
+
+
+def _tone(frequency: float, duration_seconds: float, amplitude: float = 0.35) -> np.ndarray:
+    frames = max(1, int(round(DEFAULT_SAMPLE_RATE * duration_seconds)))
+    time_axis = np.arange(frames, dtype=np.float64) / DEFAULT_SAMPLE_RATE
+    signal = amplitude * np.sin(2.0 * np.pi * frequency * time_axis)
+
+    fade_frames = min(frames // 2, max(1, DEFAULT_SAMPLE_RATE // 100))
+    fade = np.linspace(0.0, 1.0, fade_frames, endpoint=True)
+    signal[:fade_frames] *= fade
+    signal[-fade_frames:] *= fade[::-1]
+    return _pcm(signal)
+
+
+def _join(parts: Sequence[np.ndarray]) -> np.ndarray:
+    return np.concatenate(list(parts), axis=0) if parts else np.empty((0, 1), dtype=np.int16)
+
+
+def _alarm() -> np.ndarray:
+    parts: list[np.ndarray] = []
+    for frequency in (880.0, 660.0, 880.0, 660.0):
+        parts.append(_tone(frequency, 0.22, 0.34))
+        parts.append(_silence(0.08))
+    return _join(parts[:-1])
+
+
+def _door_closes() -> np.ndarray:
+    frames = int(round(DEFAULT_SAMPLE_RATE * 0.45))
+    time_axis = np.arange(frames, dtype=np.float64) / DEFAULT_SAMPLE_RATE
+    envelope = np.exp(-11.0 * time_axis)
+    signal = envelope * (
+        0.52 * np.sin(2.0 * np.pi * 78.0 * time_axis)
+        + 0.20 * np.sin(2.0 * np.pi * 145.0 * time_axis)
+        + 0.08 * np.sin(2.0 * np.pi * 900.0 * time_axis)
+    )
+    return _pcm(signal)
+
+
+def _phone_rings() -> np.ndarray:
+    frames = int(round(DEFAULT_SAMPLE_RATE * 0.38))
+    time_axis = np.arange(frames, dtype=np.float64) / DEFAULT_SAMPLE_RATE
+    ring = _pcm(
+        0.22 * np.sin(2.0 * np.pi * 440.0 * time_axis)
+        + 0.22 * np.sin(2.0 * np.pi * 480.0 * time_axis)
+    )
+    return _join([ring, _silence(0.18), ring])
+
+
+def _knock() -> np.ndarray:
+    frames = int(round(DEFAULT_SAMPLE_RATE * 0.09))
+    time_axis = np.arange(frames, dtype=np.float64) / DEFAULT_SAMPLE_RATE
+    envelope = np.exp(-42.0 * time_axis)
+    knock = _pcm(
+        envelope
+        * (
+            0.58 * np.sin(2.0 * np.pi * 115.0 * time_axis)
+            + 0.18 * np.sin(2.0 * np.pi * 720.0 * time_axis)
+        )
+    )
+    return _join([knock, _silence(0.11), knock, _silence(0.11), knock])
+
+
+def _error_notification() -> np.ndarray:
+    return _join([_tone(760.0, 0.16, 0.30), _silence(0.07), _tone(520.0, 0.28, 0.34)])
+
+
+def _siren() -> np.ndarray:
+    frames = int(round(DEFAULT_SAMPLE_RATE * 1.2))
+    time_axis = np.arange(frames, dtype=np.float64) / DEFAULT_SAMPLE_RATE
+    frequency = 800.0 + 240.0 * np.sin(2.0 * np.pi * 1.35 * time_axis)
+    phase = 2.0 * np.pi * np.cumsum(frequency) / DEFAULT_SAMPLE_RATE
+    return _pcm(0.30 * np.sin(phase))
+
+
+_SOUND_EVENT_FACTORIES = {
+    "[alarm]": _alarm,
+    "[door closes]": _door_closes,
+    "[phone rings]": _phone_rings,
+    "[knock]": _knock,
+    "[error notification]": _error_notification,
+    "[siren]": _siren,
+}
+
+
+def synthesize_sound_event(label: str) -> np.ndarray:
+    """Generate the deterministic 48 kHz mono PCM cue for one sound label."""
+    try:
+        factory = _SOUND_EVENT_FACTORIES[label]
+    except KeyError as exc:
+        raise ValueError(f"Unsupported sound event: {label}") from exc
+    return factory()
+
+
+def append_sound_events(samples: np.ndarray, labels: Sequence[str]) -> np.ndarray:
+    """Append synthetic acoustic events after speech in the reference label order."""
+    mono = downmix_to_mono(samples)
+    if not labels:
+        return mono
+
+    gap = _silence(SOUND_EVENT_GAP_MS / 1000.0)
+    parts: list[np.ndarray] = [mono]
+    for label in labels:
+        parts.append(gap)
+        parts.append(synthesize_sound_event(label))
+    return _join(parts)
 
 
 def atomic_write_wav(
