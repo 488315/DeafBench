@@ -4,6 +4,122 @@ from typing import List, Dict, Any, Optional
 import jiwer
 from .parser import normalize_text
 
+_NUMBER_VALUES = {
+    "zero": 0,
+    "one": 1,
+    "two": 2,
+    "three": 3,
+    "four": 4,
+    "five": 5,
+    "six": 6,
+    "seven": 7,
+    "eight": 8,
+    "nine": 9,
+    "ten": 10,
+    "eleven": 11,
+    "twelve": 12,
+    "thirteen": 13,
+    "fourteen": 14,
+    "fifteen": 15,
+    "sixteen": 16,
+    "seventeen": 17,
+    "eighteen": 18,
+    "nineteen": 19,
+    "twenty": 20,
+    "thirty": 30,
+    "forty": 40,
+    "fifty": 50,
+    "sixty": 60,
+    "seventy": 70,
+    "eighty": 80,
+    "ninety": 90,
+}
+_NUMBER_SCALES = {
+    "hundred": 100,
+    "thousand": 1_000,
+    "million": 1_000_000,
+}
+_DIGIT_WORDS = {
+    "zero": "0",
+    "one": "1",
+    "two": "2",
+    "three": "3",
+    "four": "4",
+    "five": "5",
+    "six": "6",
+    "seven": "7",
+    "eight": "8",
+    "nine": "9",
+}
+_DIGIT_WORD_PATTERN = "(?:" + "|".join(_DIGIT_WORDS) + ")"
+_NUMBER_WORD_PATTERN = "(?:" + "|".join((*_NUMBER_VALUES, *_NUMBER_SCALES)) + ")"
+
+
+def _parse_number_words(words: List[str]) -> int:
+    total = 0
+    current = 0
+    for word in words:
+        if word in _NUMBER_VALUES:
+            current += _NUMBER_VALUES[word]
+        elif word == "hundred":
+            current = max(current, 1) * 100
+        else:
+            total += max(current, 1) * _NUMBER_SCALES[word]
+            current = 0
+    return total + current
+
+
+def _replace_money(match: re.Match[str]) -> str:
+    dollars = int(match.group(1))
+    cents = match.group(2)
+    normalized = f"{dollars} dollars"
+    if cents is not None:
+        normalized += f" {int(cents.ljust(2, '0'))} cents"
+    return normalized
+
+
+def _replace_spoken_digits(match: re.Match[str]) -> str:
+    words = re.split(r"[\s-]+", match.group(0))
+    return "".join(_DIGIT_WORDS[word] for word in words)
+
+
+def _replace_number_words(match: re.Match[str]) -> str:
+    words = re.split(r"[\s-]+", match.group(0))
+    return str(_parse_number_words(words))
+
+
+def _normalize_critical_text(text: str) -> str:
+    """Normalize semantically equivalent numeric forms for critical matching."""
+    text = text.lower()
+    text = re.sub(r"(?<=\d),(?=\d)", "", text)
+    text = re.sub(r"\b([ap])\s*\.?\s*m\.?(?!\w)", r"\1m", text)
+    text = re.sub(r"\$(\d+)(?:\.(\d{1,2}))?", _replace_money, text)
+    text = re.sub(
+        r"\b(\d{1,2})[.:](\d{2})\s*(am|pm)\b",
+        r"\1 colon \2 \3",
+        text,
+    )
+    text = re.sub(r"\b(\d{1,2})\s*(am|pm)\b", r"\1 \2", text)
+    text = re.sub(r"\b(\d{1,2}):(\d{2})\b", r"\1 colon \2", text)
+    text = re.sub(
+        r"\b\d{1,3}(?:\.\d{1,3}){3}\b",
+        lambda match: match.group(0).replace(".", " dot "),
+        text,
+    )
+    text = re.sub(r"\b(\d+)\.(\d+)\b", r"\1 point \2", text)
+    text = re.sub(
+        rf"\b{_DIGIT_WORD_PATTERN}(?:[\s-]+{_DIGIT_WORD_PATTERN})+\b",
+        _replace_spoken_digits,
+        text,
+    )
+    text = re.sub(
+        rf"\b{_NUMBER_WORD_PATTERN}(?:[\s-]+{_NUMBER_WORD_PATTERN})*\b",
+        _replace_number_words,
+        text,
+    )
+    return normalize_text(text)
+
+
 def calculate_wer(references: List[str], predictions: List[str]) -> float:
     """Calculate Word Error Rate (WER) using jiwer."""
     if not references:
@@ -17,6 +133,7 @@ def calculate_wer(references: List[str], predictions: List[str]) -> float:
     except Exception:
         return float('nan')
 
+
 def evaluate_critical_info(reference_item: Dict[str, Any], prediction_item: Dict[str, Any]) -> Dict[str, Any]:
     """
     Evaluate critical information recall for a single item.
@@ -24,14 +141,14 @@ def evaluate_critical_info(reference_item: Dict[str, Any], prediction_item: Dict
     """
     critical_terms = reference_item.get("critical", [])
     pred_text = prediction_item.get("text", "")
-    norm_pred = normalize_text(pred_text)
+    norm_pred = _normalize_critical_text(pred_text)
     
     matched = []
     missed = []
     failures = []
     
     for term in critical_terms:
-        norm_term = normalize_text(term)
+        norm_term = _normalize_critical_text(term)
         if norm_term and re.search(rf"(?<!\w){re.escape(norm_term)}(?!\w)", norm_pred):
             matched.append(term)
         else:
@@ -47,6 +164,7 @@ def evaluate_critical_info(reference_item: Dict[str, Any], prediction_item: Dict
         "missed": missed,
         "failures": failures
     }
+
 
 def evaluate_non_speech_info(reference_item: Dict[str, Any], prediction_item: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -72,6 +190,7 @@ def evaluate_non_speech_info(reference_item: Dict[str, Any], prediction_item: Di
         "missed": missed
     }
 
+
 def evaluate_speaker_attribution(reference_item: Dict[str, Any], prediction_item: Dict[str, Any]) -> Optional[bool]:
     """
     Evaluate speaker attribution if speaker tag is present in reference.
@@ -84,6 +203,7 @@ def evaluate_speaker_attribution(reference_item: Dict[str, Any], prediction_item
     if pred_speaker is None:
         return False
     return normalize_text(str(ref_speaker)) == normalize_text(str(pred_speaker))
+
 
 def evaluate_dataset(aligned_data: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
