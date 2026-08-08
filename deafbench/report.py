@@ -59,7 +59,8 @@ def generate_markdown_report(metrics: Dict[str, Any], ref_file: str, pred_file: 
     if not failures:
         lines.append("No critical information failures detected! 🎉")
     else:
-        lines.append(f"Detected **{len(failures)}** critical information failures:")
+        noun = "failure" if len(failures) == 1 else "failures"
+        lines.append(f"Detected **{len(failures)}** critical information {noun}:")
         lines.append("")
         lines.append("| Sample ID | Missing Critical Term | Output Text |")
         lines.append("| --- | --- | --- |")
