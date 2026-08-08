@@ -36,6 +36,10 @@ def test_critical_info_does_not_match_numeric_substring():
         ("9 AM", "The meeting starts at 9am."),
         ("11:45 PM", "The migration starts at 11.45pm."),
         ("five point eight", "Install version 5.8 before opening the project."),
+        (
+            "version one point two point three point four",
+            "Install version 1.2.3.4 before opening the project.",
+        ),
         ("192 dot 168 dot 1 dot 25", "The server address is 192.168.1.25."),
         ("seven four nine two six eight one", "The delivery number is 7492681."),
         ("one hundred twenty five dollars", "The invoice total is $125.40."),
