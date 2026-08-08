@@ -1,4 +1,5 @@
 import json
+import wave
 from pathlib import Path
 
 import pytest
@@ -7,11 +8,19 @@ from tools import transcribe_whisper
 from tools.transcribe_whisper import transcribe_directory
 
 
+def _write_wav(path, *, channels=1, sample_width=2, sample_rate=48_000):
+    with wave.open(str(path), "wb") as wav_file:
+        wav_file.setnchannels(channels)
+        wav_file.setsampwidth(sample_width)
+        wav_file.setframerate(sample_rate)
+        wav_file.writeframes(b"\x00" * channels * sample_width * 8)
+
+
 def test_transcribe_directory_writes_sorted_prediction_jsonl(tmp_path):
     audio_dir = tmp_path / "audio"
     audio_dir.mkdir()
-    (audio_dir / "core-002.wav").write_bytes(b"wav")
-    (audio_dir / "core-001.wav").write_bytes(b"wav")
+    _write_wav(audio_dir / "core-002.wav")
+    _write_wav(audio_dir / "core-001.wav")
     output = tmp_path / "model-a.jsonl"
 
     transcripts = {
@@ -46,8 +55,8 @@ def test_transcribe_directory_rejects_empty_audio_dir(tmp_path):
 def test_transcribe_directory_rejects_reference_audio_id_mismatch(tmp_path):
     audio_dir = tmp_path / "audio"
     audio_dir.mkdir()
-    (audio_dir / "core-001.wav").write_bytes(b"wav")
-    (audio_dir / "core-002.wav").write_bytes(b"wav")
+    _write_wav(audio_dir / "core-001.wav")
+    _write_wav(audio_dir / "core-002.wav")
     references = tmp_path / "references.jsonl"
     references.write_text(
         '{"id":"core-001","text":"First"}\n'
@@ -73,7 +82,7 @@ def test_transcribe_directory_rejects_reference_audio_id_mismatch(tmp_path):
 def test_transcribe_directory_preserves_existing_output_on_write_failure(tmp_path, monkeypatch):
     audio_dir = tmp_path / "audio"
     audio_dir.mkdir()
-    (audio_dir / "core-001.wav").write_bytes(b"wav")
+    _write_wav(audio_dir / "core-001.wav")
     output = tmp_path / "model-a.jsonl"
     output.write_text("previous successful output\n", encoding="utf-8")
 
@@ -86,6 +95,22 @@ def test_transcribe_directory_preserves_existing_output_on_write_failure(tmp_pat
         transcribe_directory(audio_dir, output, lambda _path: "Transcript")
 
     assert output.read_text(encoding="utf-8") == "previous successful output\n"
+
+
+def test_transcribe_directory_rejects_nonstandard_wav_format(tmp_path):
+    audio_dir = tmp_path / "audio"
+    audio_dir.mkdir()
+    _write_wav(
+        audio_dir / "core-001.wav",
+        channels=2,
+        sample_rate=44_100,
+    )
+    output = tmp_path / "model-a.jsonl"
+
+    with pytest.raises(ValueError, match="Invalid WAV format"):
+        transcribe_directory(audio_dir, output, lambda _path: "Transcript")
+
+    assert not output.exists()
 
 
 def test_default_paths_are_anchored_to_repo_root():
