@@ -65,6 +65,32 @@ Median Latency             1.4s
 deafbench report examples/references.jsonl examples/model-a.jsonl --output report.md
 ```
 
+### Non-speech v1 recording workflow
+
+`non-speech-v1` keeps its acoustic-event benchmark separate from the Core v1 baseline. Each reference record contains one or more `sounds` labels. The recorder shows those labels in the GUI and, when you press **Stop**, appends the matching deterministic synthetic sound events after the recorded speech in the same order as the labels.
+
+```powershell
+python -m pip install -r tools\recorder\requirements.txt
+python -m tools.recorder.recorder --dataset non-speech-v1
+```
+
+For example, a prompt with:
+
+```json
+"sounds": ["[phone rings]", "[knock]"]
+```
+
+is saved as recorded speech, a short gap, the synthetic phone ring, another gap, then the synthetic knock.
+
+Transcribe and score the completed set with:
+
+```powershell
+python tools\transcribe_whisper.py --dataset non-speech-v1
+deafbench report benchmarks\non-speech-v1\references.jsonl benchmarks\non-speech-v1\model-a.jsonl --output benchmarks\non-speech-v1\model-a-report.md
+```
+
+Supported generated events are `[alarm]`, `[door closes]`, `[phone rings]`, `[knock]`, `[error notification]`, and `[siren]`.
+
 ---
 
 ## Input JSONL Schema
