@@ -63,7 +63,7 @@ def _build_recorder_args(parsed: argparse.Namespace) -> list[str]:
     return recorder_args
 
 
-def main(args: Optional[List[str]] = None) -> None:
+def main(args: Optional[List[str]] = None) -> int | None:
     parser = argparse.ArgumentParser(
         prog="deafbench",
         description="DeafBench: Accessibility-focused evaluation for AI captions and ASR systems."
@@ -100,8 +100,7 @@ def main(args: Optional[List[str]] = None) -> None:
     parsed = parser.parse_args(args)
 
     if parsed.command == "recorder":
-        _run_recorder(_build_recorder_args(parsed))
-        return
+        return _run_recorder(_build_recorder_args(parsed))
     
     try:
         references = parse_jsonl(parsed.references)
@@ -129,6 +128,8 @@ def main(args: Optional[List[str]] = None) -> None:
             sys.exit(1)
         print(f"Report successfully saved to {parsed.output}")
 
+    return None
+
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
