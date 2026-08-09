@@ -120,6 +120,13 @@ Human recordings live at:
 benchmarks/<dataset>/audio/
 ```
 
+Before audio selection or model initialization, parse and validate every
+reference record. Each record requires a safe, unique string `id` and a string
+`text`; optional `critical` and `sounds` values must be lists of strings. IDs
+that are blank, have surrounding whitespace, are `.` or `..`, are absolute,
+have a drive prefix, or contain a path separator or colon are invalid. This
+validation occurs before an ID can become a WAV basename.
+
 A human set is complete only when its WAV IDs exactly match the reference IDs
 and every WAV satisfies DeafBench's expected format validation.
 
@@ -253,7 +260,10 @@ the same synthetic directory, the fingerprint recomputes from the current
 references and persisted generation metadata, and all provenance and timing
 fields are present and internally consistent. Background starts at `0` and ends
 at the scene end; speech and event intervals must be non-negative, ordered, and
-bounded by that background interval. The manifest records actual generated
+bounded by that background interval. The expected frame count is exactly
+`background.end_ms * sample_rate / 1000`; this value must be integral and must
+equal the corresponding WAV's frame count. Shorter or longer files invalidate
+the set before promotion and cache reuse. The manifest records actual generated
 values so a result can be traced back to its generator environment.
 
 ## Reproducibility

@@ -244,6 +244,7 @@ class RunPaths:
 
 
 def validate_dataset_name(dataset: str) -> str: ...
+def load_reference_records(path: Path) -> tuple[Mapping[str, Any], ...]: ...
 def load_reference_ids(path: Path) -> tuple[str, ...]: ...
 def validate_wav_format(path: Path) -> None: ...
 def inspect_audio_set(references: Path, audio_dir: Path) -> AudioSetStatus: ...
@@ -270,6 +271,7 @@ import pytest
 from deafbench.benchmark.workspace import (
     AudioSetStatus,
     inspect_audio_set,
+    load_reference_records,
     resolve_audio_source,
     resolve_run_paths,
     validate_dataset_name,
@@ -338,6 +340,40 @@ def test_explicit_human_rejects_incomplete_set():
 def test_dataset_name_rejects_unsafe_values(dataset):
     with pytest.raises(ValueError, match="Invalid dataset name"):
         validate_dataset_name(dataset)
+
+
+@pytest.mark.parametrize(
+    "sample_id",
+    ["", "   ", ".", "..", "../escape", "a/b", "a\\b", "C:escape", "/absolute"],
+)
+def test_reference_id_rejects_unsafe_wav_names(tmp_path, sample_id):
+    references = tmp_path / "references.jsonl"
+    references.write_text(
+        json.dumps({"id": sample_id, "text": "hello", "critical": [], "sounds": []}) + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="Invalid reference ID"):
+        load_reference_records(references)
+
+
+@pytest.mark.parametrize(
+    "record",
+    [
+        {"id": "s1", "critical": [], "sounds": []},
+        {"id": "s1", "text": 42, "critical": [], "sounds": []},
+        {"id": "s1", "text": "hello", "critical": "hello", "sounds": []},
+        {"id": "s1", "text": "hello", "critical": [], "sounds": "[alarm]"},
+        {"id": "s1", "text": "hello", "critical": [1], "sounds": []},
+        {"id": "s1", "text": "hello", "critical": [], "sounds": [1]},
+    ],
+)
+def test_reference_schema_is_validated_before_audio_or_inference(tmp_path, record):
+    references = tmp_path / "references.jsonl"
+    references.write_text(json.dumps(record) + "\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="Invalid reference record"):
+        load_reference_records(references)
 ```
 
 - [ ] **Step 2: Run RED and commit tests only**
@@ -363,7 +399,16 @@ Bug: N/A
 
 Dataset validation matches recorder safety rules: reject empty, `.`, `..`, or any name containing `/`, `\\`, or `:`.
 
-`load_reference_ids` preserves JSONL order and raises on malformed JSON, a non-object record, missing/empty string ID, duplicate ID, or empty reference file.
+`load_reference_records` is the single parser for benchmark references. It
+preserves JSONL order and raises on malformed JSON, a non-object record, a
+duplicate ID, or an empty reference file. Every record requires an `id` string
+and `text` string. `critical` and `sounds` are optional lists of strings that
+default to empty; when present, their values and every member must have those
+types. Reject an ID when it is empty or changes after stripping whitespace, is
+`.` or `..`, is absolute, has a drive prefix, or contains `/`, `\\`, or `:`.
+This keeps every derived `<id>.wav` inside its selected audio directory.
+`load_reference_ids` delegates to this parser and returns the validated IDs; it
+must not parse the file through a second schema path.
 
 `validate_wav_format` requires:
 
@@ -671,6 +716,9 @@ def test_generate_synthetic_set_writes_complete_wavs_and_timestamp_manifest(tmp_
             {"label": event.label, "start_ms": event.start_ms, "end_ms": event.end_ms}
             for event in plan.events
         ]
+        with wave.open(str(audio_dir / record["wav"]), "rb") as handle:
+            expected_frames = record["background"]["end_ms"] * record["sample_rate"] // 1000
+            assert handle.getnframes() == expected_frames
 
 
 def test_failed_regeneration_preserves_previous_complete_set(tmp_path):
@@ -701,7 +749,9 @@ non-uniform fingerprints or generation settings, missing provenance/timing
 fields, an unsafe/mismatched WAV basename, or a fingerprint that does not
 recompute from the persisted TTS metadata; it returns true for an untouched
 matching set. Cache validation must not import WhisperSpeech or construct a
-pipeline.
+pipeline. Add parameterized regressions that rewrite an otherwise valid WAV to
+one frame shorter and one frame longer than
+`background.end_ms * sample_rate / 1000`; both sets must be rejected.
 
 - [ ] **Step 2: Run RED and commit tests only**
 
@@ -740,7 +790,10 @@ Write `manifest.jsonl` last inside staging. Before promotion, validate the exact
 manifest contract: reference IDs and WAV basenames, one shared recomputed
 fingerprint, uniform generation settings and TTS provenance, required timing
 fields and interval bounds, and the complete valid WAV set through
-`inspect_audio_set`. Cache reuse performs the same validation. Promote using:
+`inspect_audio_set`. For each record, require
+`background.end_ms * sample_rate` to be divisible by `1000` and require the WAV
+frame count to equal that quotient exactly; neither truncated nor padded audio
+may be promoted or reused. Cache reuse performs the same validation. Promote using:
 
 ```python
 backup = audio_dir.with_name(f".{audio_dir.name}-backup")
@@ -1005,8 +1058,10 @@ def main(argv: list[str] | None = None) -> int: ...
 
 **Runtime order:**
 1. Use `ensure_dataset_workspace(repo_root, dataset)` so installed Core v1 and Non-speech v1 references are seeded exactly like recorder behavior without overwriting existing references.
-2. Resolve run paths.
-3. Inspect human audio and resolve source.
+2. Resolve run paths, then load and validate the complete reference schema.
+   Reject malformed records and unsafe IDs before inspecting audio, constructing
+   generated WAV paths, importing model dependencies, or starting inference.
+3. Inspect human audio and resolve source using those validated references.
 4. Human: use human audio after complete validation.
 5. Synthetic: call `synthetic_set_is_current` using only the references,
    requested scene profile/seed, and persisted manifest provenance. A current
