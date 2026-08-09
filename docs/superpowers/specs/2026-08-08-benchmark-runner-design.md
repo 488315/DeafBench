@@ -76,14 +76,14 @@ Proposed package responsibilities:
 deafbench/
   benchmark/
     __init__.py
-    runner.py          # orchestration and run metadata
-    workspace.py       # dataset/audio/run path resolution and validation
-    synthetic.py       # synthetic set generation and scene construction
-    scenes.py          # deterministic timing/noise/event scene logic
+    runner.py
+    workspace.py
+    synthetic.py
+    scenes.py
     models/
       __init__.py
-      whisper.py       # Model A adapter
-      whisper_at.py    # Model B adapter
+      whisper.py
+      whisper_at.py
 ```
 
 Keep `deafbench.cli` focused on argument parsing and dispatch. Existing
@@ -238,9 +238,9 @@ A record has the following shape:
 }
 ```
 
-The manifest records actual generated values, not placeholders. The TTS package
-and model/version information available at runtime must be captured so a result
-can be traced back to its generator environment.
+The manifest records actual generated values. The TTS package and model/version
+information available at runtime must be captured so a result can be traced back
+to its generator environment.
 
 ## Reproducibility
 
@@ -325,7 +325,7 @@ Benchmark dependencies are lazy-loaded after `benchmark` is selected and after
 the resolved audio source shows which components are needed.
 
 Packaging should use optional extras instead of making heavyweight model
-runtimes mandatory for all DeafBench users. The implementation plan must verify
+runtimes mandatory for all DeafBench users. The implementation plan verifies
 the supported install shape against the upstream packages before locking exact
 extra requirements.
 
@@ -400,3 +400,9 @@ Do not add third-party environmental sound-effect downloads.
 Do not mix incomplete human recordings with generated replacements.
 
 Do not add a general model-plugin marketplace or arbitrary shell-command runner.
+
+## Approved implementation plan
+
+This design is approved for implementation through:
+
+`docs/superpowers/plans/2026-08-09-benchmark-runner.md`
