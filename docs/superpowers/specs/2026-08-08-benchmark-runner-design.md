@@ -206,6 +206,8 @@ A record has the following shape:
 ```json
 {
   "id": "ns-008",
+  "wav": "ns-008.wav",
+  "fingerprint": "sha256-of-generation-inputs",
   "scene_profile": "default-v1",
   "seed": 42,
   "sample_rate": 48000,
@@ -238,9 +240,21 @@ A record has the following shape:
 }
 ```
 
-The manifest records actual generated values. The TTS package and model/version
-information available at runtime must be captured so a result can be traced back
-to its generator environment.
+Every record must contain exactly one reference ID and WAV basename, the shared
+set fingerprint, scene profile and seed, sample rate, TTS engine and version,
+speech start/end times, background profile/start/end/SNR, and every event label
+with start/end times. The fingerprint is stored in the top-level `fingerprint`
+field of every record. All records in one set must use identical fingerprint,
+generation settings, and TTS provenance.
+
+Before promotion or cache reuse, validate that manifest IDs exactly match the
+reference IDs, each `wav` basename resolves to the corresponding valid WAV in
+the same synthetic directory, the fingerprint recomputes from the current
+references and persisted generation metadata, and all provenance and timing
+fields are present and internally consistent. Background starts at `0` and ends
+at the scene end; speech and event intervals must be non-negative, ordered, and
+bounded by that background interval. The manifest records actual generated
+values so a result can be traced back to its generator environment.
 
 ## Reproducibility
 

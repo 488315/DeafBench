@@ -252,6 +252,7 @@ def resolve_run_paths(repo_root: Path, dataset: str, model: str, source: Resolve
 def atomic_write_text(path: Path, text: str) -> None: ...
 def atomic_write_json(path: Path, value: Mapping[str, Any]) -> None: ...
 def atomic_write_jsonl(path: Path, records: Sequence[Mapping[str, Any]]) -> None: ...
+def atomic_write_wav(path: Path, pcm_frames: bytes, sample_rate: int = 48_000) -> None: ...
 ```
 
 The ellipses above are Python signature stubs only. The behavior for every interface is specified in the implementation steps.
@@ -392,6 +393,13 @@ def resolve_audio_source(requested, human_status):
 
 Atomic text/JSON/JSONL writes create a sibling temporary file with `NamedTemporaryFile(delete=False, dir=destination.parent)`, close it, then call `os.replace(temp_path, destination)`. Delete an unpromoted temp file in `finally`.
 
+`atomic_write_wav` uses the same sibling-temp-and-`os.replace` transaction. It
+writes `pcm_frames` with the standard-library `wave` module as uncompressed,
+48 kHz, 16-bit, mono PCM; reject any other sample rate. The caller converts the
+mixed int16 mono array with `mixed.astype("<i2", copy=False).tobytes()` so the
+workspace helper remains stdlib-only. Add a test that validates the promoted
+file with `validate_wav_format` and confirms the exact frame bytes.
+
 - [ ] **Step 4: Run GREEN and existing transcriber tests**
 
 ```bash
@@ -443,6 +451,8 @@ class ScenePlan:
     speech_end_ms: int
     scene_end_ms: int
     background_profile: str
+    background_start_ms: int
+    background_end_ms: int
     background_snr_db: float
     events: tuple[TimedEvent, ...]
 
@@ -465,7 +475,8 @@ def mix_scene(speech_pcm: np.ndarray, plan: ScenePlan) -> np.ndarray: ...
 - Clamp event start to `[speech_start_ms, max(speech_start_ms, speech_end_ms - event_duration_ms)]`.
 - Sort events by `(start_ms, label)`.
 - Scene end is 500 ms after the later of speech end or last event end.
-- Background profile is `office-v1`; SNR is `15.0` dB.
+- Background profile is `office-v1`; background start is `0`, background end is
+  `scene_end_ms`, and SNR is `15.0` dB.
 - Generate background with `default_rng(background_seed).normal(0.0, 1.0, scene_frames)`, smooth using a 64-sample averaging kernel with `np.convolve(..., mode="same")`, normalize RMS, then scale to `speech_rms / 10 ** (15.0 / 20.0)`. If speech RMS is zero, target noise RMS is `0.01`.
 - Convert int16 event cues to float by dividing by `32768.0` before mixing.
 - Mix speech, ambience, and events in float64. If absolute peak exceeds `0.98`, multiply the whole scene by `0.98 / peak`. Convert to int16 with `np.clip(np.rint(scene * 32767.0), -32768, 32767).astype(np.int16)` and return shape `(frames, 1)`.
@@ -570,7 +581,7 @@ SpeechGenerator = Callable[[str], SpeechAudio]
 
 def create_whisperspeech_generator() -> tuple[SpeechGenerator, TTSInfo]: ...
 def generation_fingerprint(references: Path, scene_profile: str, seed: int, tts_info: TTSInfo) -> str: ...
-def synthetic_set_is_current(audio_dir: Path, references: Path, scene_profile: str, seed: int, tts_info: TTSInfo) -> bool: ...
+def synthetic_set_is_current(audio_dir: Path, references: Path, scene_profile: str, seed: int) -> bool: ...
 def generate_synthetic_set(references: Path, audio_dir: Path, speech_generator: SpeechGenerator, tts_info: TTSInfo, scene_profile: str = "default-v1", seed: int = 42) -> Path: ...
 ```
 
@@ -625,9 +636,41 @@ def test_generate_synthetic_set_writes_complete_wavs_and_timestamp_manifest(tmp_
     assert {path.name for path in audio_dir.glob("*.wav")} == {"ns-001.wav", "ns-002.wav"}
     records = [json.loads(line) for line in manifest.read_text(encoding="utf-8").splitlines()]
     assert [record["id"] for record in records] == ["ns-001", "ns-002"]
-    assert records[0]["speech"]["start_ms"] == 500
-    assert records[0]["events"][0]["label"] == "[alarm]"
-    assert records[0]["sample_rate"] == 48_000
+    fingerprint = generation_fingerprint(
+        references, "default-v1", 42, TTSInfo("whisperspeech", "test")
+    )
+    expected_inputs = [
+        ("ns-001", "Stay seated.", ["[alarm]"]),
+        ("ns-002", "Wait outside.", []),
+    ]
+    for record, (sample_id, text, sounds) in zip(records, expected_inputs, strict=True):
+        speech_frames = 2 * (24_000 + len(text) * 100)
+        plan = plan_scene(sample_id, speech_frames, sounds, seed=42)
+        assert set(record) == {
+            "id", "wav", "fingerprint", "scene_profile", "seed",
+            "sample_rate", "tts", "speech", "background", "events",
+        }
+        assert record["id"] == sample_id
+        assert record["wav"] == f"{sample_id}.wav"
+        assert record["fingerprint"] == fingerprint
+        assert record["scene_profile"] == "default-v1"
+        assert record["seed"] == 42
+        assert record["sample_rate"] == 48_000
+        assert record["tts"] == {"engine": "whisperspeech", "version": "test"}
+        assert record["speech"] == {
+            "start_ms": plan.speech_start_ms,
+            "end_ms": plan.speech_end_ms,
+        }
+        assert record["background"] == {
+            "profile": plan.background_profile,
+            "start_ms": plan.background_start_ms,
+            "end_ms": plan.background_end_ms,
+            "snr_db": plan.background_snr_db,
+        }
+        assert record["events"] == [
+            {"label": event.label, "start_ms": event.start_ms, "end_ms": event.end_ms}
+            for event in plan.events
+        ]
 
 
 def test_failed_regeneration_preserves_previous_complete_set(tmp_path):
@@ -652,7 +695,13 @@ def test_failed_regeneration_preserves_previous_complete_set(tmp_path):
     assert after == before
 ```
 
-Also test `synthetic_set_is_current` returns false for a missing WAV, missing manifest, changed seed, changed reference bytes, or changed TTS version, and true for an untouched matching set.
+Also test `synthetic_set_is_current` returns false for a missing/extra/invalid
+WAV, missing or malformed manifest, changed seed, changed reference bytes,
+non-uniform fingerprints or generation settings, missing provenance/timing
+fields, an unsafe/mismatched WAV basename, or a fingerprint that does not
+recompute from the persisted TTS metadata; it returns true for an untouched
+matching set. Cache validation must not import WhisperSpeech or construct a
+pipeline.
 
 - [ ] **Step 2: Run RED and commit tests only**
 
@@ -681,10 +730,17 @@ For every reference record:
 2. Resample with `resample_mono`.
 3. Build a `ScenePlan` from record ID and `sounds`.
 4. Mix with `mix_scene`.
-5. Write `<id>.wav` inside staging with `atomic_write_wav`.
-6. Append a manifest record containing ID, set fingerprint, scene profile, seed, sample rate, TTS engine/version, speech timestamps, background metadata, and event timestamps.
+5. Convert the int16 mono result to little-endian PCM bytes and write `<id>.wav`
+   inside staging with the Task 2 `atomic_write_wav` helper.
+6. Append a manifest record containing ID, WAV basename, set fingerprint, scene
+   profile, seed, sample rate, TTS engine/version, speech timestamps, background
+   profile/start/end/SNR, and event label/start/end timestamps.
 
-Write `manifest.jsonl` last inside staging. Validate staging with `inspect_audio_set`. Promote using:
+Write `manifest.jsonl` last inside staging. Before promotion, validate the exact
+manifest contract: reference IDs and WAV basenames, one shared recomputed
+fingerprint, uniform generation settings and TTS provenance, required timing
+fields and interval bounds, and the complete valid WAV set through
+`inspect_audio_set`. Cache reuse performs the same validation. Promote using:
 
 ```python
 backup = audio_dir.with_name(f".{audio_dir.name}-backup")
@@ -952,7 +1008,12 @@ def main(argv: list[str] | None = None) -> int: ...
 2. Resolve run paths.
 3. Inspect human audio and resolve source.
 4. Human: use human audio after complete validation.
-5. Synthetic: inspect whether the existing synthetic set is reusable. If it is stale or incomplete, lazy-create the WhisperSpeech generator and rebuild the full set through `synthetic_generator`.
+5. Synthetic: call `synthetic_set_is_current` using only the references,
+   requested scene profile/seed, and persisted manifest provenance. A current
+   set is reusable without importing WhisperSpeech, looking up live TTS
+   metadata, or calling `synthetic_factory`. Only for a stale or incomplete set,
+   lazy-create the WhisperSpeech generator/TTS metadata and rebuild the full set
+   through `synthetic_generator`.
 6. Re-inspect selected audio and require a complete set before inference.
 7. Create a sibling staging run directory.
 8. Invoke selected model adapter with staging `predictions.jsonl`.
@@ -1022,6 +1083,32 @@ def test_auto_generates_synthetic_set_when_human_is_missing(tmp_path):
 
     assert result.resolved_source == "synthetic"
     assert generated == [("default-v1", 42)]
+```
+
+Synthetic-cache test:
+
+```python
+def test_current_synthetic_set_does_not_construct_whisperspeech(tmp_path):
+    _write_complete_dataset(tmp_path, human_complete=False)
+    references = tmp_path / "benchmarks" / "core-v1" / "references.jsonl"
+    audio_dir = tmp_path / "benchmarks" / "core-v1" / "audio-synthetic"
+    generate_synthetic_set(
+        references,
+        audio_dir,
+        _fake_speech,
+        TTSInfo("whisperspeech", "persisted-test-version"),
+    )
+
+    def fail_synthetic_factory():
+        raise AssertionError("current synthetic cache must not construct TTS")
+
+    result = run_benchmark(
+        BenchmarkConfig(tmp_path, "core-v1", "whisper"),
+        synthetic_factory=fail_synthetic_factory,
+        whisper_runner=_fake_whisper_runner,
+    )
+
+    assert result.resolved_source == "synthetic"
 ```
 
 Run-output test must assert:
