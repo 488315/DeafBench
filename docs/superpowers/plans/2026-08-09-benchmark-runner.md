@@ -344,7 +344,7 @@ def test_dataset_name_rejects_unsafe_values(dataset):
 
 @pytest.mark.parametrize(
     "sample_id",
-    ["", "   ", ".", "..", "../escape", "a/b", "a\\b", "C:escape", "/absolute"],
+    ["", "   ", ".", "..", "../escape", "a/b", "a\\b", "C:escape", "/absolute", "\u0000"],
 )
 def test_reference_id_rejects_unsafe_wav_names(tmp_path, sample_id):
     references = tmp_path / "references.jsonl"
@@ -405,7 +405,8 @@ duplicate ID, or an empty reference file. Every record requires an `id` string
 and `text` string. `critical` and `sounds` are optional lists of strings that
 default to empty; when present, their values and every member must have those
 types. Reject an ID when it is empty or changes after stripping whitespace, is
-`.` or `..`, is absolute, has a drive prefix, or contains `/`, `\\`, or `:`.
+`.` or `..`, is absolute, has a drive prefix, contains an embedded NUL byte, or
+contains `/`, `\\`, or `:`.
 This keeps every derived `<id>.wav` inside its selected audio directory.
 `load_reference_ids` delegates to this parser and returns the validated IDs; it
 must not parse the file through a second schema path.

@@ -124,8 +124,9 @@ Before audio selection or model initialization, parse and validate every
 reference record. Each record requires a safe, unique string `id` and a string
 `text`; optional `critical` and `sounds` values must be lists of strings. IDs
 that are blank, have surrounding whitespace, are `.` or `..`, are absolute,
-have a drive prefix, or contain a path separator or colon are invalid. This
-validation occurs before an ID can become a WAV basename.
+have a drive prefix, contain an embedded NUL byte, or contain a path separator
+or colon are invalid. This validation occurs before an ID can become a WAV
+basename.
 
 A human set is complete only when its WAV IDs exactly match the reference IDs
 and every WAV satisfies DeafBench's expected format validation.
