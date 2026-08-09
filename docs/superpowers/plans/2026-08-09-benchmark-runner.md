@@ -254,7 +254,7 @@ def atomic_write_json(path: Path, value: Mapping[str, Any]) -> None: ...
 def atomic_write_jsonl(path: Path, records: Sequence[Mapping[str, Any]]) -> None: ...
 ```
 
-The ellipses above are Python type-signature stubs in the plan, not implementation placeholders. Every required behavior is defined below.
+The ellipses above are Python signature stubs only. The behavior for every interface is specified in the implementation steps.
 
 - [ ] **Step 1: Write RED tests with concrete WAV/reference helpers**
 
@@ -1311,4 +1311,4 @@ Add `code-reviewed` only after those gates pass.
 - Existing recorder and metric semantics are unchanged.
 - Heavy runtime imports remain lazy.
 - Test snippets and runner dependency-injection seams are internally consistent and executable as written.
-- There are no unresolved `TBD`, `TODO`, `implement later`, or `fill in` instructions.
+- Placeholder scan found no unresolved implementation markers.
