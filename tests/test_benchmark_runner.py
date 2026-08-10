@@ -268,7 +268,12 @@ def test_failed_run_promotion_restores_previous_bundle(
 
 @pytest.mark.parametrize(
     ("model", "function_name"),
-    [("whisper", "run_whisper"), ("whisper-at", "run_whisper_at")],
+    [
+        ("whisper", "run_whisper"),
+        ("whisper-at", "run_whisper_at"),
+        ("faster-whisper", "run_faster_whisper"),
+        ("distil-whisper", "run_distil_whisper"),
+    ],
 )
 def test_default_model_runner_is_selected_lazily(
     model: str,
@@ -277,6 +282,42 @@ def test_default_model_runner_is_selected_lazily(
     runner = runner_module._default_model_runner(model)  # type: ignore[arg-type]
 
     assert runner.__name__ == function_name
+
+
+@pytest.mark.parametrize("model", ["faster-whisper", "distil-whisper"])
+def test_main_accepts_additional_local_models(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    model: str,
+) -> None:
+    result = BenchmarkResult(
+        "human",
+        tmp_path / "predictions.jsonl",
+        tmp_path / "report.md",
+        tmp_path / "run.json",
+        {
+            "samples": 1,
+            "wer": 0.0,
+            "critical_recall": 100.0,
+            "non_speech_recall": None,
+            "speaker_accuracy": None,
+            "median_latency_ms": None,
+            "critical_failures": [],
+        },
+    )
+    calls: list[BenchmarkConfig] = []
+    monkeypatch.setattr(
+        runner_module,
+        "run_benchmark",
+        lambda config: calls.append(config) or result,
+    )
+
+    status = runner_module.main(
+        ["core-v1", "--model", model, "--repo-root", str(tmp_path)]
+    )
+
+    assert status == 0
+    assert calls == [BenchmarkConfig(tmp_path, "core-v1", model)]
 
 
 def test_invalid_references_fail_before_audio_or_model_work(tmp_path: Path) -> None:

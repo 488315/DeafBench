@@ -19,6 +19,9 @@ benchmark = [
     "soundfile>=0.12",
     "WhisperSpeech>=0.8.9",
 ]
+local-models = [
+    "faster-whisper>=1.2.1,<2.0.0",
+]
 recorder = [
     "numpy>=1.26",
     "sounddevice>=0.5.1",

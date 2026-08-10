@@ -80,6 +80,25 @@ build synthetic scenes. OpenAI Whisper and Whisper-AT are separate inference
 backends, so install the backend shown immediately before its benchmark command.
 The extra does not install either inference backend.
 
+Two additional local models use the Faster-Whisper runtime. Install the local
+model extra once, then choose either model name:
+
+```powershell
+python -m pip install "deafbench[local-models]"
+
+# CPU-friendly INT8 baseline; downloads small.en on first use.
+deafbench benchmark core-v1 --model faster-whisper
+
+# Distilled comparison; downloads distil-large-v3 on first use.
+deafbench benchmark core-v1 --model distil-whisper
+```
+
+Both default to CPU INT8 so they work without an NVIDIA GPU. Faster-Whisper
+uses `small.en`; Distil-Whisper uses the upstream-documented
+`distil-large-v3` checkpoint with previous-text conditioning disabled. The
+Faster-Whisper runtime decodes audio through PyAV, so these two models do not
+need a separate system FFmpeg installation.
+
 With the default `--audio-source auto` policy, DeafBench selects one complete
 source for the whole run:
 

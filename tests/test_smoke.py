@@ -54,3 +54,5 @@ def test_benchmark_help_does_not_require_checkout_or_heavy_dependencies(
 
     assert result.returncode == 0, result.stderr
     assert "--audio-source" in result.stdout
+    assert "faster-whisper" in result.stdout
+    assert "distil-whisper" in result.stdout

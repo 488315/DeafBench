@@ -4,6 +4,7 @@ from typing import Optional, List
 from .parser import parse_jsonl, align_records
 from .metrics import evaluate_dataset
 from .report import generate_markdown_report
+from .benchmark.models import MODEL_NAMES
 
 
 _BENCHMARK_RUNTIME_UNAVAILABLE = (
@@ -127,7 +128,7 @@ def main(args: Optional[List[str]] = None) -> int | None:
     benchmark_parser.add_argument(
         "--model",
         required=True,
-        choices=("whisper", "whisper-at"),
+        choices=MODEL_NAMES,
     )
     benchmark_parser.add_argument(
         "--audio-source",
