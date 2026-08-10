@@ -1,5 +1,7 @@
 import json
 import os
+import subprocess
+import sys
 import wave
 from pathlib import Path
 
@@ -368,3 +370,69 @@ def test_main_prints_run_identity_summary_and_artifacts(
     assert "Audio source: human" in output
     assert f"Predictions: {result.predictions}" in output
     assert f"Report: {result.report}" in output
+
+
+def test_help_does_not_import_optional_numpy_dependency() -> None:
+    code = """
+import builtins
+original_import = builtins.__import__
+def block_numpy(name, *args, **kwargs):
+    if name == "numpy" or name.startswith("numpy."):
+        raise ModuleNotFoundError(name=name)
+    return original_import(name, *args, **kwargs)
+builtins.__import__ = block_numpy
+from deafbench.benchmark.runner import main
+main(["--help"])
+"""
+
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "Run a complete DeafBench model benchmark" in result.stdout
+
+
+@pytest.mark.parametrize("mode", ["missing", "extra"])
+def test_prediction_id_mismatch_preserves_previous_bundle(
+    tmp_path: Path,
+    mode: str,
+) -> None:
+    _write_dataset(tmp_path, human_complete=True)
+    config = BenchmarkConfig(tmp_path, "core-v1", "whisper")
+    first = run_benchmark(config, whisper_runner=_fake_model_runner)
+    run_dir = first.predictions.parent
+    before = {
+        path.relative_to(run_dir): path.read_bytes()
+        for path in run_dir.rglob("*")
+        if path.is_file()
+    }
+
+    def mismatched_runner(
+        _audio_dir: Path,
+        _references: Path,
+        output: Path,
+    ) -> ModelRunInfo:
+        records = [{"id": "core-001", "text": "partial"}]
+        if mode == "extra":
+            records.extend(
+                [
+                    {"id": "core-002", "text": "second"},
+                    {"id": "extra", "text": "unexpected"},
+                ]
+            )
+        atomic_write_jsonl(output, records)
+        return ModelRunInfo("whisper", "broken-model")
+
+    with pytest.raises(ValueError, match="Prediction IDs do not match"):
+        run_benchmark(config, whisper_runner=mismatched_runner)
+
+    after = {
+        path.relative_to(run_dir): path.read_bytes()
+        for path in run_dir.rglob("*")
+        if path.is_file()
+    }
+    assert after == before
