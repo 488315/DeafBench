@@ -5,7 +5,9 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass
+from importlib.resources.abc import Traversable
 from importlib.resources import files
+from pathlib import PurePosixPath
 from typing import Any, Mapping, Sequence, cast
 
 
@@ -211,7 +213,27 @@ def load_model_registry() -> tuple[ModelLicense, ...]:
         payload = json.loads(resource.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise ModelRegistryError("model registry is unavailable or invalid") from exc
-    return validate_model_registry(payload)
+    models = validate_model_registry(payload)
+    verify_model_license_files(models, files("deafbench"))
+    return models
+
+
+def verify_model_license_files(
+    models: Sequence[ModelLicense], package_root: Traversable
+) -> None:
+    """Reject unsafe or absent license evidence referenced by model metadata."""
+    for model in models:
+        for relative in (*model.license_files, *model.notice_files):
+            path = PurePosixPath(relative)
+            if path.is_absolute() or ".." in path.parts or path.as_posix() != relative:
+                raise ModelRegistryError(
+                    f"unsafe license file for model {model.model_id}: {relative}"
+                )
+            resource = package_root.joinpath(*path.parts)
+            if not resource.is_file():
+                raise ModelRegistryError(
+                    f"missing license file for model {model.model_id}: {relative}"
+                )
 
 
 def get_model_license(model_id: str) -> ModelLicense:

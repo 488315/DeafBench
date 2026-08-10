@@ -7,6 +7,7 @@ from deafbench.model_registry import (
     get_model_license,
     load_model_registry,
     validate_model_registry,
+    verify_model_license_files,
 )
 
 
@@ -65,3 +66,19 @@ def test_registry_requires_exact_upstream_model_url() -> None:
 def test_unknown_model_fails_closed() -> None:
     with pytest.raises(ModelRegistryError, match="missing license metadata"):
         get_model_license("unknown/model")
+
+
+def test_registry_rejects_missing_license_file(tmp_path) -> None:
+    model = validate_model_registry(_registry(deepcopy(_MODEL)))[0]
+
+    with pytest.raises(ModelRegistryError, match="missing license file"):
+        verify_model_license_files((model,), tmp_path)
+
+
+def test_registry_accepts_declared_license_file(tmp_path) -> None:
+    model = validate_model_registry(_registry(deepcopy(_MODEL)))[0]
+    license_path = tmp_path / "licenses" / "example-model" / "LICENSE"
+    license_path.parent.mkdir(parents=True)
+    license_path.write_text("license evidence", encoding="utf-8")
+
+    verify_model_license_files((model,), tmp_path)
