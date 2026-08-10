@@ -108,6 +108,59 @@ def test_evaluator_delegates_normalization_and_scoring_to_pinned_source(tmp_path
     }
 
 
+def test_evaluator_analyzes_rows_with_pinned_normalization(tmp_path):
+    checkout, revision = _commit_fake_evaluator(tmp_path)
+    evaluator = OfficialEvaluator(checkout, expected_revision=revision)
+    results_dir = tmp_path / "results"
+    results_dir.mkdir()
+    dataset_id = "hf-audio-open-asr-leaderboard_librispeech_test.clean"
+    manifest = results_dir / f"MODEL_owner-model_DATASET_{dataset_id}.jsonl"
+    records = [
+        {
+            "audio_filepath": "sample_0",
+            "duration": 1.0,
+            "time": 0.1,
+            "text": "Doctor Ada",
+            "pred_text": "doctor ada",
+        },
+        {
+            "audio_filepath": "sample_1",
+            "duration": 2.0,
+            "time": 0.2,
+            "text": "Hello world",
+            "pred_text": "hello",
+        },
+    ]
+    manifest.write_text(
+        "".join(json.dumps(record) + "\n" for record in records),
+        encoding="utf-8",
+    )
+
+    analysis = evaluator.analyze(results_dir, "owner/model", limit=1)
+
+    assert analysis == {
+        "datasets": {
+            dataset_id: {
+                "analyzed_rows": 2,
+                "reference_words": 4,
+                "errors": {"del": 1, "ins": 0, "sub": 0},
+                "top_errors": [
+                    {
+                        "row": 1,
+                        "audio_filepath": "sample_1",
+                        "duration": 2.0,
+                        "reference": "hello world",
+                        "prediction": "hello",
+                        "reference_words": 2,
+                        "errors": {"del": 1, "ins": 0, "sub": 0},
+                        "wer": 50.0,
+                    }
+                ],
+            }
+        }
+    }
+
+
 def test_evaluator_rejects_missing_results_directory(tmp_path):
     checkout, revision = _commit_fake_evaluator(tmp_path)
     evaluator = OfficialEvaluator(checkout, expected_revision=revision)

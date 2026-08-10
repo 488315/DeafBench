@@ -64,6 +64,20 @@ python -m deafbench leaderboard score experiments\open-asr\results `
   --model-id soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M
 ```
 
+Rank high-error utterances with the same pinned normalizer and compound-aware
+alignment used by the scorer:
+
+```powershell
+python -m deafbench leaderboard analyze experiments\open-asr\results\full-public `
+  --official-repo C:\path\to\open-asr-official-9585-clean `
+  --model-id soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M `
+  --limit 20 --output experiments\open-asr\results\zipformer-public-errors.json
+```
+
+The analyzer reports normalized reference and prediction text, per-row error
+counts, and each dataset's aggregate counts. It ranks by error mass for
+diagnosis; its output is not an additional leaderboard metric.
+
 Use `full` as the third argument only at a defined public-test milestone:
 
 ```powershell

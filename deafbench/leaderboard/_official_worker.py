@@ -49,18 +49,28 @@ def _evaluation_status(observed_rows: dict[str, int]) -> dict:
     }
 
 
-def _public_manifest_rows(results_dir: str, model_id: str) -> dict[str, int]:
-    observed = {}
+def _public_manifest_files(results_dir: str, model_id: str) -> dict[str, Path]:
+    manifests = {}
     expected_prefix = "MODEL_" + model_id.replace("/", "-") + "_DATASET_"
     for result_file in Path(results_dir).rglob("*.jsonl"):
         if not result_file.stem.startswith(expected_prefix):
             continue
         dataset_id = result_file.stem.removeprefix(expected_prefix)
         if dataset_id in _PUBLIC_EXPECTED_ROWS:
-            if dataset_id in observed:
+            if dataset_id in manifests:
                 raise ValueError(f"duplicate public manifest: {dataset_id}")
-            with result_file.open(encoding="utf-8") as handle:
-                observed[dataset_id] = sum(1 for line in handle if line.strip())
+            manifests[dataset_id] = result_file
+    return manifests
+
+
+def _public_manifest_rows(results_dir: str, model_id: str) -> dict[str, int]:
+    observed = {}
+    for dataset_id, result_file in _public_manifest_files(
+        results_dir,
+        model_id,
+    ).items():
+        with result_file.open(encoding="utf-8") as handle:
+            observed[dataset_id] = sum(1 for line in handle if line.strip())
     return observed
 
 
@@ -102,15 +112,43 @@ def _score(payload: dict) -> dict:
     }
 
 
+def _analyze(payload: dict) -> dict:
+    from kaldialign import edit_distance
+    from normalizer.data_utils import normalizer
+
+    from deafbench.leaderboard.error_analysis import analyze_records
+
+    datasets = {}
+    manifests = _public_manifest_files(
+        payload["results_dir"],
+        payload["model_id"],
+    )
+    for dataset_id, manifest_path in sorted(manifests.items()):
+        with manifest_path.open(encoding="utf-8") as handle:
+            records = [json.loads(line) for line in handle if line.strip()]
+        datasets[dataset_id] = analyze_records(
+            records,
+            normalize=normalizer,
+            edit_distance=edit_distance,
+            limit=payload["limit"],
+        )
+    return {"datasets": datasets}
+
+
 def main(args: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--checkout", type=Path, required=True)
-    parser.add_argument("action", choices=("normalize", "score"))
+    parser.add_argument("action", choices=("analyze", "normalize", "score"))
     parsed = parser.parse_args(args)
 
     sys.path.insert(0, str(parsed.checkout.resolve()))
     payload = _read_payload()
-    result = _normalize(payload) if parsed.action == "normalize" else _score(payload)
+    actions = {
+        "analyze": _analyze,
+        "normalize": _normalize,
+        "score": _score,
+    }
+    result = actions[parsed.action](payload)
     print(_RESULT_MARKER + json.dumps(result, sort_keys=True))
     return 0
 

@@ -114,6 +114,33 @@ class OfficialEvaluator:
             {"results_dir": str(results_path), "model_id": model_id},
         )
 
+    def analyze(
+        self,
+        results_dir: Path | str,
+        model_id: str,
+        *,
+        limit: int = 20,
+    ) -> dict[str, Any]:
+        """Rank utterance errors using pinned normalization and alignment."""
+        results_path = Path(results_dir).resolve()
+        if not results_path.is_dir():
+            raise OfficialEvaluatorError(
+                f"results directory does not exist: {results_path}"
+            )
+        if not model_id.strip():
+            raise OfficialEvaluatorError("model_id must not be empty")
+        if limit <= 0:
+            raise OfficialEvaluatorError("analysis limit must be positive")
+
+        return self._invoke_worker(
+            "analyze",
+            {
+                "results_dir": str(results_path),
+                "model_id": model_id,
+                "limit": limit,
+            },
+        )
+
     def _invoke_worker(self, action: str, payload: dict[str, Any]) -> dict[str, Any]:
         self.validate()
         try:

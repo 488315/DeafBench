@@ -104,3 +104,53 @@ def test_leaderboard_score_reports_invalid_checkout(tmp_path, capsys):
 
     assert exit_code == 1
     assert "official evaluator checkout does not exist" in capsys.readouterr().err
+
+
+def test_leaderboard_analyze_writes_ranked_errors(tmp_path, monkeypatch):
+    checkout, revision = _fake_checkout(tmp_path)
+    results = tmp_path / "results"
+    results.mkdir()
+    dataset_id = "hf-audio-open-asr-leaderboard_librispeech_test.clean"
+    manifest = results / f"MODEL_owner-model_DATASET_{dataset_id}.jsonl"
+    manifest.write_text(
+        json.dumps(
+            {
+                "audio_filepath": "sample_0",
+                "duration": 1.0,
+                "text": "Hello world",
+                "pred_text": "hello",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    output = tmp_path / "analysis.json"
+    monkeypatch.setattr(
+        "deafbench.leaderboard.official.OPEN_ASR_EVALUATOR_REVISION",
+        revision,
+    )
+
+    exit_code = main(
+        [
+            "leaderboard",
+            "analyze",
+            str(results),
+            "--official-repo",
+            str(checkout),
+            "--model-id",
+            "owner/model",
+            "--limit",
+            "1",
+            "--output",
+            str(output),
+        ]
+    )
+
+    assert exit_code == 0
+    result = json.loads(output.read_text(encoding="utf-8"))
+    assert result["datasets"][dataset_id]["errors"] == {
+        "del": 1,
+        "ins": 0,
+        "sub": 0,
+    }
+    assert result["datasets"][dataset_id]["top_errors"][0]["row"] == 0
