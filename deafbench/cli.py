@@ -53,7 +53,12 @@ def _run_recorder(recorder_args: list[str]) -> int:
 
 def _run_benchmark(benchmark_args: list[str]) -> int:
     """Lazy-load and run the optional benchmark orchestration."""
-    from .benchmark.runner import main as benchmark_main
+    try:
+        from .benchmark.runner import main as benchmark_main
+    except ModuleNotFoundError as exc:
+        if exc.name == "deafbench.benchmark.runner":
+            raise SystemExit("Benchmark runtime is not available in this build.") from exc
+        raise
     return benchmark_main(benchmark_args)
 
 
