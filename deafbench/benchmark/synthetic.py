@@ -68,8 +68,8 @@ def create_whisperspeech_generator() -> tuple[SpeechGenerator, TTSInfo]:
     """Create one reusable WhisperSpeech pipeline and its provenance."""
     try:
         from whisperspeech.pipeline import Pipeline
-    except ImportError as exc:
-        if exc.name not in {"whisperspeech", "whisperspeech.pipeline"}:
+    except ModuleNotFoundError as exc:
+        if exc.name != "whisperspeech":
             raise
         raise RuntimeError(
             "WhisperSpeech is not installed. Run: "
@@ -263,7 +263,12 @@ def _validate_synthetic_set(
         raise ValueError("Invalid TTS provenance")
     engine = first_tts.get("engine")
     version = first_tts.get("version")
-    if not isinstance(engine, str) or not engine or not isinstance(version, str) or not version:
+    if not (
+        isinstance(engine, str)
+        and engine
+        and isinstance(version, str)
+        and version
+    ):
         raise ValueError("Invalid TTS provenance")
     expected_fingerprint = generation_fingerprint(
         references,
