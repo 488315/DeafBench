@@ -18,6 +18,7 @@ benchmark = [
     "numpy>=1.26",
     "soundfile>=0.12",
     "WhisperSpeech>=0.8.9",
+    "webdataset>=1.0.2,<2.0.0",
 ]
 local-models = [
     "faster-whisper>=1.2.1,<2.0.0",
