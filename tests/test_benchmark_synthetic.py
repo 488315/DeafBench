@@ -1,6 +1,8 @@
-import json
 import builtins
+import json
 import os
+import sys
+import types
 import wave
 from pathlib import Path
 
@@ -411,6 +413,80 @@ def test_generator_preserves_incompatible_pipeline_import_error(
     monkeypatch.setattr(builtins, "__import__", failing_import)
     with pytest.raises(ImportError, match="cannot import name 'Pipeline'"):
         create_whisperspeech_generator()
+
+
+def test_generator_explains_missing_whisperspeech_package(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original_import = builtins.__import__
+
+    def failing_import(name: str, *args: object, **kwargs: object) -> object:
+        if name == "whisperspeech.pipeline":
+            raise ModuleNotFoundError(
+                "No module named 'whisperspeech'",
+                name="whisperspeech",
+            )
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", failing_import)
+    with pytest.raises(
+        RuntimeError,
+        match=r'python -m pip install "deafbench\[benchmark\]"',
+    ):
+        create_whisperspeech_generator()
+
+
+def test_generator_reuses_pipeline_and_reports_actual_audio(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple[Path, str, str]] = []
+    instances = 0
+
+    class FakePipeline:
+        def __init__(self) -> None:
+            nonlocal instances
+            instances += 1
+
+        def generate_to_file(self, path: str, text: str, *, lang: str) -> None:
+            output = Path(path)
+            output.write_bytes(b"fake wave")
+            calls.append((output, text, lang))
+
+    whisperspeech = types.ModuleType("whisperspeech")
+    whisperspeech.__path__ = []  # type: ignore[attr-defined]
+    pipeline = types.ModuleType("whisperspeech.pipeline")
+    pipeline.Pipeline = FakePipeline  # type: ignore[attr-defined]
+    soundfile = types.ModuleType("soundfile")
+
+    def read_audio(
+        path: Path,
+        *,
+        dtype: str,
+        always_2d: bool,
+    ) -> tuple[np.ndarray, int]:
+        assert path.read_bytes() == b"fake wave"
+        assert dtype == "float32"
+        assert always_2d is True
+        return np.ones((3, 1), dtype=np.float32), 22_050
+
+    soundfile.read = read_audio  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "whisperspeech", whisperspeech)
+    monkeypatch.setitem(sys.modules, "whisperspeech.pipeline", pipeline)
+    monkeypatch.setitem(sys.modules, "soundfile", soundfile)
+    monkeypatch.setattr(synthetic_module.metadata, "version", lambda _: "0.8.9")
+
+    generate, info = create_whisperspeech_generator()
+    first = generate("Stay seated.")
+    second = generate("Wait outside.")
+
+    assert info == TTSInfo("whisperspeech", "0.8.9")
+    assert instances == 1
+    assert [(text, lang) for _, text, lang in calls] == [
+        ("Stay seated.", "en"),
+        ("Wait outside.", "en"),
+    ]
+    assert first.sample_rate == second.sample_rate == 22_050
+    np.testing.assert_array_equal(first.samples, np.ones((3, 1)))
 
 
 def test_interrupted_promotion_restores_last_complete_set_on_failure(
