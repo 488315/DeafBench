@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from deafbench.benchmark.models import whisper as whisper_adapter
 from tools import transcribe_whisper
 from tools.transcribe_whisper import resolve_dataset_paths, transcribe_directory
 
@@ -168,3 +169,36 @@ def test_main_reports_invalid_dataset_as_parser_error(tmp_path, monkeypatch, cap
 
     assert exc_info.value.code == 2
     assert "Invalid dataset name" in capsys.readouterr().err
+
+
+def test_main_delegates_to_packaged_whisper_adapter(tmp_path, monkeypatch):
+    dataset_dir = tmp_path / "benchmarks" / "core-v1"
+    audio_dir = dataset_dir / "audio"
+    audio_dir.mkdir(parents=True)
+    _write_wav(audio_dir / "core-001.wav")
+    references = dataset_dir / "references.jsonl"
+    references.write_text(
+        '{"id":"core-001","text":"Hello"}\n',
+        encoding="utf-8",
+    )
+    output = dataset_dir / "model-a.jsonl"
+    calls = {}
+
+    def run_whisper(audio, refs, destination, *, model_id):
+        calls.update(
+            audio_dir=audio,
+            references=refs,
+            output=destination,
+            model_id=model_id,
+        )
+
+    monkeypatch.setattr(whisper_adapter, "run_whisper", run_whisper)
+
+    transcribe_whisper.main(["--repo-root", str(tmp_path)])
+
+    assert calls == {
+        "audio_dir": audio_dir,
+        "references": references,
+        "output": output,
+        "model_id": "turbo",
+    }

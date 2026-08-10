@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from deafbench.benchmark.models import whisper_at as whisper_at_adapter
 from tools import transcribe_whisper_at
 from tools.transcribe_whisper_at import (
     extract_audio_tags,
@@ -238,3 +239,51 @@ def test_main_rejects_invalid_at_time_res_before_model_loading(
 
     assert exc_info.value.code == 2
     assert "at-time-res" in capsys.readouterr().err.lower()
+
+
+def test_main_delegates_to_packaged_whisper_at_adapter(tmp_path, monkeypatch):
+    dataset_dir = tmp_path / "benchmarks" / "core-v1"
+    audio_dir = dataset_dir / "audio"
+    audio_dir.mkdir(parents=True)
+    _write_wav(audio_dir / "core-001.wav")
+    references = dataset_dir / "references.jsonl"
+    references.write_text(
+        '{"id":"core-001","text":"Hello"}\n',
+        encoding="utf-8",
+    )
+    output = dataset_dir / "model-b.jsonl"
+    calls = {}
+
+    def run_whisper_at(
+        audio,
+        refs,
+        destination,
+        *,
+        model_id,
+        at_time_res,
+        top_k,
+        p_threshold,
+    ):
+        calls.update(
+            audio_dir=audio,
+            references=refs,
+            output=destination,
+            model_id=model_id,
+            at_time_res=at_time_res,
+            top_k=top_k,
+            p_threshold=p_threshold,
+        )
+
+    monkeypatch.setattr(whisper_at_adapter, "run_whisper_at", run_whisper_at)
+
+    transcribe_whisper_at.main(["--repo-root", str(tmp_path)])
+
+    assert calls == {
+        "audio_dir": audio_dir,
+        "references": references,
+        "output": output,
+        "model_id": "medium.en",
+        "at_time_res": 10.0,
+        "top_k": 5,
+        "p_threshold": -1.0,
+    }
