@@ -106,8 +106,10 @@ def test_builder_regenerates_only_predeclared_samples(tmp_path: Path):
         ).hexdigest()
         with wave.open(str(destination / "audio-synthetic" / f"{sample_id}.wav")) as wav:
             pcm = np.frombuffer(wav.readframes(wav.getnframes()), dtype="<i2")
-        assert not np.any(pcm[: 48_000 // 5])
-        assert not np.any(pcm[-48_000 // 5 :])
+        assert not np.any(pcm[: 48_000 // 10])
+        assert not np.any(pcm[-48_000 // 10 :])
+        assert manifest[sample_id]["scene"]["speech"]["start_ms"] == 100
+        assert manifest[sample_id]["scene"]["edge_silence_ms"] == 100
     assert manifest["core-019"]["replacement_reason"] is None
     assert manifest["core-019"]["audio_sha256"] == parent_hashes["core-019"]
     assert manifest["core-019"]["validation_speech_sha256"] is None

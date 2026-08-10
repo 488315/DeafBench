@@ -6,7 +6,7 @@ import hashlib
 import os
 import shutil
 import tempfile
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Mapping, Protocol, cast
 
@@ -24,7 +24,7 @@ REPLACEMENT_REASONS: Mapping[str, str] = {
     "core-016": "questionable synthesis truncates typed DIGIT_SEQUENCE",
 }
 
-EDGE_SILENCE_MS = 200
+EDGE_SILENCE_MS = 100
 
 
 @dataclass(frozen=True)
@@ -71,6 +71,28 @@ def _scene_metadata(plan: Any) -> dict[str, Any]:
             for event in plan.events
         ],
     }
+
+
+def _compact_scene_edges(plan: Any) -> Any:
+    """Reduce only the silent scene margins to the predeclared minimum."""
+    shift_ms = plan.speech_start_ms - EDGE_SILENCE_MS
+    if shift_ms < 0 or plan.scene_end_ms - plan.speech_end_ms < shift_ms:
+        raise ValueError("scene does not have enough edge margin to compact")
+    return replace(
+        plan,
+        speech_start_ms=plan.speech_start_ms - shift_ms,
+        speech_end_ms=plan.speech_end_ms - shift_ms,
+        scene_end_ms=plan.scene_end_ms - 2 * shift_ms,
+        background_end_ms=plan.background_end_ms - 2 * shift_ms,
+        events=tuple(
+            replace(
+                event,
+                start_ms=event.start_ms - shift_ms,
+                end_ms=event.end_ms - shift_ms,
+            )
+            for event in plan.events
+        ),
+    )
 
 
 def build_synthetic_v2_candidates(
@@ -139,6 +161,7 @@ def build_synthetic_v2_candidates(
                     seed=seed,
                     scene_profile=DEFAULT_SCENE_PROFILE,
                 )
+                plan = _compact_scene_edges(plan)
                 mixed = mix_scene(speech, plan)
                 edge_frames = round(plan.sample_rate * EDGE_SILENCE_MS / 1000)
                 mixed[:edge_frames] = 0
