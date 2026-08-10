@@ -6,6 +6,12 @@ from .metrics import evaluate_dataset
 from .report import generate_markdown_report
 
 
+_BENCHMARK_RUNTIME_UNAVAILABLE = (
+    "Benchmark runtime is not available in this build; use `deafbench compare` "
+    "until a release with benchmark runner support is installed."
+)
+
+
 def format_terminal_output(metrics: dict) -> str:
     lines = [
         "DeafBench v0.1",
@@ -57,9 +63,7 @@ def _run_benchmark(benchmark_args: list[str]) -> int:
         from .benchmark.runner import main as benchmark_main
     except ModuleNotFoundError as exc:
         if exc.name == "deafbench.benchmark.runner":
-            raise SystemExit(
-                "Benchmark runtime is not available in this build."
-            ) from exc
+            raise SystemExit(_BENCHMARK_RUNTIME_UNAVAILABLE) from exc
         raise
     return benchmark_main(benchmark_args)
 
