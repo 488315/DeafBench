@@ -54,7 +54,9 @@ def _is_safe_reference_id(sample_id: object) -> bool:
         return False
     if sample_id != sample_id.strip() or sample_id in {".", ".."}:
         return False
-    if "\x00" in sample_id or any(char in sample_id for char in ("/", "\\", ":")):
+    if "\x00" in sample_id or any(
+        char in sample_id for char in ("/", "\\", ":")
+    ):
         return False
     candidate = Path(sample_id)
     return not candidate.is_absolute() and not candidate.drive
@@ -62,8 +64,12 @@ def _is_safe_reference_id(sample_id: object) -> bool:
 
 def _string_list(record: Mapping[str, Any], key: str) -> list[str]:
     value = record.get(key, [])
-    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
-        raise ValueError(f"Invalid reference record: {key} must be a list of strings")
+    if not isinstance(value, list) or not all(
+        isinstance(item, str) for item in value
+    ):
+        raise ValueError(
+            f"Invalid reference record: {key} must be a list of strings"
+        )
     return value
 
 
@@ -84,7 +90,8 @@ def load_reference_records(path: Path) -> tuple[Mapping[str, Any], ...]:
                 ) from exc
             if not isinstance(value, dict):
                 raise ValueError(
-                    f"Invalid reference record on line {line_number}: expected an object"
+                    "Invalid reference record on line "
+                    f"{line_number}: expected an object"
                 )
 
             sample_id = value.get("id")
@@ -93,7 +100,8 @@ def load_reference_records(path: Path) -> tuple[Mapping[str, Any], ...]:
             text = value.get("text")
             if not isinstance(text, str):
                 raise ValueError(
-                    f"Invalid reference record on line {line_number}: text must be a string"
+                    "Invalid reference record on line "
+                    f"{line_number}: text must be a string"
                 )
             if sample_id in seen_ids:
                 raise ValueError(f"Duplicate reference ID: {sample_id}")
@@ -111,7 +119,9 @@ def load_reference_records(path: Path) -> tuple[Mapping[str, Any], ...]:
 
 def load_reference_ids(path: Path) -> tuple[str, ...]:
     """Return validated IDs through the benchmark's single reference parser."""
-    return tuple(cast(str, record["id"]) for record in load_reference_records(path))
+    return tuple(
+        cast(str, record["id"]) for record in load_reference_records(path)
+    )
 
 
 def validate_wav_format(path: Path) -> None:
@@ -178,7 +188,9 @@ def resolve_run_paths(
     source: ResolvedAudioSource,
 ) -> RunPaths:
     """Return deterministic workspace paths for one model and audio source."""
-    dataset_dir = Path(repo_root) / "benchmarks" / validate_dataset_name(dataset)
+    dataset_dir = (
+        Path(repo_root) / "benchmarks" / validate_dataset_name(dataset)
+    )
     run_dir = dataset_dir / "runs" / model / source
     return RunPaths(
         dataset_dir=dataset_dir,
@@ -221,7 +233,8 @@ def atomic_write_text(path: Path, text: str) -> None:
 
 def atomic_write_json(path: Path, value: Mapping[str, Any]) -> None:
     """Atomically write a deterministic JSON object."""
-    _atomic_write_text(path, json.dumps(value, indent=2, sort_keys=True) + "\n")
+    text = json.dumps(value, indent=2, sort_keys=True) + "\n"
+    _atomic_write_text(path, text)
 
 
 def atomic_write_jsonl(

@@ -262,7 +262,10 @@ def test_atomic_text_json_and_jsonl_writers_promote_complete_files(
     assert json.loads(json_path.read_text(encoding="utf-8")) == {
         "model": "whisper"
     }
-    assert [json.loads(line) for line in jsonl_path.read_text().splitlines()] == [
+    parsed_records = [
+        json.loads(line) for line in jsonl_path.read_text().splitlines()
+    ]
+    assert parsed_records == [
         {"id": "s1"},
         {"id": "s2"},
     ]
