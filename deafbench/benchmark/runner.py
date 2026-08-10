@@ -34,7 +34,18 @@ if TYPE_CHECKING:
     from deafbench.benchmark.synthetic import SpeechGenerator, TTSInfo
 
 
-ModelName = Literal["whisper", "whisper-at"]
+ModelName = Literal[
+    "whisper",
+    "whisper-at",
+    "faster-whisper",
+    "distil-whisper",
+]
+MODEL_NAMES: tuple[ModelName, ...] = (
+    "whisper",
+    "whisper-at",
+    "faster-whisper",
+    "distil-whisper",
+)
 SyntheticFactory = Callable[[], tuple["SpeechGenerator", "TTSInfo"]]
 SyntheticGenerator = Callable[..., Path]
 ModelRunner = Callable[[Path, Path, Path], ModelRunInfo]
@@ -64,7 +75,7 @@ class BenchmarkResult:
 
 
 def _validate_config(config: BenchmarkConfig) -> None:
-    if config.model not in ("whisper", "whisper-at"):
+    if config.model not in MODEL_NAMES:
         raise ValueError(f"Unsupported benchmark model: {config.model}")
     if config.audio_source not in ("auto", "human", "synthetic"):
         raise ValueError(f"Unsupported audio source: {config.audio_source}")
@@ -128,9 +139,17 @@ def _default_model_runner(model: ModelName) -> ModelRunner:
         from deafbench.benchmark.models.whisper import run_whisper
 
         return run_whisper
-    from deafbench.benchmark.models.whisper_at import run_whisper_at
+    if model == "whisper-at":
+        from deafbench.benchmark.models.whisper_at import run_whisper_at
 
-    return run_whisper_at
+        return run_whisper_at
+    if model == "faster-whisper":
+        from deafbench.benchmark.models.faster_whisper import run_faster_whisper
+
+        return run_faster_whisper
+    from deafbench.benchmark.models.distil_whisper import run_distil_whisper
+
+    return run_distil_whisper
 
 
 def _evaluate(
@@ -313,9 +332,10 @@ def run_benchmark(
         )
     _require_complete_audio(paths.references, audio_dir, source)
 
-    runner = (
-        whisper_runner if config.model == "whisper" else whisper_at_runner
-    )
+    runner = {
+        "whisper": whisper_runner,
+        "whisper-at": whisper_at_runner,
+    }.get(config.model)
     metrics = _build_run_bundle(
         config,
         paths,
@@ -339,7 +359,7 @@ def _parser() -> argparse.ArgumentParser:
         description="Run a complete DeafBench model benchmark.",
     )
     parser.add_argument("dataset")
-    parser.add_argument("--model", required=True, choices=("whisper", "whisper-at"))
+    parser.add_argument("--model", required=True, choices=MODEL_NAMES)
     parser.add_argument(
         "--audio-source",
         choices=("auto", "human", "synthetic"),
