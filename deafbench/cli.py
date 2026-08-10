@@ -51,6 +51,12 @@ def _run_recorder(recorder_args: list[str]) -> int:
     return recorder_main(recorder_args)
 
 
+def _run_benchmark(benchmark_args: list[str]) -> int:
+    """Lazy-load and run the optional benchmark orchestration."""
+    from .benchmark.runner import main as benchmark_main
+    return benchmark_main(benchmark_args)
+
+
 def _build_recorder_args(parsed: argparse.Namespace) -> list[str]:
     recorder_args = ["--dataset", parsed.dataset]
     for option, value in (
@@ -96,11 +102,39 @@ def main(args: Optional[List[str]] = None) -> int | None:
     recorder_parser.add_argument("--repo-root", help="Workspace root for benchmark files")
     recorder_parser.add_argument("--references", dest="recorder_references", help="Reference JSONL override")
     recorder_parser.add_argument("--audio-dir", help="Recorded WAV output directory")
+
+    # benchmark command
+    benchmark_parser = subparsers.add_parser(
+        "benchmark",
+        help="Run a complete DeafBench model benchmark.",
+    )
+    benchmark_parser.add_argument("dataset", help="Benchmark directory under benchmarks/")
+    benchmark_parser.add_argument("--model", required=True, choices=("whisper", "whisper-at"))
+    benchmark_parser.add_argument(
+        "--audio-source",
+        choices=("auto", "human", "synthetic"),
+        default="auto",
+    )
+    benchmark_parser.add_argument("--repo-root", dest="benchmark_repo_root")
+    benchmark_parser.add_argument("--scene-profile", default="default-v1")
+    benchmark_parser.add_argument("--seed", type=int, default=42)
     
     parsed = parser.parse_args(args)
 
     if parsed.command == "recorder":
         return _run_recorder(_build_recorder_args(parsed))
+
+    if parsed.command == "benchmark":
+        benchmark_args = [
+            parsed.dataset,
+            "--model", parsed.model,
+            "--audio-source", parsed.audio_source,
+            "--scene-profile", parsed.scene_profile,
+            "--seed", str(parsed.seed),
+        ]
+        if parsed.benchmark_repo_root is not None:
+            benchmark_args.extend(["--repo-root", parsed.benchmark_repo_root])
+        return _run_benchmark(benchmark_args)
     
     try:
         references = parse_jsonl(parsed.references)
