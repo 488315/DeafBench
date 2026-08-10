@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import wave
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -66,6 +67,16 @@ def _decode_transcription(processor: Any, generated_ids: Any) -> str:
     return decoded[0]
 
 
+def _read_pcm16_mono(wav_path: Path, torch: Any) -> Any:
+    with wave.open(str(wav_path), "rb") as handle:
+        if handle.getnchannels() != 1 or handle.getsampwidth() != 2:
+            raise ValueError(f"Qwen3-ASR requires mono PCM16 WAV: {wav_path}")
+        frames = handle.readframes(handle.getnframes())
+    return torch.frombuffer(frames, dtype=torch.int16).clone().to(
+        dtype=torch.float32
+    ).div_(32_768)
+
+
 def run_qwen3_asr(
     audio_dir: Path,
     references: Path,
@@ -93,7 +104,7 @@ def run_qwen3_asr(
     with runtime.torch.inference_mode():
         for wav_path in wav_paths:
             inputs = processor.apply_transcription_request(
-                audio=str(wav_path),
+                audio=_read_pcm16_mono(wav_path, runtime.torch),
                 language="English",
             ).to(model.device, model.dtype)
             output_ids = model.generate(

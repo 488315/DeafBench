@@ -48,12 +48,32 @@ class _FakeOutput:
         return "generated-ids"
 
 
+class _FakeAudio:
+    shape = (16,)
+
+    def clone(self) -> "_FakeAudio":
+        return self
+
+    def to(self, *, dtype: object) -> "_FakeAudio":
+        assert dtype == "float32"
+        return self
+
+    def div_(self, divisor: int) -> "_FakeAudio":
+        assert divisor == 32_768
+        return self
+
+
 class _FakeProcessor:
     def __init__(self) -> None:
-        self.audio: list[str] = []
+        self.audio: list[object] = []
         self.inputs: list[_FakeInputs] = []
 
-    def apply_transcription_request(self, *, audio: str, language: str) -> _FakeInputs:
+    def apply_transcription_request(
+        self,
+        *,
+        audio: object,
+        language: str,
+    ) -> _FakeInputs:
         assert language == "English"
         inputs = _FakeInputs()
         self.audio.append(audio)
@@ -116,6 +136,9 @@ def test_qwen_adapter_pins_safe_runtime_and_writes_sorted_predictions(
         torch=SimpleNamespace(
             cuda=SimpleNamespace(is_available=lambda: True),
             device=lambda name: name,
+            frombuffer=lambda frames, dtype: _FakeAudio(),
+            int16="int16",
+            float32="float32",
             inference_mode=nullcontext,
         ),
     )
@@ -138,10 +161,8 @@ def test_qwen_adapter_pins_safe_runtime_and_writes_sorted_predictions(
     assert model.evaluated is True
     assert model.generations == [256, 256]
     assert all(inputs.moves == [("cuda", "bfloat16")] for inputs in processor.inputs)
-    assert [Path(path).name for path in processor.audio] == [
-        "sample-001.wav",
-        "sample-002.wav",
-    ]
+    assert all(not isinstance(audio, (str, Path)) for audio in processor.audio)
+    assert all(audio.shape == (16,) for audio in processor.audio)
     assert [json.loads(line) for line in output.read_text().splitlines()] == [
         {"id": "sample-001", "text": "transcript 1"},
         {"id": "sample-002", "text": "transcript 2"},
