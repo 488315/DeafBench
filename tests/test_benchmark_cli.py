@@ -127,3 +127,7 @@ def test_benchmark_command_prints_complete_terminal_summary(
         "Report:",
     ):
         assert expected in output
+    assert "0.0%" in output
+    assert "100.0%" in output
+    assert str(result.predictions) in output
+    assert str(result.report) in output

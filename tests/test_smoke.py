@@ -38,7 +38,10 @@ def test_benchmark_help_does_not_require_checkout_or_heavy_dependencies(
     subprocess_env = {
         key: value
         for key, value in os.environ.items()
-        if not key.startswith("COV_CORE") and key != "COVERAGE_PROCESS_START"
+        if (
+            not key.startswith("COV_CORE")
+            and key not in {"COVERAGE_PROCESS_START", "PYTHONPATH"}
+        )
     }
     result = subprocess.run(
         [sys.executable, "-m", "deafbench", "benchmark", "--help"],
