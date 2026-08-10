@@ -63,6 +63,22 @@ two highest completed-set WERs. That is a prioritization signal, not permission
 to tune on public test labels: candidate changes must be selected and measured
 on corresponding training or validation data.
 
+## Six-set utterance diagnostics
+
+GigaSpeech-Cleaned adds 18,757 analyzed rows. Its aggregate 7,332 deletions,
+7,212 insertions, and 18,526 substitutions exactly reproduce the official
+scorer's **8.33% WER**. The largest retained row pairs reinforce the need for
+data review before model changes: row 18,143 has 1.338 seconds of audio but a
+50-word reference, and row 505 has a fluent hypothesis substantially longer
+than its supplied reference. Other high-error rows contain noisy reference
+wording, conversational profanity, financial language, esports names, and
+numbers.
+
+These observations are diagnostic evidence, not causal labels. Audio review
+and corresponding train/validation splits are required to distinguish model
+errors from truncation, segmentation, or transcription noise. AMI remains the
+highest-WER completed set, followed by GigaSpeech-Cleaned and Earnings22.
+
 ## Full LibriSpeech test-clean baseline
 
 The pinned official scorer measured **1.31% WER** over all 2,620 rows and
@@ -109,3 +125,13 @@ deletions, 2,117 insertions, and 3,856 substitutions. At 89.4465 RTFx,
 within the RTX 4070 constraint. Meeting speech is now the largest measured
 opportunity, but overlap, disfluency, names, segmentation, and acoustic
 conditions require utterance-level evidence before selecting an intervention.
+
+## Full GigaSpeech-Cleaned baseline
+
+The official loader retained **18,757 of 18,768 raw rows** after removing 11
+references that normalized to empty or its ignore sentinel. The official
+scorer measured **8.33% WER** over 126,515.196 seconds of audio: 7,332
+deletions, 7,212 insertions, and 18,526 substitutions. At 99.2171 RTFx,
+2,025.625 seconds wall time, and 2,567,505,408 peak VRAM bytes, batch 16 stayed
+within the RTX 4070 constraint. Two identical official scoring runs produced
+SHA-256 `10FE1A88D5AEBAA6B968D4B937CEBBE4BF9896C562D72A9063FEC1856686FFB6`.

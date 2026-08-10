@@ -27,14 +27,15 @@ def test_zipformer_predictions_repeat_across_independent_batch_sizes():
     ] == [tuple(row[field] for field in _STABLE_FIELDS) for row in full_run]
 
 
-def test_five_set_error_analysis_reproduces_official_aggregates():
+def test_six_set_error_analysis_reproduces_official_aggregates():
     score = json.loads(
-        (_RESULTS / "zipformer-public-5set-score.json").read_text(encoding="utf-8")
+        (_RESULTS / "zipformer-public-6set-score.json").read_text(encoding="utf-8")
     )
     analysis = json.loads(
-        (_RESULTS / "zipformer-public-5set-errors.json").read_text(encoding="utf-8")
+        (_RESULTS / "zipformer-public-6set-errors.json").read_text(encoding="utf-8")
     )
 
+    assert score["evaluation"]["completed_sets"] == 6
     for score_key, metrics in score["datasets"].items():
         dataset_id = score_key.split(" | ", 1)[1]
         assert analysis["datasets"][dataset_id]["errors"] == {
