@@ -1,7 +1,4 @@
 {
-  "composite_wer": {
-    "soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M": 1.73
-  },
   "datasets": {
     "soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M | hf-audio-open-asr-leaderboard_librispeech_test.clean": {
       "audio_length": 68.865,
@@ -12,5 +9,28 @@
       "sub": 3,
       "wer": 1.73
     }
+  },
+  "evaluation": {
+    "completed_sets": 0,
+    "expected_rows": {
+      "hf-audio-open-asr-leaderboard_ami_cleaned_test": 7805,
+      "hf-audio-open-asr-leaderboard_earnings22_test": 2741,
+      "hf-audio-open-asr-leaderboard_gigaspeech_cleaned_test": 18768,
+      "hf-audio-open-asr-leaderboard_librispeech_test.clean": 2620,
+      "hf-audio-open-asr-leaderboard_librispeech_test.other": 2939,
+      "hf-audio-open-asr-leaderboard_spgispeech_test": 39341,
+      "hf-audio-open-asr-leaderboard_voxpopuli_cleaned_aa_test": 628
+    },
+    "expected_sets": 7,
+    "observed_rows": {
+      "hf-audio-open-asr-leaderboard_librispeech_test.clean": 2
+    },
+    "status": "partial"
+  },
+  "partial_mean_wer": {
+    "soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M": 1.73
+  },
+  "upstream_wer_sum": {
+    "soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M": 1.73
   }
 }
