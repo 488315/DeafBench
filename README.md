@@ -80,11 +80,16 @@ build synthetic scenes. OpenAI Whisper and Whisper-AT are separate inference
 backends, so install the backend shown immediately before its benchmark command.
 The extra does not install either inference backend.
 
-Two additional local models use the Faster-Whisper runtime. Install the local
-model extra once, then choose either model name:
+Two additional local models use the Faster-Whisper runtime. For existing human
+audio, install the local-model extra. Synthetic runs also need the benchmark
+extra that supplies WhisperSpeech and its runtime dependencies:
 
 ```powershell
+# Existing human audio
 python -m pip install "deafbench[local-models]"
+
+# Synthetic audio
+python -m pip install "deafbench[benchmark,local-models]"
 
 # CPU-friendly INT8 baseline; downloads small.en on first use.
 deafbench benchmark core-v1 --model faster-whisper
