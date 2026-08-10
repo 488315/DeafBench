@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from deafbench.benchmark.models import whisper_at as whisper_at_adapter
 from tools import transcribe_whisper_at
 from tools.transcribe_whisper_at import (
     extract_audio_tags,
@@ -91,6 +92,19 @@ def test_extract_audio_tags_keeps_broad_labels_raw_only():
 
     assert raw_tags == ["Door", "Sliding door", "Telephone"]
     assert sounds == []
+
+
+def test_extract_audio_tags_preserves_tolerant_legacy_behavior():
+    parsed = [
+        "invalid segment",
+        {"audio tags": "invalid tags"},
+        {"audio tags": [(), (None, 1.0), ("Alarm", 0.9)]},
+    ]
+
+    raw_tags, sounds = extract_audio_tags(parsed)
+
+    assert raw_tags == ["Alarm"]
+    assert sounds == ["[alarm]"]
 
 
 def test_transcribe_directory_writes_structured_model_b_predictions(tmp_path):
@@ -238,3 +252,93 @@ def test_main_rejects_invalid_at_time_res_before_model_loading(
 
     assert exc_info.value.code == 2
     assert "at-time-res" in capsys.readouterr().err.lower()
+
+
+def test_main_delegates_to_packaged_whisper_at_adapter(tmp_path, monkeypatch):
+    dataset_dir = tmp_path / "benchmarks" / "core-v1"
+    audio_dir = dataset_dir / "audio"
+    audio_dir.mkdir(parents=True)
+    _write_wav(audio_dir / "core-001.wav")
+    references = dataset_dir / "references.jsonl"
+    references.write_text(
+        '{"id":"core-001","text":"Hello"}\n',
+        encoding="utf-8",
+    )
+    output = dataset_dir / "model-b.jsonl"
+    calls = {}
+
+    def run_whisper_at(
+        audio,
+        refs,
+        destination,
+        *,
+        model_id,
+        at_time_res,
+        top_k,
+        p_threshold,
+    ):
+        calls.update(
+            audio_dir=audio,
+            references=refs,
+            output=destination,
+            model_id=model_id,
+            at_time_res=at_time_res,
+            top_k=top_k,
+            p_threshold=p_threshold,
+        )
+
+    monkeypatch.setattr(whisper_at_adapter, "run_whisper_at", run_whisper_at)
+
+    transcribe_whisper_at.main(["--repo-root", str(tmp_path)])
+
+    assert calls == {
+        "audio_dir": audio_dir,
+        "references": references,
+        "output": output,
+        "model_id": "medium.en",
+        "at_time_res": 10.0,
+        "top_k": 5,
+        "p_threshold": -1.0,
+    }
+
+
+def test_main_reports_missing_whisper_at_without_traceback(tmp_path, monkeypatch):
+    message = (
+        "Whisper-AT is not installed. See the upstream "
+        "Whisper-AT installation instructions."
+    )
+
+    def fail_run(*_args, **_kwargs):
+        raise RuntimeError(message)
+
+    monkeypatch.setattr(whisper_at_adapter, "run_whisper_at", fail_run)
+
+    with pytest.raises(SystemExit, match="Whisper-AT is not installed"):
+        transcribe_whisper_at.main(["--repo-root", str(tmp_path)])
+
+
+def test_script_resolves_package_for_valid_direct_invocation(tmp_path):
+    script = Path(transcribe_whisper_at.__file__).resolve()
+    dataset_dir = tmp_path / "benchmarks" / "core-v1"
+    audio_dir = dataset_dir / "audio"
+    audio_dir.mkdir(parents=True)
+    _write_wav(audio_dir / "core-001.wav")
+    (dataset_dir / "references.jsonl").write_text(
+        '{"id":"core-001","text":"Hello"}\n',
+        encoding="utf-8",
+    )
+    env = os.environ.copy()
+    env["PYTHONPATH"] = ""
+
+    result = subprocess.run(
+        [sys.executable, "-S", str(script), "--repo-root", str(tmp_path)],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 1
+    assert "Whisper-AT is not installed" in result.stderr
+    assert "No module named 'deafbench'" not in result.stderr

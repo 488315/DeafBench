@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 import tempfile
 import wave
 from collections.abc import Callable
@@ -13,6 +14,9 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 REFERENCES = REPO_ROOT / "benchmarks" / "core-v1" / "references.jsonl"
 AUDIO_DIR = REPO_ROOT / "benchmarks" / "core-v1" / "audio"
 OUTPUT = REPO_ROOT / "benchmarks" / "core-v1" / "model-a.jsonl"
+MISSING_BACKEND_MESSAGE = (
+    "Whisper is not installed. Run: python -m pip install -U openai-whisper"
+)
 
 
 def resolve_dataset_paths(repo_root: Path, dataset: str = "core-v1") -> tuple[Path, Path, Path]:
@@ -167,34 +171,22 @@ def main(argv: list[str] | None = None) -> None:
     audio_dir = args.audio_dir or default_audio_dir
     output = args.output or default_output
 
+    if __package__ in {None, ""} and str(REPO_ROOT) not in sys.path:
+        sys.path.insert(0, str(REPO_ROOT))
+    from deafbench.benchmark.models.whisper import run_whisper
+
     try:
-        import whisper
-    except ImportError as exc:
-        raise SystemExit(
-            "Whisper is not installed. Run: python -m pip install -U openai-whisper"
-        ) from exc
-
-    model = whisper.load_model("turbo")
-
-    def transcribe(wav: Path) -> str:
-        print(f"Transcribing {wav.stem}...")
-        result = model.transcribe(
-            str(wav),
-            language="en",
-            task="transcribe",
-            verbose=False,
+        run_whisper(
+            audio_dir,
+            references,
+            output,
+            model_id="turbo",
         )
-        text = result["text"]
-        print(f"  {text}")
-        return text
-
-    records = transcribe_directory(
-        audio_dir,
-        output,
-        transcribe,
-        references=references,
-    )
-    print(f"\nSaved {len(records)} predictions to {output}")
+    except RuntimeError as exc:
+        if str(exc) != MISSING_BACKEND_MESSAGE:
+            raise
+        raise SystemExit(MISSING_BACKEND_MESSAGE) from None
+    print(f"Saved predictions to {output}")
 
 
 if __name__ == "__main__":
