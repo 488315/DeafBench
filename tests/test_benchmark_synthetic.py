@@ -1,14 +1,18 @@
 import json
+import builtins
+import os
 import wave
 from pathlib import Path
 
 import numpy as np
 import pytest
 
+import deafbench.benchmark.synthetic as synthetic_module
 from deafbench.benchmark.scenes import plan_scene
 from deafbench.benchmark.synthetic import (
     SpeechAudio,
     TTSInfo,
+    create_whisperspeech_generator,
     generate_synthetic_set,
     generation_fingerprint,
     synthetic_set_is_current,
@@ -35,7 +39,11 @@ def _fake_speech(text: str) -> SpeechAudio:
     )
 
 
-def _generate(tmp_path: Path) -> tuple[Path, Path, Path]:
+def _generate(
+    tmp_path: Path,
+    *,
+    seed: int = 42,
+) -> tuple[Path, Path, Path]:
     references = _write_references(tmp_path / "references.jsonl")
     audio_dir = tmp_path / "audio-synthetic"
     manifest = generate_synthetic_set(
@@ -43,7 +51,7 @@ def _generate(tmp_path: Path) -> tuple[Path, Path, Path]:
         audio_dir,
         _fake_speech,
         TTSInfo("whisperspeech", "test"),
-        seed=42,
+        seed=seed,
     )
     return references, audio_dir, manifest
 
@@ -198,6 +206,7 @@ def test_untouched_matching_set_is_current(tmp_path: Path) -> None:
         "nonuniform_fingerprint",
         "nonuniform_seed",
         "missing_timing",
+        "missing_provenance",
         "unsafe_wav",
         "mismatched_wav",
         "unrecomputed_fingerprint",
@@ -232,6 +241,9 @@ def test_cache_rejects_incomplete_or_inconsistent_sets(
         _write_manifest(manifest, records)
     elif mutation == "missing_timing":
         records[0].pop("speech")
+        _write_manifest(manifest, records)
+    elif mutation == "missing_provenance":
+        records[0].pop("tts")
         _write_manifest(manifest, records)
     elif mutation == "unsafe_wav":
         records[0]["wav"] = "../ns-001.wav"
@@ -269,6 +281,188 @@ def test_cache_rejects_requested_generation_changes(tmp_path: Path) -> None:
         references,
         "future-v2",
         42,
+    )
+
+
+@pytest.mark.parametrize(
+    ("persisted_seed", "requested_seed"),
+    [(True, 1), (42.0, 42)],
+)
+def test_cache_rejects_non_integer_persisted_seed(
+    tmp_path: Path,
+    persisted_seed: object,
+    requested_seed: int,
+) -> None:
+    references, audio_dir, manifest = _generate(
+        tmp_path,
+        seed=requested_seed,
+    )
+    records = _manifest_records(manifest)
+    for record in records:
+        record["seed"] = persisted_seed
+    _write_manifest(manifest, records)
+
+    assert not synthetic_set_is_current(
+        audio_dir,
+        references,
+        "default-v1",
+        requested_seed,
+    )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "missing_event",
+        "wrong_event",
+        "event_timing",
+        "background_profile",
+        "background_snr",
+        "speech_timing",
+    ],
+)
+def test_cache_rejects_semantically_changed_scene_metadata(
+    tmp_path: Path,
+    mutation: str,
+) -> None:
+    references, audio_dir, manifest = _generate(tmp_path)
+    records = _manifest_records(manifest)
+    first = records[0]
+    events = first["events"]
+    assert isinstance(events, list) and events
+    background = first["background"]
+    speech = first["speech"]
+    assert isinstance(background, dict)
+    assert isinstance(speech, dict)
+
+    if mutation == "missing_event":
+        first["events"] = []
+    elif mutation == "wrong_event":
+        events[0]["label"] = "[knock]"
+    elif mutation == "event_timing":
+        events[0]["start_ms"] += 1
+        events[0]["end_ms"] += 1
+    elif mutation == "background_profile":
+        background["profile"] = "street-v1"
+    elif mutation == "background_snr":
+        background["snr_db"] = 12.0
+    elif mutation == "speech_timing":
+        speech["start_ms"] += 1
+
+    _write_manifest(manifest, records)
+    assert not synthetic_set_is_current(
+        audio_dir,
+        references,
+        "default-v1",
+        42,
+    )
+
+
+def test_cache_validation_never_imports_whisperspeech(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    references, audio_dir, _ = _generate(tmp_path)
+    original_import = builtins.__import__
+
+    def guarded_import(name: str, *args: object, **kwargs: object) -> object:
+        if name.startswith("whisperspeech"):
+            raise AssertionError("cache validation must not import WhisperSpeech")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+    assert synthetic_set_is_current(
+        audio_dir,
+        references,
+        "default-v1",
+        42,
+    )
+
+
+def test_generator_preserves_unrelated_import_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original_import = builtins.__import__
+
+    def failing_import(name: str, *args: object, **kwargs: object) -> object:
+        if name == "whisperspeech.pipeline":
+            raise ImportError("No module named 'torch'", name="torch")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", failing_import)
+    with pytest.raises(ImportError) as caught:
+        create_whisperspeech_generator()
+    assert caught.value.name == "torch"
+
+
+def test_interrupted_promotion_restores_last_complete_set_on_failure(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    references, audio_dir, _ = _generate(tmp_path)
+    before = {
+        path.name: path.read_bytes()
+        for path in audio_dir.iterdir()
+        if path.is_file()
+    }
+    backup = audio_dir.with_name(f".{audio_dir.name}-backup")
+    os.replace(audio_dir, backup)
+    original_replace = synthetic_module.os.replace
+
+    def failing_replace(source: object, destination: object) -> None:
+        source_path = Path(source)
+        if (
+            source_path.name.startswith(".audio-synthetic-")
+            and source_path != backup
+        ):
+            raise OSError("promotion failed")
+        original_replace(source, destination)
+
+    monkeypatch.setattr(synthetic_module.os, "replace", failing_replace)
+    with pytest.raises(OSError, match="promotion failed"):
+        generate_synthetic_set(
+            references,
+            audio_dir,
+            _fake_speech,
+            TTSInfo("whisperspeech", "test"),
+            seed=43,
+        )
+
+    after = {
+        path.name: path.read_bytes()
+        for path in audio_dir.iterdir()
+        if path.is_file()
+    }
+    assert after == before
+
+
+def test_backup_cleanup_failure_does_not_fail_committed_generation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    references, audio_dir, _ = _generate(tmp_path)
+    original_rmtree = synthetic_module.shutil.rmtree
+
+    def failing_cleanup(path: object, *args: object, **kwargs: object) -> None:
+        if Path(path).name == ".audio-synthetic-backup":
+            raise OSError("cleanup failed")
+        original_rmtree(path, *args, **kwargs)
+
+    monkeypatch.setattr(synthetic_module.shutil, "rmtree", failing_cleanup)
+    manifest = generate_synthetic_set(
+        references,
+        audio_dir,
+        _fake_speech,
+        TTSInfo("whisperspeech", "test"),
+        seed=43,
+    )
+
+    assert manifest.exists()
+    assert synthetic_set_is_current(
+        audio_dir,
+        references,
+        "default-v1",
+        43,
     )
 
 
