@@ -235,7 +235,12 @@ def _scene_metadata_matches(
 
 def _wav_frame_count(path: Path) -> int:
     with wave.open(str(path), "rb") as handle:
-        return handle.getnframes()
+        frame_count = handle.getnframes()
+        frame_width = handle.getnchannels() * handle.getsampwidth()
+        payload = handle.readframes(frame_count)
+    if len(payload) != frame_count * frame_width:
+        raise ValueError("Synthetic WAV payload is truncated")
+    return frame_count
 
 
 def _validate_synthetic_set(
