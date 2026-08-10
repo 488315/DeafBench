@@ -78,5 +78,7 @@ at 18.8164 RTFx. Earnings22 scored **7.68% official WER** over 2,737 evaluable
 rows at 86.5395 RTFx and 4,220,642,304 peak VRAM bytes. The three-set mean is
 4.43%. LibriSpeech test-other scored **3.01% official WER** over 2,939 rows,
 bringing the four-set mean to 4.08%; neither partial mean is the seven-set
-composite. See `results/zipformer-public-4set-score.json` for the current
+composite. AMI-Cleaned scored **10.30% official WER** over 7,715 evaluable
+rows at 89.4465 RTFx and 2,829,196,800 peak VRAM bytes, bringing the five-set
+mean to 5.32%. See `results/zipformer-public-5set-score.json` for the current
 machine-readable result.

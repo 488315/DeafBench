@@ -1,7 +1,7 @@
 # Zipformer baseline error analysis
 
-Status: four of seven public test sets are complete. Cross-domain analysis
-remains incomplete pending the other three public manifests.
+Status: five of seven public test sets are complete. Cross-domain analysis
+remains incomplete pending the other two public manifests.
 
 ## Evidence
 
@@ -23,13 +23,13 @@ the official scorer (1.73%).
 
 | Category | Diagnostic evidence | Priority before full baseline |
 |---|---|---|
-| Meetings and overlapping speech | Not represented | Await AMI-Cleaned results |
+| Meetings and overlapping speech | AMI-Cleaned is the hardest completed set at 10.30 WER | High; classify utterance errors before choosing a change |
 | Conversational speech | Not represented | Await public and private confirmation |
 | Accents | Not identified | Await per-dataset errors |
 | Financial terminology | Earnings22 is the hardest completed set at 7.68 WER | High; classify utterance errors before choosing a change |
 | Names and rare words | `Creighton` -> `Crichton` twice | High diagnostic signal |
 | Numbers and abbreviations | Not represented | Await full results |
-| Disfluencies | Not represented | Await AMI-Cleaned results |
+| Disfluencies | AMI-Cleaned aggregate errors do not isolate disfluencies | Await utterance-level alignment |
 | Long-form segmentation | Rows are about 34 seconds; no segmentation failure | Reassess across AMI/Earnings22 |
 | Substitutions | 3 | Current observed error type |
 | Insertions | 0 | No diagnostic evidence |
@@ -74,3 +74,14 @@ seconds of audio: 103 deletions, 144 insertions, and 1,343 substitutions. This
 is 1.70 WER points worse than test-clean under the same pinned model and
 decoder. Substitutions account for most of the gap; utterance-level alignment
 is still required before attributing it to acoustics, names, or rare words.
+
+## Full AMI-Cleaned baseline
+
+The official loader retained **7,715 of 7,805 raw rows** after removing 90
+references that normalized to empty or its ignore sentinel. The official
+scorer measured **10.30% WER** over 28,727.590 seconds of audio: 2,506
+deletions, 2,117 insertions, and 3,856 substitutions. At 89.4465 RTFx,
+566.743 seconds wall time, and 2,829,196,800 peak VRAM bytes, batch 16 stayed
+within the RTX 4070 constraint. Meeting speech is now the largest measured
+opportunity, but overlap, disfluency, names, segmentation, and acoustic
+conditions require utterance-level evidence before selecting an intervention.
