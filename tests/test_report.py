@@ -1,6 +1,43 @@
 from deafbench.report import generate_markdown_report
 
 
+def test_report_keeps_dual_critical_metrics_and_word_error_counts():
+    metrics = {
+        "samples": 1,
+        "wer": 50.0,
+        "substitutions": 1,
+        "insertions": 0,
+        "deletions": 0,
+        "word_errors_by_sample": [
+            {
+                "id": "sample-1",
+                "wer": 50.0,
+                "substitutions": 1,
+                "insertions": 0,
+                "deletions": 0,
+            }
+        ],
+        "critical_recall": 100.0,
+        "canonical_critical_recall": 100.0,
+        "strict_critical_recall": 0.0,
+        "matched_critical": 1,
+        "canonical_matched_critical": 1,
+        "strict_matched_critical": 0,
+        "total_critical": 1,
+        "critical_failures": [],
+        "non_speech_recall": None,
+        "total_sounds": 0,
+        "matched_sounds": 0,
+    }
+
+    report = generate_markdown_report(metrics, "refs.jsonl", "preds.jsonl")
+
+    assert "Strict lexical critical recall** | 0.0% (0/1)" in report
+    assert "Canonical semantic critical recall** | 100.0% (1/1)" in report
+    assert "WER substitutions** | 1" in report
+    assert "| `sample-1` | 50.0% | 1 | 0 | 0 |" in report
+
+
 def test_report_escapes_failure_table_cells():
     metrics = {
         "samples": 1,

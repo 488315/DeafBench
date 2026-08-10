@@ -180,6 +180,9 @@ def test_reference_id_rejects_unsafe_wav_names(
         {"id": "s1", "text": "hello", "critical": [], "sounds": "[alarm]"},
         {"id": "s1", "text": "hello", "critical": [1], "sounds": []},
         {"id": "s1", "text": "hello", "critical": [], "sounds": [1]},
+        {"id": "s1", "text": "hello", "critical": ["hello"], "sounds": [], "critical_types": []},
+        {"id": "s1", "text": "hello", "critical": ["hello"], "sounds": [], "critical_types": {"other": "TIME"}},
+        {"id": "s1", "text": "hello", "critical": ["hello"], "sounds": [], "critical_types": {"hello": "FUZZY"}},
     ],
 )
 def test_reference_schema_is_validated_before_audio_or_inference(

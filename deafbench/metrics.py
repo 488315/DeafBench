@@ -3,6 +3,7 @@ import re
 from typing import List, Dict, Any, Optional
 import jiwer
 from .parser import normalize_text
+from .critical_entities import ENTITY_TYPES, canonical_contains, strict_contains
 
 _NUMBER_VALUES = {
     "zero": 0,
@@ -269,12 +270,37 @@ def calculate_wer(references: List[str], predictions: List[str]) -> float:
         return float('nan')
 
 
+def _word_error_counts(reference: str, prediction: str) -> Dict[str, Any]:
+    """Return WER and edit counts for one reference/prediction pair."""
+    ref = reference if reference.strip() else " "
+    pred = prediction if prediction.strip() else " "
+    result = jiwer.process_words(ref, pred)
+    return {
+        "wer": float(result.wer) * 100.0,
+        "substitutions": result.substitutions,
+        "insertions": result.insertions,
+        "deletions": result.deletions,
+    }
+
+
 def evaluate_critical_info(reference_item: Dict[str, Any], prediction_item: Dict[str, Any]) -> Dict[str, Any]:
     """
     Evaluate critical information recall for a single item.
     Returns details on matched, missed, and total critical terms, plus specific failure details.
     """
     critical_terms = reference_item.get("critical", [])
+    critical_types = reference_item.get("critical_types", {})
+    if (
+        not isinstance(critical_types, dict)
+        or not all(
+            isinstance(term, str)
+            and isinstance(entity_type, str)
+            and term in critical_terms
+            and entity_type in ENTITY_TYPES
+            for term, entity_type in critical_types.items()
+        )
+    ):
+        raise ValueError("Invalid critical_types entity mapping")
     pred_text = prediction_item.get("text", "")
     norm_pred = _normalize_critical_text(pred_text)
     identifier_norm_pred = None
@@ -282,16 +308,29 @@ def evaluate_critical_info(reference_item: Dict[str, Any], prediction_item: Dict
     matched = []
     missed = []
     failures = []
+    strict_matched = []
+    strict_missed = []
     
     for term in critical_terms:
-        norm_term = _normalize_critical_text(term)
-        is_match = _contains_normalized_term(norm_term, norm_pred)
+        if strict_contains(term, pred_text):
+            strict_matched.append(term)
+        else:
+            strict_missed.append(term)
 
-        if not is_match and _looks_like_identifier_term(term, norm_term):
-            if identifier_norm_pred is None:
-                identifier_norm_pred = _normalize_identifier_text(pred_text)
-            identifier_norm_term = _normalize_identifier_text(term)
-            is_match = _contains_identifier_term(identifier_norm_term, identifier_norm_pred)
+        entity_type = critical_types.get(term)
+        if entity_type is not None:
+            is_match = canonical_contains(term, pred_text, entity_type)
+        else:
+            # Preserve the legacy contract for datasets that have not yet added
+            # explicit entity types. Typed datasets never use this heuristic.
+            norm_term = _normalize_critical_text(term)
+            is_match = _contains_normalized_term(norm_term, norm_pred)
+
+            if not is_match and _looks_like_identifier_term(term, norm_term):
+                if identifier_norm_pred is None:
+                    identifier_norm_pred = _normalize_identifier_text(pred_text)
+                identifier_norm_term = _normalize_identifier_text(term)
+                is_match = _contains_identifier_term(identifier_norm_term, identifier_norm_pred)
 
         if is_match:
             matched.append(term)
@@ -306,7 +345,11 @@ def evaluate_critical_info(reference_item: Dict[str, Any], prediction_item: Dict
         "total": len(critical_terms),
         "matched": matched,
         "missed": missed,
-        "failures": failures
+        "failures": failures,
+        "strict_matched": strict_matched,
+        "strict_missed": strict_missed,
+        "canonical_matched": matched,
+        "canonical_missed": missed,
     }
 
 
@@ -367,10 +410,16 @@ def evaluate_dataset(aligned_data: List[Dict[str, Any]]) -> Dict[str, Any]:
     pred_texts = [item["prediction"].get("text", "") for item in aligned_data]
     
     wer = calculate_wer(ref_texts, pred_texts)
+    word_errors_by_sample = []
+    substitutions = 0
+    insertions = 0
+    deletions = 0
     
     total_critical = 0
     matched_critical = 0
+    strict_matched_critical = 0
     all_critical_failures = []
+    all_strict_critical_failures = []
     
     total_sounds = 0
     matched_sounds = 0
@@ -392,12 +441,27 @@ def evaluate_dataset(aligned_data: List[Dict[str, Any]]) -> Dict[str, Any]:
         crit_res = evaluate_critical_info(ref, pred)
         total_critical += crit_res["total"]
         matched_critical += len(crit_res["matched"])
+        strict_matched_critical += len(crit_res["strict_matched"])
         for fail in crit_res["failures"]:
             all_critical_failures.append({
                 "id": sample_id,
                 "expected": fail["expected"],
                 "predicted_text": fail["predicted_text"]
             })
+        for expected in crit_res["strict_missed"]:
+            all_strict_critical_failures.append({
+                "id": sample_id,
+                "expected": expected,
+                "predicted_text": pred.get("text", ""),
+            })
+
+        sample_errors = _word_error_counts(
+            ref.get("text", ""), pred.get("text", "")
+        )
+        substitutions += sample_errors["substitutions"]
+        insertions += sample_errors["insertions"]
+        deletions += sample_errors["deletions"]
+        word_errors_by_sample.append({"id": sample_id, **sample_errors})
             
         # Non-speech
         sound_res = evaluate_non_speech_info(ref, pred)
@@ -430,6 +494,7 @@ def evaluate_dataset(aligned_data: List[Dict[str, Any]]) -> Dict[str, Any]:
             latencies.append(latency_ms)
             
     crit_recall = (matched_critical / total_critical * 100.0) if total_critical > 0 else 100.0
+    strict_crit_recall = (strict_matched_critical / total_critical * 100.0) if total_critical > 0 else 100.0
     sound_recall = (matched_sounds / total_sounds * 100.0) if total_sounds > 0 else None
     speaker_acc = (sum(speaker_evals) / len(speaker_evals) * 100.0) if speaker_evals else None
     
@@ -445,10 +510,19 @@ def evaluate_dataset(aligned_data: List[Dict[str, Any]]) -> Dict[str, Any]:
     return {
         "samples": len(aligned_data),
         "wer": wer * 100.0,
+        "substitutions": substitutions,
+        "insertions": insertions,
+        "deletions": deletions,
+        "word_errors_by_sample": word_errors_by_sample,
         "critical_recall": crit_recall,
+        "canonical_critical_recall": crit_recall,
+        "strict_critical_recall": strict_crit_recall,
         "total_critical": total_critical,
         "matched_critical": matched_critical,
+        "canonical_matched_critical": matched_critical,
+        "strict_matched_critical": strict_matched_critical,
         "critical_failures": all_critical_failures,
+        "strict_critical_failures": all_strict_critical_failures,
         "non_speech_recall": sound_recall,
         "total_sounds": total_sounds,
         "matched_sounds": matched_sounds,

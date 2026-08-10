@@ -15,6 +15,14 @@ def _escape_markdown_table_cell(value: Any) -> str:
 
 def generate_markdown_report(metrics: Dict[str, Any], ref_file: str, pred_file: str) -> str:
     """Generate Markdown report from metrics output."""
+    canonical_recall = metrics.get(
+        "canonical_critical_recall", metrics["critical_recall"]
+    )
+    canonical_matched = metrics.get(
+        "canonical_matched_critical", metrics["matched_critical"]
+    )
+    strict_recall = metrics.get("strict_critical_recall", canonical_recall)
+    strict_matched = metrics.get("strict_matched_critical", canonical_matched)
     lines = [
         "# DeafBench Evaluation Report",
         "",
@@ -27,7 +35,11 @@ def generate_markdown_report(metrics: Dict[str, Any], ref_file: str, pred_file: 
         "| Metric | Value |",
         "| --- | --- |",
         f"| **Word Error Rate (WER)** | {metrics['wer']:.1f}% |",
-        f"| **Critical Information Recall** | {metrics['critical_recall']:.1f}% ({metrics['matched_critical']}/{metrics['total_critical']}) |",
+        f"| **WER substitutions** | {metrics.get('substitutions', 0)} |",
+        f"| **WER insertions** | {metrics.get('insertions', 0)} |",
+        f"| **WER deletions** | {metrics.get('deletions', 0)} |",
+        f"| **Strict lexical critical recall** | {strict_recall:.1f}% ({strict_matched}/{metrics['total_critical']}) |",
+        f"| **Canonical semantic critical recall** | {canonical_recall:.1f}% ({canonical_matched}/{metrics['total_critical']}) |",
     ]
 
     if metrics.get("non_speech_recall") is not None:
@@ -48,6 +60,23 @@ def generate_markdown_report(metrics: Dict[str, Any], ref_file: str, pred_file: 
         lines.append(f"| **Median Latency** | {latency_sec:.2f}s ({metrics['median_latency_ms']:.0f} ms) |")
     else:
         lines.append("| **Median Latency** | N/A |")
+
+    sample_errors = metrics.get("word_errors_by_sample", [])
+    if sample_errors:
+        lines.extend([
+            "",
+            "## Per-Sample Word Errors",
+            "",
+            "| Sample ID | WER | Substitutions | Insertions | Deletions |",
+            "| --- | ---: | ---: | ---: | ---: |",
+        ])
+        for sample in sample_errors:
+            sample_id = _escape_markdown_table_cell(sample["id"])
+            lines.append(
+                f"| `{sample_id}` | {sample['wer']:.1f}% | "
+                f"{sample['substitutions']} | {sample['insertions']} | "
+                f"{sample['deletions']} |"
+            )
         
     lines.extend([
         "",

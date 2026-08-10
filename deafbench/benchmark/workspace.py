@@ -10,6 +10,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal, Mapping, Sequence, cast
 
+from deafbench.critical_entities import ENTITY_TYPES
+
 
 AudioSource = Literal["auto", "human", "synthetic"]
 ResolvedAudioSource = Literal["human", "synthetic"]
@@ -73,6 +75,30 @@ def _string_list(record: Mapping[str, Any], key: str) -> list[str]:
     return value
 
 
+def _critical_types(
+    record: Mapping[str, Any], critical_terms: Sequence[str]
+) -> dict[str, str]:
+    value = record.get("critical_types", {})
+    if not isinstance(value, dict) or not all(
+        isinstance(key, str) and isinstance(entity_type, str)
+        for key, entity_type in value.items()
+    ):
+        raise ValueError(
+            "Invalid reference record: critical_types must map strings to strings"
+        )
+    unknown_terms = set(value) - set(critical_terms)
+    unknown_types = set(value.values()) - ENTITY_TYPES
+    if unknown_terms:
+        raise ValueError(
+            "Invalid reference record: critical_types keys must appear in critical"
+        )
+    if unknown_types:
+        raise ValueError(
+            "Invalid reference record: unsupported critical entity type"
+        )
+    return dict(value)
+
+
 def load_reference_records(path: Path) -> tuple[Mapping[str, Any], ...]:
     """Load ordered, schema-validated benchmark reference records."""
     records: list[Mapping[str, Any]] = []
@@ -108,6 +134,9 @@ def load_reference_records(path: Path) -> tuple[Mapping[str, Any], ...]:
 
             normalized = dict(value)
             normalized["critical"] = _string_list(value, "critical")
+            normalized["critical_types"] = _critical_types(
+                value, normalized["critical"]
+            )
             normalized["sounds"] = _string_list(value, "sounds")
             seen_ids.add(sample_id)
             records.append(normalized)

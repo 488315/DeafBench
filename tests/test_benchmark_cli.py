@@ -128,7 +128,8 @@ def test_benchmark_command_prints_complete_terminal_summary(
     ):
         assert expected in output
     assert "WER                          0.0%" in output
-    assert "Critical Information       100.0%" in output
+    assert "Strict Critical Information     100.0%" in output
+    assert "Canonical Critical Information  100.0%" in output
     assert "Non-Speech Information     100.0%" in output
     assert f"Predictions: {result.predictions}" in output
     assert f"Report: {result.report}" in output

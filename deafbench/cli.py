@@ -16,13 +16,20 @@ _BENCHMARK_RUNTIME_UNAVAILABLE = (
 
 
 def format_terminal_output(metrics: dict) -> str:
+    canonical_recall = metrics.get(
+        "canonical_critical_recall", metrics["critical_recall"]
+    )
+    strict_recall = metrics.get("strict_critical_recall", canonical_recall)
     lines = [
         "DeafBench v0.1",
         "",
         f"Samples: {metrics['samples']}",
         "",
         f"WER                       {metrics['wer']:>6.1f}%",
-        f"Critical Information      {metrics['critical_recall']:>6.1f}%",
+        f"Strict Critical Information    {strict_recall:>6.1f}%",
+        f"Canonical Critical Information {canonical_recall:>6.1f}%",
+        f"WER edits (S/I/D)         {metrics.get('substitutions', 0)}/"
+        f"{metrics.get('insertions', 0)}/{metrics.get('deletions', 0)}",
     ]
 
     if metrics.get("non_speech_recall") is not None:

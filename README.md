@@ -146,6 +146,12 @@ benchmark version. Synthetic runs also record the scene profile, seed, and TTS
 engine/version. Run directories include both model and source so human and
 synthetic results cannot overwrite one another.
 
+Reports keep critical-information scoring in two separate views. Strict lexical
+recall measures the expected surface form; canonical semantic recall applies
+only the normalization allowed by an entity's explicit type, such as TIME or
+DIGIT_SEQUENCE. Reports also include per-sample WER and aggregate substitution,
+insertion, and deletion counts.
+
 ### Usage
 
 **1. Compare predictions against reference captions:**
