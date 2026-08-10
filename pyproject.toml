@@ -30,6 +30,7 @@ open-asr-evaluator = [
     "regex==2026.7.19",
 ]
 qwen-asr = [
+    "scipy>=1.15,<2.0",
     "transformers[torch]>=5.13.0,<6.0.0",
 ]
 recorder = [
