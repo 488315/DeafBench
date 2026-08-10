@@ -51,6 +51,11 @@ The command downloads or reuses the pinned checkpoint, materializes the pinned
 dataset config, decodes two rows, and writes an official JSONL manifest below
 `~/.cache/deafbench/open-asr-runs/results/`.
 
+The tracked two-row batch-1 diagnostic and the first two rows of the independent
+batch-32 full run have identical audio identities, references, and predictions.
+`tests/test_open_asr_evidence.py` verifies those stable fields while excluding
+run-dependent timing from the reproducibility contract.
+
 Score the copied manifests from Windows with the pinned official checkout:
 
 ```powershell
