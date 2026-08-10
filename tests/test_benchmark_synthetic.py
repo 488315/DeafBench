@@ -451,62 +451,37 @@ def test_generator_explains_missing_whisperspeech_package(
 def test_generator_reuses_pipeline_and_reports_actual_audio(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    calls: list[tuple[Path, str, str]] = []
+    calls: list[tuple[str, str]] = []
     instances = 0
-    allow_soundfile = False
-    original_import = builtins.__import__
-
-    def guarded_import(name: str, *args: object, **kwargs: object) -> object:
-        if name == "soundfile" and not allow_soundfile:
-            raise AssertionError("soundfile must stay lazy until generation")
-        return original_import(name, *args, **kwargs)
 
     class FakePipeline:
         def __init__(self) -> None:
             nonlocal instances
             instances += 1
 
-        def generate_to_file(self, path: str, text: str, *, lang: str) -> None:
-            output = Path(path)
-            output.write_bytes(b"fake wave")
-            calls.append((output, text, lang))
+        def generate(self, text: str, *, lang: str) -> np.ndarray:
+            calls.append((text, lang))
+            return np.ones((1, 3), dtype=np.float32)
 
     whisperspeech = types.ModuleType("whisperspeech")
     whisperspeech.__path__ = []  # type: ignore[attr-defined]
     pipeline = types.ModuleType("whisperspeech.pipeline")
     pipeline.Pipeline = FakePipeline  # type: ignore[attr-defined]
-    soundfile = types.ModuleType("soundfile")
-
-    def read_audio(
-        path: Path,
-        *,
-        dtype: str,
-        always_2d: bool,
-    ) -> tuple[np.ndarray, int]:
-        assert path.read_bytes() == b"fake wave"
-        assert dtype == "float32"
-        assert always_2d is True
-        return np.ones((3, 1), dtype=np.float32), 22_050
-
-    soundfile.read = read_audio  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "whisperspeech", whisperspeech)
     monkeypatch.setitem(sys.modules, "whisperspeech.pipeline", pipeline)
-    monkeypatch.setitem(sys.modules, "soundfile", soundfile)
     monkeypatch.setattr(synthetic_module.metadata, "version", lambda _: "0.8.9")
-    monkeypatch.setattr(builtins, "__import__", guarded_import)
 
     generate, info = create_whisperspeech_generator()
-    allow_soundfile = True
     first = generate("Stay seated.")
     second = generate("Wait outside.")
 
     assert info == TTSInfo("whisperspeech", "0.8.9")
     assert instances == 1
-    assert [(text, lang) for _, text, lang in calls] == [
+    assert calls == [
         ("Stay seated.", "en"),
         ("Wait outside.", "en"),
     ]
-    assert first.sample_rate == second.sample_rate == 22_050
+    assert first.sample_rate == second.sample_rate == 24_000
     np.testing.assert_array_equal(first.samples, np.ones((3, 1)))
 
 
