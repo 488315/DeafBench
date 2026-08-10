@@ -1,12 +1,18 @@
 import json
+import os
 import wave
 from pathlib import Path
 
 import numpy as np
 import pytest
 
+import deafbench.benchmark.runner as runner_module
 from deafbench.benchmark.models import ModelRunInfo
-from deafbench.benchmark.runner import BenchmarkConfig, run_benchmark
+from deafbench.benchmark.runner import (
+    BenchmarkConfig,
+    BenchmarkResult,
+    run_benchmark,
+)
 from deafbench.benchmark.synthetic import (
     SpeechAudio,
     TTSInfo,
@@ -224,6 +230,53 @@ def test_failed_rerun_preserves_every_previous_run_byte(tmp_path: Path) -> None:
     assert after == before
 
 
+def test_failed_run_promotion_restores_previous_bundle(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _write_dataset(tmp_path, human_complete=True)
+    config = BenchmarkConfig(tmp_path, "core-v1", "whisper")
+    first = run_benchmark(config, whisper_runner=_fake_model_runner)
+    run_dir = first.predictions.parent
+    before = {
+        path.relative_to(run_dir): path.read_bytes()
+        for path in run_dir.rglob("*")
+        if path.is_file()
+    }
+    real_replace = os.replace
+
+    def fail_staging_promotion(source: object, destination: object) -> None:
+        source_path = Path(source)  # type: ignore[arg-type]
+        if source_path.name.startswith(".human-run-"):
+            raise OSError("promotion failed")
+        real_replace(source, destination)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(runner_module.os, "replace", fail_staging_promotion)
+
+    with pytest.raises(OSError, match="promotion failed"):
+        run_benchmark(config, whisper_runner=_fake_model_runner)
+
+    after = {
+        path.relative_to(run_dir): path.read_bytes()
+        for path in run_dir.rglob("*")
+        if path.is_file()
+    }
+    assert after == before
+
+
+@pytest.mark.parametrize(
+    ("model", "function_name"),
+    [("whisper", "run_whisper"), ("whisper-at", "run_whisper_at")],
+)
+def test_default_model_runner_is_selected_lazily(
+    model: str,
+    function_name: str,
+) -> None:
+    runner = runner_module._default_model_runner(model)  # type: ignore[arg-type]
+
+    assert runner.__name__ == function_name
+
+
 def test_invalid_references_fail_before_audio_or_model_work(tmp_path: Path) -> None:
     references = _write_dataset(tmp_path, human_complete=False)
     references.write_text(
@@ -240,3 +293,78 @@ def test_invalid_references_fail_before_audio_or_model_work(tmp_path: Path) -> N
             synthetic_factory=fail,  # type: ignore[arg-type]
             whisper_runner=fail,  # type: ignore[arg-type]
         )
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("model", "unknown", "Unsupported benchmark model"),
+        ("audio_source", "mixed", "Unsupported audio source"),
+    ],
+)
+def test_direct_config_rejects_invalid_choices_before_workspace(
+    tmp_path: Path,
+    field: str,
+    value: str,
+    message: str,
+) -> None:
+    values = {
+        "repo_root": tmp_path,
+        "dataset": "core-v1",
+        "model": "whisper",
+        "audio_source": "auto",
+    }
+    values[field] = value
+
+    with pytest.raises(ValueError, match=message):
+        run_benchmark(BenchmarkConfig(**values))  # type: ignore[arg-type]
+
+    assert not (tmp_path / "benchmarks").exists()
+
+
+def test_main_prints_run_identity_summary_and_artifacts(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    run_dir = tmp_path / "run"
+    result = BenchmarkResult(
+        "human",
+        run_dir / "predictions.jsonl",
+        run_dir / "report.md",
+        run_dir / "run.json",
+        {
+            "samples": 1,
+            "wer": 0.0,
+            "critical_recall": 100.0,
+            "non_speech_recall": None,
+            "speaker_accuracy": None,
+            "median_latency_ms": None,
+            "critical_failures": [],
+        },
+    )
+    calls: list[BenchmarkConfig] = []
+    monkeypatch.setattr(
+        runner_module,
+        "run_benchmark",
+        lambda config: calls.append(config) or result,
+    )
+
+    status = runner_module.main(
+        [
+            "core-v1",
+            "--model",
+            "whisper",
+            "--repo-root",
+            str(tmp_path),
+        ]
+    )
+
+    assert status == 0
+    assert calls == [BenchmarkConfig(tmp_path, "core-v1", "whisper")]
+    output = capsys.readouterr().out
+    assert "Dataset: core-v1" in output
+    assert "Model: whisper" in output
+    assert "Audio source: human" in output
+    assert f"Predictions: {result.predictions}" in output
+    assert f"Report: {result.report}" in output

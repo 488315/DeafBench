@@ -1,5 +1,6 @@
 import builtins
 import sys
+import types
 
 import pytest
 
@@ -9,16 +10,16 @@ from deafbench import cli
 pytestmark = pytest.mark.functional
 
 
-def test_benchmark_launcher_explains_missing_runner():
-    sys.modules.pop("deafbench.benchmark.runner", None)
+def test_benchmark_launcher_calls_installed_runner(monkeypatch):
+    calls = []
+    runner = types.ModuleType("deafbench.benchmark.runner")
+    runner.main = lambda args: calls.append(args) or 7  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "deafbench.benchmark.runner", runner)
 
-    with pytest.raises(SystemExit) as exc_info:
-        cli._run_benchmark([])
+    status = cli._run_benchmark(["core-v1", "--model", "whisper"])
 
-    assert str(exc_info.value) == (
-        "Benchmark runtime is not available in this build; use `deafbench "
-        "compare` until a release with benchmark runner support is installed."
-    )
+    assert status == 7
+    assert calls == [["core-v1", "--model", "whisper"]]
 
 
 def test_benchmark_launcher_reraises_missing_runtime_dependency(monkeypatch):
