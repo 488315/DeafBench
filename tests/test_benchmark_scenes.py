@@ -90,6 +90,17 @@ def test_mix_scene_is_reproducible_for_silent_speech() -> None:
     assert np.any(first)
 
 
+@pytest.mark.parametrize("actual_frames", [0, 47_999, 48_001])
+def test_mix_scene_rejects_speech_length_different_from_plan(
+    actual_frames: int,
+) -> None:
+    plan = plan_scene("core-001", 48_000, [], seed=42)
+    speech = np.zeros((actual_frames, 1), dtype=np.float64)
+
+    with pytest.raises(ValueError, match="Speech length does not match"):
+        mix_scene(speech, plan)
+
+
 def test_unsupported_scene_profile_is_rejected_before_mixing() -> None:
     with pytest.raises(ValueError, match="Unsupported scene profile"):
         plan_scene(
