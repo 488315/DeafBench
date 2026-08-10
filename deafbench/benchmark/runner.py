@@ -10,17 +10,10 @@ import tempfile
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 from deafbench import __version__
 from deafbench.benchmark.models import ModelRunInfo
-from deafbench.benchmark.synthetic import (
-    SpeechGenerator,
-    TTSInfo,
-    create_whisperspeech_generator,
-    generate_synthetic_set,
-    synthetic_set_is_current,
-)
 from deafbench.benchmark.workspace import (
     AudioSource,
     ResolvedAudioSource,
@@ -37,9 +30,12 @@ from deafbench.parser import align_records, parse_jsonl
 from deafbench.recorder.workspace import ensure_dataset_workspace
 from deafbench.report import generate_markdown_report
 
+if TYPE_CHECKING:
+    from deafbench.benchmark.synthetic import SpeechGenerator, TTSInfo
+
 
 ModelName = Literal["whisper", "whisper-at"]
-SyntheticFactory = Callable[[], tuple[SpeechGenerator, TTSInfo]]
+SyntheticFactory = Callable[[], tuple["SpeechGenerator", "TTSInfo"]]
 SyntheticGenerator = Callable[..., Path]
 ModelRunner = Callable[[Path, Path, Path], ModelRunInfo]
 
@@ -75,6 +71,8 @@ def _validate_config(config: BenchmarkConfig) -> None:
 
 
 def _load_cached_tts(audio_dir: Path) -> TTSInfo:
+    from deafbench.benchmark.synthetic import TTSInfo
+
     manifest = audio_dir / "manifest.jsonl"
     with manifest.open("r", encoding="utf-8") as handle:
         first_line = next((line for line in handle if line.strip()), "")
@@ -89,6 +87,8 @@ def _prepare_synthetic(
     synthetic_factory: SyntheticFactory,
     synthetic_generator: SyntheticGenerator,
 ) -> TTSInfo:
+    from deafbench.benchmark.synthetic import synthetic_set_is_current
+
     if synthetic_set_is_current(
         paths.synthetic_audio,
         paths.references,
@@ -139,6 +139,21 @@ def _evaluate(
 ) -> dict[str, Any]:
     reference_records = parse_jsonl(str(references))
     prediction_records = parse_jsonl(str(predictions))
+    expected_ids = {cast(str, record["id"]) for record in reference_records}
+    actual_ids: set[str] = set()
+    for record in prediction_records:
+        sample_id = record.get("id")
+        if not isinstance(sample_id, str) or not sample_id:
+            raise ValueError("Invalid prediction ID: expected a non-empty string")
+        if sample_id in actual_ids:
+            raise ValueError(f"Duplicate prediction ID: {sample_id}")
+        actual_ids.add(sample_id)
+    if actual_ids != expected_ids:
+        raise ValueError(
+            "Prediction IDs do not match references: "
+            f"missing={sorted(expected_ids - actual_ids)}; "
+            f"extra={sorted(actual_ids - expected_ids)}"
+        )
     aligned = align_records(reference_records, prediction_records)
     return evaluate_dataset(aligned)
 
@@ -285,6 +300,11 @@ def run_benchmark(
         audio_dir = paths.human_audio
     else:
         audio_dir = paths.synthetic_audio
+        from deafbench.benchmark.synthetic import (
+            create_whisperspeech_generator,
+            generate_synthetic_set,
+        )
+
         tts_info = _prepare_synthetic(
             config,
             paths,
