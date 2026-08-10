@@ -1,4 +1,6 @@
 import json
+import os
+import subprocess
 import sys
 import wave
 from pathlib import Path
@@ -202,3 +204,42 @@ def test_main_delegates_to_packaged_whisper_adapter(tmp_path, monkeypatch):
         "output": output,
         "model_id": "turbo",
     }
+
+
+def test_main_reports_missing_whisper_without_traceback(tmp_path, monkeypatch):
+    message = "Whisper is not installed. Run: python -m pip install -U openai-whisper"
+
+    def fail_run(*_args, **_kwargs):
+        raise RuntimeError(message)
+
+    monkeypatch.setattr(whisper_adapter, "run_whisper", fail_run)
+
+    with pytest.raises(SystemExit, match=message):
+        transcribe_whisper.main(["--repo-root", str(tmp_path)])
+
+
+def test_script_resolves_package_for_valid_direct_invocation(tmp_path):
+    script = Path(transcribe_whisper.__file__).resolve()
+    dataset_dir = tmp_path / "benchmarks" / "core-v1"
+    audio_dir = dataset_dir / "audio"
+    audio_dir.mkdir(parents=True)
+    _write_wav(audio_dir / "core-001.wav")
+    (dataset_dir / "references.jsonl").write_text(
+        '{"id":"core-001","text":"Hello"}\n',
+        encoding="utf-8",
+    )
+    env = os.environ.copy()
+    env["PYTHONPATH"] = ""
+
+    result = subprocess.run(
+        [sys.executable, "-S", str(script), "--repo-root", str(tmp_path)],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 1
+    assert "Whisper is not installed" in result.stderr
+    assert "No module named 'deafbench'" not in result.stderr

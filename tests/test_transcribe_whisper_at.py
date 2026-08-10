@@ -94,6 +94,19 @@ def test_extract_audio_tags_keeps_broad_labels_raw_only():
     assert sounds == []
 
 
+def test_extract_audio_tags_preserves_tolerant_legacy_behavior():
+    parsed = [
+        "invalid segment",
+        {"audio tags": "invalid tags"},
+        {"audio tags": [(), (None, 1.0), ("Alarm", 0.9)]},
+    ]
+
+    raw_tags, sounds = extract_audio_tags(parsed)
+
+    assert raw_tags == ["Alarm"]
+    assert sounds == ["[alarm]"]
+
+
 def test_transcribe_directory_writes_structured_model_b_predictions(tmp_path):
     audio_dir = tmp_path / "audio"
     audio_dir.mkdir()
@@ -287,3 +300,45 @@ def test_main_delegates_to_packaged_whisper_at_adapter(tmp_path, monkeypatch):
         "top_k": 5,
         "p_threshold": -1.0,
     }
+
+
+def test_main_reports_missing_whisper_at_without_traceback(tmp_path, monkeypatch):
+    message = (
+        "Whisper-AT is not installed. See the upstream "
+        "Whisper-AT installation instructions."
+    )
+
+    def fail_run(*_args, **_kwargs):
+        raise RuntimeError(message)
+
+    monkeypatch.setattr(whisper_at_adapter, "run_whisper_at", fail_run)
+
+    with pytest.raises(SystemExit, match="Whisper-AT is not installed"):
+        transcribe_whisper_at.main(["--repo-root", str(tmp_path)])
+
+
+def test_script_resolves_package_for_valid_direct_invocation(tmp_path):
+    script = Path(transcribe_whisper_at.__file__).resolve()
+    dataset_dir = tmp_path / "benchmarks" / "core-v1"
+    audio_dir = dataset_dir / "audio"
+    audio_dir.mkdir(parents=True)
+    _write_wav(audio_dir / "core-001.wav")
+    (dataset_dir / "references.jsonl").write_text(
+        '{"id":"core-001","text":"Hello"}\n',
+        encoding="utf-8",
+    )
+    env = os.environ.copy()
+    env["PYTHONPATH"] = ""
+
+    result = subprocess.run(
+        [sys.executable, "-S", str(script), "--repo-root", str(tmp_path)],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 1
+    assert "Whisper-AT is not installed" in result.stderr
+    assert "No module named 'deafbench'" not in result.stderr
