@@ -39,6 +39,30 @@ No improvement experiment should be selected from two rows. Rank opportunities
 only after the seven public manifests are complete and analyzed, then develop
 against training/validation data rather than repeatedly tuning on test labels.
 
+## Five-set utterance diagnostics
+
+`results/zipformer-public-5set-errors.json` applies the pinned official
+normalizer and compound-aware alignment to every completed row. Its aggregate
+deletion, insertion, and substitution counts exactly reproduce the official
+five-set scorer, while retaining only the 20 highest-error rows per dataset.
+
+The highest-error AMI rows dominate current diagnostic error mass. Several
+have hypotheses that are semantically unrelated to very short references and
+WER above 100%, which is consistent with competing speech, reference/channel
+alignment, or segmentation effects but does not distinguish among them without
+audio review. Earnings22 rows 67, 69, and 942 contain fluent hypotheses that
+materially disagree with the supplied reference wording, so label quality and
+segment alignment must be checked before treating every difference as a model
+error. LibriSpeech-other's largest errors visibly concentrate dialect spelling
+and pronunciation; LibriSpeech-clean includes archaic wording, names, and
+number renderings. VoxPopuli's largest rows are mostly shorter function-word,
+inflection, and title differences.
+
+AMI and Earnings22 remain the first diagnostic targets because they have the
+two highest completed-set WERs. That is a prioritization signal, not permission
+to tune on public test labels: candidate changes must be selected and measured
+on corresponding training or validation data.
+
 ## Full LibriSpeech test-clean baseline
 
 The pinned official scorer measured **1.31% WER** over all 2,620 rows and

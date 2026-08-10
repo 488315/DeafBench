@@ -25,3 +25,18 @@ def test_zipformer_predictions_repeat_across_independent_batch_sizes():
     assert [
         tuple(row[field] for field in _STABLE_FIELDS) for row in diagnostic
     ] == [tuple(row[field] for field in _STABLE_FIELDS) for row in full_run]
+
+
+def test_five_set_error_analysis_reproduces_official_aggregates():
+    score = json.loads(
+        (_RESULTS / "zipformer-public-5set-score.json").read_text(encoding="utf-8")
+    )
+    analysis = json.loads(
+        (_RESULTS / "zipformer-public-5set-errors.json").read_text(encoding="utf-8")
+    )
+
+    for score_key, metrics in score["datasets"].items():
+        dataset_id = score_key.split(" | ", 1)[1]
+        assert analysis["datasets"][dataset_id]["errors"] == {
+            key: metrics[key] for key in ("del", "ins", "sub")
+        }
