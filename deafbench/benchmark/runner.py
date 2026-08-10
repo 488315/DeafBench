@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, cast
 
 from deafbench import __version__
-from deafbench.benchmark.models import ModelRunInfo
+from deafbench.benchmark.models import MODEL_NAMES, ModelRunInfo
 from deafbench.benchmark.workspace import (
     AudioSource,
     ResolvedAudioSource,
@@ -40,12 +40,6 @@ ModelName = Literal[
     "faster-whisper",
     "distil-whisper",
 ]
-MODEL_NAMES: tuple[ModelName, ...] = (
-    "whisper",
-    "whisper-at",
-    "faster-whisper",
-    "distil-whisper",
-)
 SyntheticFactory = Callable[[], tuple["SpeechGenerator", "TTSInfo"]]
 SyntheticGenerator = Callable[..., Path]
 ModelRunner = Callable[[Path, Path, Path], ModelRunInfo]
