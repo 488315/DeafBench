@@ -209,7 +209,7 @@ def _exact_code_matches(term: str, prediction: str) -> bool:
         re.findall(r"(?<!\w)(?:[a-z]+\d+|\d+)(?!\w)", prediction.casefold())
     )
     spoken_code = re.compile(
-        rf"(?<!\w)(?:[a-z]+[ ]+)?{_DIGIT_WORD_PATTERN}"
+        rf"(?<!\w){_DIGIT_WORD_PATTERN}"
         rf"(?:[ ]+{_DIGIT_WORD_PATTERN})*(?!\w)",
         re.IGNORECASE,
     )

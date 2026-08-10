@@ -259,6 +259,7 @@ def test_reported_failures_use_strict_and_typed_semantic_scoring(
         ("CODE", "alpha seven nine", "code Alpha79", True),
         ("CODE", "alpha seven nine", "code Alpha-79", False),
         ("PASSWORD", "481926", "password 481926", True),
+        ("PASSWORD", "481926", "password is four eight one nine two six", True),
         ("PASSWORD", "481926", "password 48192", False),
         ("SSID", "Office Guest", "network officeguest", True),
         ("SSID", "Office Guest", "network Alpha Guest", False),
