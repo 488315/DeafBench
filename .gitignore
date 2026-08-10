@@ -214,5 +214,12 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
+# Generated DeafBench evidence (manifests remain versioned)
+/benchmarks/synthetic-v2/audio-synthetic/
+/benchmarks/synthetic-v2/validation-speech/
+/benchmarks/synthetic-v2/runs/
+/benchmarks/synthetic-v2-candidate*/
+/benchmarks/synthetic-v2-whisperspeech-probe-*.wav
+
 # Streamlit
 .streamlit/secrets.toml

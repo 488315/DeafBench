@@ -1,0 +1,310 @@
+{
+  "inherited_samples": "frozen core-v1 bytes; not admitted under v2 gates",
+  "policy_sha256": "3d0b4369af8f8d0482f4bfe79cd79bc4dc8b25830a7b84bc4d4f5c6a3fd63935",
+  "samples": [
+    {
+      "disagreements": [],
+      "forced_alignment": {
+        "adapter": "torchaudio-MMS_FA",
+        "adapter_revision": "torchaudio=2.11.0+cpu;model_sha256=20ef12963ab4924bef49ac4fc7f58ad5da2ee43b2c11bc8c853c9b90ecdbc680",
+        "audio_sha256": "c75dc014e2826341bec583e7fc3736f63b44d713a1ee1a81e9837c49f928a3a9",
+        "coverage_score_threshold": 0.25,
+        "critical_entity_coverage": {
+          "2:15 PM": 1.0
+        },
+        "token_coverage": 0.9591836734693877
+      },
+      "gates": [
+        {
+          "evidence": "PCM16 WAV readable",
+          "name": "readable_container",
+          "passed": true
+        },
+        {
+          "evidence": "48000 Hz, 1 channel(s), WAV/PCM_16",
+          "name": "required_format",
+          "passed": true
+        },
+        {
+          "evidence": "peak=0.656372",
+          "name": "nonempty_waveform",
+          "passed": true
+        },
+        {
+          "evidence": "leading=110.0, trailing=190.0 ms",
+          "name": "not_truncated",
+          "passed": true
+        },
+        {
+          "evidence": "leading=110.0, trailing=190.0 ms",
+          "name": "bounded_silence",
+          "passed": true
+        },
+        {
+          "evidence": "fraction=0.00000000",
+          "name": "bounded_clipping",
+          "passed": true
+        },
+        {
+          "evidence": "duration=3.214 seconds",
+          "name": "plausible_duration",
+          "passed": true
+        },
+        {
+          "evidence": "expected=d81fa57f93fb7ef9b491bd34ff58e06695688cdacc35dbf8da1dba72f160e945",
+          "name": "reference_hash",
+          "passed": true
+        },
+        {
+          "evidence": "coverage=0.959184, score_floor=0.250000",
+          "name": "forced_alignment_coverage",
+          "passed": true
+        },
+        {
+          "evidence": "coverage={'2:15 PM': 1.0}",
+          "name": "typed_critical_entity_fidelity",
+          "passed": true
+        }
+      ],
+      "id": "core-001",
+      "independent_asr": {
+        "adapter": "torchaudio-WAV2VEC2_ASR_BASE_960H",
+        "adapter_revision": "torchaudio=2.11.0+cpu;model_sha256=488fd4f16de84438ffc945334278c1b9fb9b7159a806c1080b16111a958c945d",
+        "audio_sha256": "c75dc014e2826341bec583e7fc3736f63b44d713a1ee1a81e9837c49f928a3a9",
+        "role": "supporting evidence only",
+        "text": "my appointment with doctor martina's is friday at two fifteen p m"
+      },
+      "status": "accepted"
+    },
+    {
+      "disagreements": [],
+      "forced_alignment": {
+        "adapter": "torchaudio-MMS_FA",
+        "adapter_revision": "torchaudio=2.11.0+cpu;model_sha256=20ef12963ab4924bef49ac4fc7f58ad5da2ee43b2c11bc8c853c9b90ecdbc680",
+        "audio_sha256": "3335be1b0806b4c960e3792a5ba1250a0b66a2dbf48d77aac3a50a04b2ed2408",
+        "coverage_score_threshold": 0.25,
+        "critical_entity_coverage": {
+          "4:45 PM": 1.0,
+          "83927": 0.9545454545454546
+        },
+        "token_coverage": 0.9764705882352941
+      },
+      "gates": [
+        {
+          "evidence": "PCM16 WAV readable",
+          "name": "readable_container",
+          "passed": true
+        },
+        {
+          "evidence": "48000 Hz, 1 channel(s), WAV/PCM_16",
+          "name": "required_format",
+          "passed": true
+        },
+        {
+          "evidence": "peak=0.688660",
+          "name": "nonempty_waveform",
+          "passed": true
+        },
+        {
+          "evidence": "leading=200.0, trailing=610.0 ms",
+          "name": "not_truncated",
+          "passed": true
+        },
+        {
+          "evidence": "leading=200.0, trailing=610.0 ms",
+          "name": "bounded_silence",
+          "passed": true
+        },
+        {
+          "evidence": "fraction=0.00000000",
+          "name": "bounded_clipping",
+          "passed": true
+        },
+        {
+          "evidence": "duration=5.798 seconds",
+          "name": "plausible_duration",
+          "passed": true
+        },
+        {
+          "evidence": "expected=ce2c5118f428924da986b75359575d82ea4a8281bba87392dac36bec567abf76",
+          "name": "reference_hash",
+          "passed": true
+        },
+        {
+          "evidence": "coverage=0.976471, score_floor=0.250000",
+          "name": "forced_alignment_coverage",
+          "passed": true
+        },
+        {
+          "evidence": "coverage={'83927': 0.9545454545454546, '4:45 PM': 1.0}",
+          "name": "typed_critical_entity_fidelity",
+          "passed": true
+        }
+      ],
+      "id": "core-009",
+      "independent_asr": {
+        "adapter": "torchaudio-WAV2VEC2_ASR_BASE_960H",
+        "adapter_revision": "torchaudio=2.11.0+cpu;model_sha256=488fd4f16de84438ffc945334278c1b9fb9b7159a806c1080b16111a958c945d",
+        "audio_sha256": "3335be1b0806b4c960e3792a5ba1250a0b66a2dbf48d77aac3a50a04b2ed2408",
+        "role": "supporting evidence only",
+        "text": "jordan needs the confirmation number eight three nine two seven before thursday at four forty five p m"
+      },
+      "status": "accepted"
+    },
+    {
+      "disagreements": [],
+      "forced_alignment": {
+        "adapter": "torchaudio-MMS_FA",
+        "adapter_revision": "torchaudio=2.11.0+cpu;model_sha256=20ef12963ab4924bef49ac4fc7f58ad5da2ee43b2c11bc8c853c9b90ecdbc680",
+        "audio_sha256": "37e6a77de46fd64d4991612e4f09ef44dac54b735afddd066ec2c0a91990db70",
+        "coverage_score_threshold": 0.25,
+        "critical_entity_coverage": {
+          "481926": 1.0,
+          "dev_user twenty three": 1.0
+        },
+        "token_coverage": 0.9770114942528736
+      },
+      "gates": [
+        {
+          "evidence": "PCM16 WAV readable",
+          "name": "readable_container",
+          "passed": true
+        },
+        {
+          "evidence": "48000 Hz, 1 channel(s), WAV/PCM_16",
+          "name": "required_format",
+          "passed": true
+        },
+        {
+          "evidence": "peak=0.679413",
+          "name": "nonempty_waveform",
+          "passed": true
+        },
+        {
+          "evidence": "leading=150.0, trailing=270.0 ms",
+          "name": "not_truncated",
+          "passed": true
+        },
+        {
+          "evidence": "leading=150.0, trailing=270.0 ms",
+          "name": "bounded_silence",
+          "passed": true
+        },
+        {
+          "evidence": "fraction=0.00000000",
+          "name": "bounded_clipping",
+          "passed": true
+        },
+        {
+          "evidence": "duration=5.588 seconds",
+          "name": "plausible_duration",
+          "passed": true
+        },
+        {
+          "evidence": "expected=aa3c28a4431e77d24f729e6a2eecb851870f2631c5fb9b9f7581eb0f8674bb22",
+          "name": "reference_hash",
+          "passed": true
+        },
+        {
+          "evidence": "coverage=0.977011, score_floor=0.250000",
+          "name": "forced_alignment_coverage",
+          "passed": true
+        },
+        {
+          "evidence": "coverage={'dev_user twenty three': 1.0, '481926': 1.0}",
+          "name": "typed_critical_entity_fidelity",
+          "passed": true
+        }
+      ],
+      "id": "core-011",
+      "independent_asr": {
+        "adapter": "torchaudio-WAV2VEC2_ASR_BASE_960H",
+        "adapter_revision": "torchaudio=2.11.0+cpu;model_sha256=488fd4f16de84438ffc945334278c1b9fb9b7159a806c1080b16111a958c945d",
+        "audio_sha256": "37e6a77de46fd64d4991612e4f09ef44dac54b735afddd066ec2c0a91990db70",
+        "role": "supporting evidence only",
+        "text": "my user name is dev underscore user twenty three in the password reset cote is four eight one nine two six"
+      },
+      "status": "accepted"
+    },
+    {
+      "disagreements": [],
+      "forced_alignment": {
+        "adapter": "torchaudio-MMS_FA",
+        "adapter_revision": "torchaudio=2.11.0+cpu;model_sha256=20ef12963ab4924bef49ac4fc7f58ad5da2ee43b2c11bc8c853c9b90ecdbc680",
+        "audio_sha256": "35b33e642fdf9696f19383190ee28f5fa5198e4b29ba19568fbb46c4142d6eb6",
+        "coverage_score_threshold": 0.25,
+        "critical_entity_coverage": {
+          "seven four nine two six eight one": 0.9629629629629629
+        },
+        "token_coverage": 0.9811320754716981
+      },
+      "gates": [
+        {
+          "evidence": "PCM16 WAV readable",
+          "name": "readable_container",
+          "passed": true
+        },
+        {
+          "evidence": "48000 Hz, 1 channel(s), WAV/PCM_16",
+          "name": "required_format",
+          "passed": true
+        },
+        {
+          "evidence": "peak=0.672821",
+          "name": "nonempty_waveform",
+          "passed": true
+        },
+        {
+          "evidence": "leading=210.0, trailing=100.0 ms",
+          "name": "not_truncated",
+          "passed": true
+        },
+        {
+          "evidence": "leading=210.0, trailing=100.0 ms",
+          "name": "bounded_silence",
+          "passed": true
+        },
+        {
+          "evidence": "fraction=0.00000000",
+          "name": "bounded_clipping",
+          "passed": true
+        },
+        {
+          "evidence": "duration=3.979 seconds",
+          "name": "plausible_duration",
+          "passed": true
+        },
+        {
+          "evidence": "expected=8e2d45e4324e36ce3e1d23d34080008fe705c052ee39612608c3d12b2a571ad3",
+          "name": "reference_hash",
+          "passed": true
+        },
+        {
+          "evidence": "coverage=0.981132, score_floor=0.250000",
+          "name": "forced_alignment_coverage",
+          "passed": true
+        },
+        {
+          "evidence": "coverage={'seven four nine two six eight one': 0.9629629629629629}",
+          "name": "typed_critical_entity_fidelity",
+          "passed": true
+        }
+      ],
+      "id": "core-016",
+      "independent_asr": {
+        "adapter": "torchaudio-WAV2VEC2_ASR_BASE_960H",
+        "adapter_revision": "torchaudio=2.11.0+cpu;model_sha256=488fd4f16de84438ffc945334278c1b9fb9b7159a806c1080b16111a958c945d",
+        "audio_sha256": "35b33e642fdf9696f19383190ee28f5fa5198e4b29ba19568fbb46c4142d6eb6",
+        "role": "supporting evidence only",
+        "text": "the package delivery number is seven four nine two six eight one"
+      },
+      "status": "accepted"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "regenerated-replacements-only",
+  "validators": {
+    "forced_aligner_revision": "torchaudio=2.11.0+cpu;model_sha256=20ef12963ab4924bef49ac4fc7f58ad5da2ee43b2c11bc8c853c9b90ecdbc680",
+    "independent_asr_revision": "torchaudio=2.11.0+cpu;model_sha256=488fd4f16de84438ffc945334278c1b9fb9b7159a806c1080b16111a958c945d"
+  }
+}

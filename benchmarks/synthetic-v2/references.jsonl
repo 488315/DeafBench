@@ -1,0 +1,25 @@
+{"id":"core-001","text":"My appointment with Dr. Martinez is Friday at 2:15 PM.","critical":["Dr. Martinez","Friday","2:15 PM"],"critical_types":{"2:15 PM":"TIME"},"sounds":[]}
+{"id":"core-002","text":"The total is 47 dollars and 83 cents.","critical":["47 dollars","83 cents"],"sounds":[]}
+{"id":"core-003","text":"The meeting was moved from Monday to Thursday at 9 AM.","critical":["Thursday","9 AM"],"critical_types":{"9 AM":"TIME"},"sounds":[]}
+{"id":"core-004","text":"Do not restart the server until the backup is complete.","critical":["Do not restart","until the backup is complete"],"sounds":[]}
+{"id":"core-005","text":"Please leave the building when you hear the alarm.","critical":["leave the building"],"sounds":[]}
+{"id":"core-006","text":"Take 15 milligrams at 8:30 PM, not 50 milligrams.","critical":["15 milligrams","8:30 PM","not 50 milligrams"],"critical_types":{"8:30 PM":"TIME"},"sounds":[]}
+{"id":"core-007","text":"The server address is 192 dot 168 dot 1 dot 25.","critical":["192 dot 168 dot 1 dot 25"],"sounds":[]}
+{"id":"core-008","text":"Do not delete the database before the backup finishes.","critical":["Do not delete","before the backup finishes"],"sounds":[]}
+{"id":"core-009","text":"Jordan needs the confirmation number 83927 before Thursday at 4:45 PM.","critical":["Jordan","83927","Thursday","4:45 PM"],"critical_types":{"83927":"DIGIT_SEQUENCE","4:45 PM":"TIME"},"sounds":[]}
+{"id":"core-010","text":"The API returned error code 503 because the authentication token expired.","critical":["API","503","authentication token expired"],"critical_types":{"503":"CODE"},"sounds":[]}
+{"id":"core-011","text":"My username is dev_user twenty three and the password reset code is 481926.","critical":["dev_user twenty three","password reset code","481926"],"critical_types":{"dev_user twenty three":"USERNAME","481926":"PASSWORD"},"sounds":[]}
+{"id":"core-012","text":"The server migration starts on March 18th at 11:45 PM and finishes at 3:20 AM.","critical":["March 18th","11:45 PM","3:20 AM"],"critical_types":{"11:45 PM":"TIME","3:20 AM":"TIME"},"sounds":[]}
+{"id":"core-013","text":"The error message says authentication failed after three incorrect login attempts.","critical":["authentication failed","three incorrect login attempts"],"sounds":[]}
+{"id":"core-014","text":"Please install Unreal Engine version five point eight before opening the project file.","critical":["Unreal Engine","five point eight","project file"],"sounds":[]}
+{"id":"core-015","text":"Taylor closed the door, the phone rang, and then the meeting continued.","critical":["Taylor","meeting continued"],"sounds":[]}
+{"id":"core-016","text":"The package delivery number is seven four nine two six eight one.","critical":["seven four nine two six eight one"],"critical_types":{"seven four nine two six eight one":"DIGIT_SEQUENCE"},"sounds":[]}
+{"id":"core-017","text":"The appointment was changed from Tuesday at 10 AM to Friday at 4:30 PM.","critical":["Tuesday","10 AM","Friday","4:30 PM"],"critical_types":{"10 AM":"TIME","4:30 PM":"TIME"},"sounds":[]}
+{"id":"core-018","text":"The customer said they cannot access the account after the security update.","critical":["cannot access the account","security update"],"sounds":[]}
+{"id":"core-019","text":"The Wi-Fi network name is Office Guest and the connection code is alpha seven nine.","critical":["Office Guest","connection code","alpha seven nine"],"critical_types":{"Office Guest":"SSID","alpha seven nine":"CODE"},"sounds":[]}
+{"id":"core-020","text":"The doctor said take two tablets in the morning and one tablet at night.","critical":["two tablets","morning","one tablet","night"],"sounds":[]}
+{"id":"core-021","text":"The meeting has three speakers: Jordan, Morgan, and Casey.","critical":["three speakers","Jordan","Morgan","Casey"],"sounds":[]}
+{"id":"core-022","text":"The application crashed because the database connection timed out.","critical":["application crashed","database connection timed out"],"sounds":[]}
+{"id":"core-023","text":"The invoice total is one hundred twenty five dollars and forty cents.","critical":["one hundred twenty five dollars","forty cents"],"sounds":[]}
+{"id":"core-024","text":"The emergency alert says evacuate the building immediately and do not use the elevator.","critical":["evacuate the building immediately","do not use the elevator"],"sounds":[]}
+{"id":"core-025","text":"The developer deployed version two point four after reviewing the security changes.","critical":["deployed version two point four","security changes"],"sounds":[]}
