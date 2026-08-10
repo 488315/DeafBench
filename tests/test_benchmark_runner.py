@@ -319,6 +319,7 @@ def test_failed_run_promotion_restores_previous_bundle(
         ("whisper-at", "run_whisper_at"),
         ("faster-whisper", "run_faster_whisper"),
         ("distil-whisper", "run_distil_whisper"),
+        ("qwen3-asr-0.6b", "run_qwen3_asr"),
     ],
 )
 def test_default_model_runner_is_selected_lazily(
@@ -330,7 +331,9 @@ def test_default_model_runner_is_selected_lazily(
     assert runner.__name__ == function_name
 
 
-@pytest.mark.parametrize("model", ["faster-whisper", "distil-whisper"])
+@pytest.mark.parametrize(
+    "model", ["faster-whisper", "distil-whisper", "qwen3-asr-0.6b"]
+)
 def test_main_accepts_additional_local_models(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
