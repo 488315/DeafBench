@@ -21,10 +21,35 @@ def test_benchmark_extra_installs_whisperspeech_runtime_dependencies() -> None:
     os.environ.get("DEAFBENCH_RUN_PACKAGING_INTEGRATION") != "1",
     reason="requires an isolated installation of DeafBench[benchmark]",
 )
-def test_benchmark_install_imports_whisperspeech_pipeline() -> None:
+def test_benchmark_install_imports_whisperspeech_pipeline(tmp_path: Path) -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    environment = tmp_path / "benchmark-venv"
+    subprocess.run(
+        [sys.executable, "-m", "venv", str(environment)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    environment_python = environment / (
+        "Scripts/python.exe" if os.name == "nt" else "bin/python"
+    )
+    installed = subprocess.run(
+        [
+            str(environment_python),
+            "-m",
+            "pip",
+            "install",
+            f"{project_root}[benchmark]",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert installed.returncode == 0, installed.stderr
+
     completed = subprocess.run(
         [
-            sys.executable,
+            str(environment_python),
             "-I",
             "-c",
             (
