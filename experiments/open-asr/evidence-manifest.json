@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "track": "hugging-face-open-asr-compatibility",
+  "scope": "public-seven-set-open-model-baseline",
+  "result_rows": 74737,
+  "source_pins": {
+    "official_evaluator": "9585fc39bff55697a2ec1c5f13921b18812bfde8",
+    "zipformer_runner": "64c698c42932a54bc7a40a7f172d03c8c4838fe6",
+    "dataset": "b6bdcd0beb34f8975dc659796176d88f43aff502",
+    "model": "d410fb15a71cbf87ec5e0a860356563deb9d8f01",
+    "icefall": "3f848bb6d0acc970c9b294a30ca0a04a7c9c78d1"
+  },
+  "decoding": {
+    "method": "modified_beam_search",
+    "beam": 6,
+    "common_parameters_across_datasets": true,
+    "batch_size_is_local_memory_scheduling_only": true
+  },
+  "metrics": {
+    "family": "official_open_asr_wer",
+    "public_seven_set_macro_wer": 5.23,
+    "aggregation": "unweighted mean of seven rounded dataset WER values"
+  },
+  "hardware": {
+    "label": "local RTX 4070",
+    "comparison_to_official_hardware_allowed": false
+  },
+  "claim_boundary": "Public compatibility evidence only; not a Hugging Face verified leaderboard result.",
+  "artifacts": [
+    {
+      "path": "experiments/open-asr/results/full-public/MODEL_soundsgoodai-Zipformer-cr-ctc-transducer-XL-290M_DATASET_hf-audio-open-asr-leaderboard_ami_cleaned_test.jsonl",
+      "bytes": 1665726,
+      "rows": 7715,
+      "sha256": "a91a26e1faaf0da5cda744991c06be90f2176179f94da8888ecc89dee67ed789"
+    },
+    {
+      "path": "experiments/open-asr/results/full-public/MODEL_soundsgoodai-Zipformer-cr-ctc-transducer-XL-290M_DATASET_hf-audio-open-asr-leaderboard_earnings22_test.jsonl",
+      "bytes": 867988,
+      "rows": 2737,
+      "sha256": "e1f80f976885813a9792dff0543de7941ef22afe97da9aad735eba0b834879f2"
+    },
+    {
+      "path": "experiments/open-asr/results/full-public/MODEL_soundsgoodai-Zipformer-cr-ctc-transducer-XL-290M_DATASET_hf-audio-open-asr-leaderboard_gigaspeech_cleaned_test.jsonl",
+      "bytes": 6246826,
+      "rows": 18757,
+      "sha256": "925d351a43c3bc9b8857b871250b29886b2b84b5ec2965978dc0831428797c36"
+    },
+    {
+      "path": "experiments/open-asr/results/full-public/MODEL_soundsgoodai-Zipformer-cr-ctc-transducer-XL-290M_DATASET_hf-audio-open-asr-leaderboard_librispeech_test.clean.jsonl",
+      "bytes": 852245,
+      "rows": 2620,
+      "sha256": "206d59ded8fa70cb5c10b82584fc090eb7d9d8567cdadb64132d0bfd3a6125b4"
+    },
+    {
+      "path": "experiments/open-asr/results/full-public/MODEL_soundsgoodai-Zipformer-cr-ctc-transducer-XL-290M_DATASET_hf-audio-open-asr-leaderboard_librispeech_test.other.jsonl",
+      "bytes": 869959,
+      "rows": 2939,
+      "sha256": "d5fcd1cb0011aabf5a9cb6249d78128f0bad261e37885b16a9f55bb2c622b5df"
+    },
+    {
+      "path": "experiments/open-asr/results/full-public/MODEL_soundsgoodai-Zipformer-cr-ctc-transducer-XL-290M_DATASET_hf-audio-open-asr-leaderboard_spgispeech_test.jsonl",
+      "bytes": 15370519,
+      "rows": 39341,
+      "sha256": "d0874150b59aea49e3750a002af03fde168ad25facdf19c80dce6e272e927516"
+    },
+    {
+      "path": "experiments/open-asr/results/full-public/MODEL_soundsgoodai-Zipformer-cr-ctc-transducer-XL-290M_DATASET_hf-audio-open-asr-leaderboard_voxpopuli_cleaned_aa_test.jsonl",
+      "bytes": 278787,
+      "rows": 628,
+      "sha256": "2c5499ca8690d5d2b2fb40144158c5a93ab860566655ee3e7b23f9fcd37a395e"
+    },
+    {
+      "path": "experiments/open-asr/results/zipformer-public-7set-score.json",
+      "bytes": 3345,
+      "sha256": "634398f9f58415214f82720933b648ae135afa28727b00ffc3ab401b50ddca0e"
+    },
+    {
+      "path": "experiments/open-asr/results/zipformer-public-7set-errors.json",
+      "bytes": 92995,
+      "sha256": "eded5b67d7d32db2c3c47ee543310a7fcfb02426237973667250627af3bbc4b6"
+    }
+  ]
+}
