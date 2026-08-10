@@ -156,7 +156,16 @@ def prepare_spoken_reference(
         entity_ranges[term] = (range_start, len(words))
         alias = " ".join(alias_words)
         aliases[term] = alias
-        ssml_parts.append(f'<sub alias="{escape(alias, quote=True)}">{escape(term)}</sub>')
+        if entity_type in {"DIGIT_SEQUENCE", "CODE", "PASSWORD"} and re.search(
+            r"\d", term
+        ):
+            ssml_parts.append(
+                f'<say-as interpret-as="telephone">{escape(term)}</say-as>'
+            )
+        else:
+            ssml_parts.append(
+                f'<sub alias="{escape(alias, quote=True)}">{escape(term)}</sub>'
+            )
         cursor = end
 
     suffix = reference_text[cursor:]

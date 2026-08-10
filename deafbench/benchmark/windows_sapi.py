@@ -19,14 +19,15 @@ _SCRIPT = r"""
 param(
     [Parameter(Mandatory=$true)][string]$SsmlPath,
     [Parameter(Mandatory=$true)][string]$OutputPath,
-    [Parameter(Mandatory=$true)][string]$VoiceName
+    [Parameter(Mandatory=$true)][string]$VoiceName,
+    [Parameter(Mandatory=$true)][int]$VoiceRate
 )
 $ErrorActionPreference = "Stop"
 Add-Type -AssemblyName System.Speech
 $speaker = [System.Speech.Synthesis.SpeechSynthesizer]::new()
 try {
     $speaker.SelectVoice($VoiceName)
-    $speaker.Rate = 0
+    $speaker.Rate = $VoiceRate
     $speaker.Volume = 100
     $voice = $speaker.Voice
     $speaker.SetOutputToWaveFile($OutputPath)
@@ -39,7 +40,7 @@ try {
         culture = $voice.Culture.Name
         gender = $voice.Gender.ToString()
         age = $voice.Age.ToString()
-        rate = 0
+        rate = $VoiceRate
         volume = 100
     } | ConvertTo-Json -Compress
 }
@@ -57,12 +58,16 @@ class WindowsSapiGenerator:
         *,
         voice_name: str = "Microsoft Zira Desktop",
         powershell: str = "powershell.exe",
+        rate: int = 4,
     ) -> None:
+        if not -10 <= rate <= 10:
+            raise ValueError("Windows SAPI rate must be between -10 and 10")
         executable = shutil.which(powershell)
         if executable is None:
             raise RuntimeError(f"Windows PowerShell is unavailable: {powershell}")
         self._powershell = executable
         self._voice_name = voice_name
+        self._rate = rate
 
     def generate(
         self,
@@ -92,6 +97,8 @@ class WindowsSapiGenerator:
                     str(output),
                     "-VoiceName",
                     self._voice_name,
+                    "-VoiceRate",
+                    str(self._rate),
                 ],
                 check=True,
                 capture_output=True,
@@ -107,7 +114,7 @@ class WindowsSapiGenerator:
                 "version": voice["assembly"],
                 "voice": {key: value for key, value in voice.items() if key != "assembly"},
                 "operating_system": platform.platform(),
-                "synthesis_profile": "typed-ssml-v1",
+                "synthesis_profile": "typed-ssml-v2",
                 "tts_seed": None,
                 "reference_sha256": prepared.reference_sha256,
                 "spoken_aliases": dict(prepared.spoken_aliases),

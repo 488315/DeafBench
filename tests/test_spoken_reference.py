@@ -59,7 +59,13 @@ def test_replacement_entities_have_explicit_spoken_forms(
     start, end = prepared.entity_word_ranges[term]
 
     assert prepared.words[start:end] == expected_words
-    assert f'alias="{" ".join(expected_words)}"' in prepared.ssml
+    assert prepared.spoken_aliases[term] == " ".join(expected_words)
+    if record["critical_types"][term] in {"DIGIT_SEQUENCE", "CODE", "PASSWORD"} and any(
+        character.isdigit() for character in term
+    ):
+        assert f'<say-as interpret-as="telephone">{term}</say-as>' in prepared.ssml
+    else:
+        assert f'alias="{" ".join(expected_words)}"' in prepared.ssml
     assert prepared.reference_sha256 == hashlib.sha256(
         record["text"].encode("utf-8")
     ).hexdigest()
