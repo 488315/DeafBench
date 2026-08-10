@@ -2,6 +2,7 @@ import json
 import subprocess
 
 from deafbench.cli import main
+from deafbench.leaderboard._official_worker import _PUBLIC_EXPECTED_ROWS
 
 
 def _fake_checkout(tmp_path):
@@ -72,9 +73,16 @@ def test_leaderboard_score_writes_json(tmp_path, monkeypatch):
 
     assert exit_code == 0
     assert json.loads(output.read_text(encoding="utf-8")) == {
-        "composite_wer": {"owner/model": 4.25},
+        "partial_mean_wer": {"owner/model": 4.25},
         "datasets": {"owner/model | fake_test": {"wer": 4.25}},
         "upstream_wer_sum": {"owner/model": 4.25},
+        "evaluation": {
+            "status": "partial",
+            "completed_sets": 0,
+            "expected_sets": 7,
+            "observed_rows": {},
+            "expected_rows": _PUBLIC_EXPECTED_ROWS,
+        },
     }
 
 

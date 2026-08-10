@@ -9,6 +9,15 @@ import sys
 
 
 _RESULT_MARKER = "DEAFBENCH_OFFICIAL_RESULT="
+_PUBLIC_EXPECTED_ROWS = {
+    "hf-audio-open-asr-leaderboard_ami_cleaned_test": 7805,
+    "hf-audio-open-asr-leaderboard_earnings22_test": 2741,
+    "hf-audio-open-asr-leaderboard_gigaspeech_cleaned_test": 18768,
+    "hf-audio-open-asr-leaderboard_librispeech_test.clean": 2620,
+    "hf-audio-open-asr-leaderboard_librispeech_test.other": 2939,
+    "hf-audio-open-asr-leaderboard_spgispeech_test": 39341,
+    "hf-audio-open-asr-leaderboard_voxpopuli_cleaned_aa_test": 628,
+}
 
 
 def _mean_wer_by_model(datasets: dict) -> dict[str, float]:
@@ -21,6 +30,33 @@ def _mean_wer_by_model(datasets: dict) -> dict[str, float]:
         model_id: round(sum(values) / len(values), 2)
         for model_id, values in wers.items()
     }
+
+
+def _evaluation_status(observed_rows: dict[str, int]) -> dict:
+    complete = observed_rows == _PUBLIC_EXPECTED_ROWS
+    return {
+        "status": "complete" if complete else "partial",
+        "completed_sets": sum(
+            observed_rows.get(dataset_id) == rows
+            for dataset_id, rows in _PUBLIC_EXPECTED_ROWS.items()
+        ),
+        "expected_sets": len(_PUBLIC_EXPECTED_ROWS),
+        "observed_rows": observed_rows,
+        "expected_rows": _PUBLIC_EXPECTED_ROWS,
+    }
+
+
+def _public_manifest_rows(results_dir: str) -> dict[str, int]:
+    observed = {}
+    for result_file in Path(results_dir).rglob("*.jsonl"):
+        marker = "_DATASET_"
+        if marker not in result_file.stem:
+            continue
+        dataset_id = result_file.stem.split(marker, 1)[1]
+        if dataset_id in _PUBLIC_EXPECTED_ROWS:
+            with result_file.open(encoding="utf-8") as handle:
+                observed[dataset_id] = sum(1 for line in handle if line.strip())
+    return observed
 
 
 def _read_payload() -> dict:
@@ -47,10 +83,14 @@ def _score(payload: dict) -> dict:
         payload["model_id"],
         families=["public"],
     )
+    observed_rows = _public_manifest_rows(payload["results_dir"])
+    evaluation = _evaluation_status(observed_rows)
+    mean_key = "composite_wer" if evaluation["status"] == "complete" else "partial_mean_wer"
     return {
-        "composite_wer": _mean_wer_by_model(datasets),
+        mean_key: _mean_wer_by_model(datasets),
         "upstream_wer_sum": dict(upstream_sum),
         "datasets": datasets,
+        "evaluation": evaluation,
     }
 
 

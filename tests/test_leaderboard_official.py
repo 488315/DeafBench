@@ -3,7 +3,11 @@ import subprocess
 
 import pytest
 
-from deafbench.leaderboard._official_worker import _mean_wer_by_model
+from deafbench.leaderboard._official_worker import (
+    _PUBLIC_EXPECTED_ROWS,
+    _evaluation_status,
+    _mean_wer_by_model,
+)
 from deafbench.leaderboard.official import (
     OfficialEvaluator,
     OfficialEvaluatorError,
@@ -85,13 +89,20 @@ def test_evaluator_delegates_normalization_and_scoring_to_pinned_source(tmp_path
     score = evaluator.score(results_dir, "owner/model")
 
     assert score == {
-        "composite_wer": {"owner/model": 12.5},
+        "partial_mean_wer": {"owner/model": 12.5},
         "upstream_wer_sum": {"owner/model": 12.5},
         "datasets": {
             "owner/model | fake_test": {
                 "rtfx": 3.0,
                 "wer": 12.5,
             }
+        },
+        "evaluation": {
+            "status": "partial",
+            "completed_sets": 0,
+            "expected_sets": 7,
+            "observed_rows": {},
+            "expected_rows": _PUBLIC_EXPECTED_ROWS,
         },
     }
 
@@ -129,3 +140,14 @@ def test_worker_returns_the_mean_that_upstream_only_prints():
         "owner/model": 2.81,
         "other/model": 2.0,
     }
+
+
+def test_worker_requires_all_exact_public_row_counts_for_composite():
+    assert _evaluation_status(dict(_PUBLIC_EXPECTED_ROWS))["status"] == "complete"
+
+    incomplete = dict(_PUBLIC_EXPECTED_ROWS)
+    incomplete["hf-audio-open-asr-leaderboard_librispeech_test.clean"] -= 1
+    status = _evaluation_status(incomplete)
+
+    assert status["status"] == "partial"
+    assert status["completed_sets"] == 6
