@@ -395,6 +395,24 @@ def test_generator_preserves_unrelated_import_error(
     assert caught.value.name == "torch"
 
 
+def test_generator_preserves_incompatible_pipeline_import_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original_import = builtins.__import__
+
+    def failing_import(name: str, *args: object, **kwargs: object) -> object:
+        if name == "whisperspeech.pipeline":
+            raise ImportError(
+                "cannot import name 'Pipeline'",
+                name="whisperspeech.pipeline",
+            )
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", failing_import)
+    with pytest.raises(ImportError, match="cannot import name 'Pipeline'"):
+        create_whisperspeech_generator()
+
+
 def test_interrupted_promotion_restores_last_complete_set_on_failure(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
