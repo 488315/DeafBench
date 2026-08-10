@@ -74,6 +74,7 @@ def test_leaderboard_score_writes_json(tmp_path, monkeypatch):
     assert json.loads(output.read_text(encoding="utf-8")) == {
         "composite_wer": {"owner/model": 4.25},
         "datasets": {"owner/model | fake_test": {"wer": 4.25}},
+        "upstream_wer_sum": {"owner/model": 4.25},
     }
 
 

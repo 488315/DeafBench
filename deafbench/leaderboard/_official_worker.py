@@ -11,6 +11,18 @@ import sys
 _RESULT_MARKER = "DEAFBENCH_OFFICIAL_RESULT="
 
 
+def _mean_wer_by_model(datasets: dict) -> dict[str, float]:
+    """Match the mean that upstream prints but does not return."""
+    wers: dict[str, list[float]] = {}
+    for result_key, metrics in datasets.items():
+        model_id = result_key.split("|", 1)[0].strip()
+        wers.setdefault(model_id, []).append(metrics["wer"])
+    return {
+        model_id: round(sum(values) / len(values), 2)
+        for model_id, values in wers.items()
+    }
+
+
 def _read_payload() -> dict:
     payload = json.load(sys.stdin)
     if not isinstance(payload, dict):
@@ -30,13 +42,14 @@ def _normalize(payload: dict) -> dict:
 def _score(payload: dict) -> dict:
     from normalizer.eval_utils import score_results
 
-    composite, datasets = score_results(
+    upstream_sum, datasets = score_results(
         payload["results_dir"],
         payload["model_id"],
         families=["public"],
     )
     return {
-        "composite_wer": dict(composite),
+        "composite_wer": _mean_wer_by_model(datasets),
+        "upstream_wer_sum": dict(upstream_sum),
         "datasets": datasets,
     }
 

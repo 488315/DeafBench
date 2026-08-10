@@ -3,6 +3,7 @@ import subprocess
 
 import pytest
 
+from deafbench.leaderboard._official_worker import _mean_wer_by_model
 from deafbench.leaderboard.official import (
     OfficialEvaluator,
     OfficialEvaluatorError,
@@ -85,6 +86,7 @@ def test_evaluator_delegates_normalization_and_scoring_to_pinned_source(tmp_path
 
     assert score == {
         "composite_wer": {"owner/model": 12.5},
+        "upstream_wer_sum": {"owner/model": 12.5},
         "datasets": {
             "owner/model | fake_test": {
                 "rtfx": 3.0,
@@ -114,3 +116,16 @@ def test_evaluator_rejects_worker_output_without_result_marker(tmp_path, monkeyp
 
     with pytest.raises(OfficialEvaluatorError, match="result marker"):
         evaluator.score(results_dir, "owner/model")
+
+
+def test_worker_returns_the_mean_that_upstream_only_prints():
+    datasets = {
+        "owner/model | first": {"wer": 1.31},
+        "owner/model | second": {"wer": 4.31},
+        "other/model | first": {"wer": 2.0},
+    }
+
+    assert _mean_wer_by_model(datasets) == {
+        "owner/model": 2.81,
+        "other/model": 2.0,
+    }
