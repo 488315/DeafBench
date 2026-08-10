@@ -33,6 +33,17 @@ The model-specific [launcher](https://github.com/huggingface/open_asr_leaderboar
 
 **Verified:** every listed config has audio (declared 16 kHz), dataset, text, id, and audio_length_s in the [pinned dataset card](https://huggingface.co/datasets/hf-audio/open-asr-leaderboard/blob/b6bdcd0beb34f8975dc659796176d88f43aff502/README.md). The [published evaluation YAML](https://huggingface.co/soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M/blob/d410fb15a71cbf87ec5e0a860356563deb9d8f01/.eval_results/open_asr_leaderboard.yaml) reports 5.56 mean WER and the seven per-set WERs dated 2026-07-19.
 
+## Score-to-beat correction
+
+At the pinned evaluator revision, `scripts/data/en_shortform.csv` lists the
+lowest public seven-set average as **5.42** for
+`CohereLabs/cohere-transcribe-03-2026`. The requested **5.37** is the
+VoxPopuli column for `zoom/scribe_v1`, whose public average is 5.47; it is not
+an Average WER in this snapshot. DeafBench therefore records 5.42 as the
+pinned public comparison and retains 5.37 only as an unverified external
+target. Neither value proves success on the unavailable private scripted and
+conversational evaluations.
+
 **Important distinction:** the dataset [eval.yaml](https://huggingface.co/datasets/hf-audio/open-asr-leaderboard/blob/b6bdcd0beb34f8975dc659796176d88f43aff502/eval.yaml) also lists older/un-cleaned task identifiers and Common Voice/TED-LIUM. For this model’s published result, the executable model-specific scripts are stronger operational authority for the seven-set aggregate.
 
 ## Verified runner, preprocessing, and decoding

@@ -10,8 +10,10 @@ dataset, model, and Icefall revisions are recorded in
 - The baseline model is `CC-BY-NC-4.0`. It is useful for research and
   comparison, but it cannot be the commercial foundation of DeafBench without
   separate permission.
-- The pinned published model result is 5.56 public seven-set macro WER. The
-  user's 5.37 target was not the value in the pinned official result artifact.
+- The pinned published Zipformer result is 5.56 public seven-set macro WER.
+  The pinned leaderboard CSV's best public average is 5.42; 5.37 is Zoom
+  Scribe's VoxPopuli column, not its average. Private success still requires
+  an authorized official submission.
 - A public score does not prove a leaderboard win. Private scripted and
   conversational evaluation is available only through an authorized official
   submission.
