@@ -1,6 +1,8 @@
 import builtins
+import importlib
 import sys
 import types
+from pathlib import Path
 
 import pytest
 
@@ -75,3 +77,53 @@ def test_compare_does_not_import_benchmark_runner(tmp_path):
     cli.main(["compare", str(references), str(predictions)])
 
     assert "deafbench.benchmark.runner" not in sys.modules
+
+
+def test_benchmark_command_prints_complete_terminal_summary(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    runner_module = importlib.import_module("deafbench.benchmark.runner")
+    BenchmarkResult = runner_module.BenchmarkResult
+    run_dir = tmp_path / "benchmarks/non-speech-v1/runs/whisper-at/synthetic"
+    result = BenchmarkResult(
+        "synthetic",
+        run_dir / "predictions.jsonl",
+        run_dir / "report.md",
+        run_dir / "run.json",
+        {
+            "samples": 1,
+            "wer": 0.0,
+            "critical_recall": 100.0,
+            "non_speech_recall": 100.0,
+            "speaker_accuracy": None,
+            "median_latency_ms": None,
+            "critical_failures": [],
+        },
+    )
+    monkeypatch.setattr(runner_module, "run_benchmark", lambda _config: result)
+
+    status = cli.main([
+        "benchmark",
+        "non-speech-v1",
+        "--model",
+        "whisper-at",
+        "--audio-source",
+        "synthetic",
+        "--repo-root",
+        str(tmp_path),
+    ])
+
+    assert status == 0
+    output = capsys.readouterr().out
+    for expected in (
+        "Dataset: non-speech-v1",
+        "Model: whisper-at",
+        "Audio source: synthetic",
+        "WER",
+        "Critical Information",
+        "Predictions:",
+        "Report:",
+    ):
+        assert expected in output
