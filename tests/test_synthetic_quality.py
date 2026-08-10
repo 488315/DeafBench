@@ -31,6 +31,7 @@ def _alignment(
         reference_sha256=_reference_hash(),
         token_coverage=coverage,
         critical_entity_coverage={"8:30 PM": entity_coverage},
+        coverage_score_threshold=0.25,
         adapter="test-forced-aligner",
         adapter_revision="test-revision",
     )
@@ -176,6 +177,7 @@ def test_typed_entity_gate_is_not_applicable_when_reference_has_no_typed_labels(
         reference_sha256=_reference_hash(),
         token_coverage=1.0,
         critical_entity_coverage={},
+        coverage_score_threshold=0.25,
         adapter="test-forced-aligner",
         adapter_revision="test-revision",
     )
@@ -205,6 +207,24 @@ def test_independent_asr_cannot_accept_failed_alignment(tmp_path: Path):
     assert not decision.gate("forced_alignment_coverage").passed
 
 
+def test_alignment_coverage_from_a_weaker_score_floor_is_quarantined(tmp_path: Path):
+    wav = tmp_path / "weak-coverage-floor.wav"
+    _write_wav(wav)
+    alignment = AlignmentEvidence(
+        reference_sha256=_reference_hash(),
+        token_coverage=1.0,
+        critical_entity_coverage={"8:30 PM": 1.0},
+        coverage_score_threshold=0.10,
+        adapter="test-forced-aligner",
+        adapter_revision="test-revision",
+    )
+
+    decision = _evaluate(wav, alignment=alignment)
+
+    assert not decision.gate("forced_alignment_coverage").passed
+    assert decision.status == "quarantined"
+
+
 def test_validator_disagreement_is_recorded_and_quarantined(tmp_path: Path):
     wav = tmp_path / "disagreement.wav"
     _write_wav(wav)
@@ -231,6 +251,7 @@ def test_faster_whisper_cannot_supply_forced_alignment_evidence():
             reference_sha256=_reference_hash(),
             token_coverage=1.0,
             critical_entity_coverage={"8:30 PM": 1.0},
+            coverage_score_threshold=0.25,
             adapter="faster-whisper",
             adapter_revision="any",
         )

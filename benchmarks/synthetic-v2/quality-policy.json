@@ -10,6 +10,7 @@
     "min_seconds_per_word": 0.08,
     "max_seconds_per_word": 0.45,
     "min_alignment_coverage": 0.95,
+    "min_alignment_token_score": 0.25,
     "min_entity_coverage": 0.95,
     "analysis_frame_ms": 10
   },
@@ -28,6 +29,7 @@
   "alignment_contract": {
     "kind": "reference-conditioned forced alignment",
     "minimum_token_coverage": 0.95,
+    "covered_token_minimum_score": 0.25,
     "minimum_per-typed-entity_coverage": 0.95,
     "baseline_model_may_supply_alignment": false
   },

@@ -26,6 +26,7 @@ class QualityRules:
     min_seconds_per_word: float = 0.08
     max_seconds_per_word: float = 0.45
     min_alignment_coverage: float = 0.95
+    min_alignment_token_score: float = 0.25
     min_entity_coverage: float = 0.95
     analysis_frame_ms: int = 10
 
@@ -40,6 +41,8 @@ class QualityRules:
             raise ValueError("duration bounds must be positive and ordered")
         if not 0 <= self.min_alignment_coverage <= 1:
             raise ValueError("alignment coverage must be between zero and one")
+        if not 0 <= self.min_alignment_token_score <= 1:
+            raise ValueError("alignment token score must be between zero and one")
         if not 0 <= self.min_entity_coverage <= 1:
             raise ValueError("entity coverage must be between zero and one")
 
@@ -59,6 +62,7 @@ class AlignmentEvidence:
     reference_sha256: str
     token_coverage: float
     critical_entity_coverage: Mapping[str, float]
+    coverage_score_threshold: float
     adapter: str
     adapter_revision: str
 
@@ -67,6 +71,8 @@ class AlignmentEvidence:
             raise ValueError("faster-whisper is not an accepted forced-alignment adapter")
         if not 0 <= self.token_coverage <= 1:
             raise ValueError("token coverage must be between zero and one")
+        if not 0 <= self.coverage_score_threshold <= 1:
+            raise ValueError("coverage score threshold must be between zero and one")
         if any(not 0 <= value <= 1 for value in self.critical_entity_coverage.values()):
             raise ValueError("entity coverage must be between zero and one")
         object.__setattr__(
@@ -188,8 +194,12 @@ def evaluate_synthetic_sample(
         ),
         _gate(
             "forced_alignment_coverage",
-            alignment.token_coverage >= rules.min_alignment_coverage,
-            f"coverage={alignment.token_coverage:.6f}",
+            alignment.token_coverage >= rules.min_alignment_coverage
+            and alignment.coverage_score_threshold >= rules.min_alignment_token_score,
+            (
+                f"coverage={alignment.token_coverage:.6f}, "
+                f"score_floor={alignment.coverage_score_threshold:.6f}"
+            ),
         ),
         _gate(
             "typed_critical_entity_fidelity",
