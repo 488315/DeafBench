@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Mapping
 
 from deafbench.benchmark.workspace import inspect_audio_set
 
@@ -22,6 +23,8 @@ class ModelRunInfo:
 
     name: str
     model_id: str
+    revision: str | None = None
+    decoding: Mapping[str, object] | None = None
 
 
 def _validated_wavs(audio_dir: Path, references: Path) -> tuple[Path, ...]:
