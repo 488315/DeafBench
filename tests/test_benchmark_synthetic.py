@@ -208,6 +208,7 @@ def test_untouched_matching_set_is_current(tmp_path: Path) -> None:
         "missing_wav",
         "extra_wav",
         "invalid_wav",
+        "truncated_wav_payload",
         "missing_manifest",
         "malformed_manifest",
         "changed_reference",
@@ -235,6 +236,9 @@ def test_cache_rejects_incomplete_or_inconsistent_sets(
         )
     elif mutation == "invalid_wav":
         (audio_dir / "ns-001.wav").write_bytes(b"not a wav")
+    elif mutation == "truncated_wav_payload":
+        wav = audio_dir / "ns-001.wav"
+        wav.write_bytes(wav.read_bytes()[:-2])
     elif mutation == "missing_manifest":
         manifest.unlink()
     elif mutation == "malformed_manifest":
