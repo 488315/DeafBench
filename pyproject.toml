@@ -14,6 +14,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+benchmark = [
+    "numpy>=1.26",
+    "soundfile>=0.12",
+    "WhisperSpeech>=0.8.9",
+]
 recorder = [
     "numpy>=1.26",
     "sounddevice>=0.5.1",
