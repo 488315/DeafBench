@@ -65,6 +65,7 @@ def test_faster_whisper_writes_complete_segment_transcript(
         "device": "cpu",
         "compute_type": "int8",
     }
+    assert calls["model_id"] == "small.en"
     assert calls["transcribe_kwargs"] == {
         "beam_size": 5,
         "language": "en",
