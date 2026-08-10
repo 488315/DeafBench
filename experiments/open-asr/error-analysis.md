@@ -1,7 +1,7 @@
 # Zipformer baseline error analysis
 
-Status: two of seven public test sets are complete. Cross-domain analysis
-remains incomplete pending the other five public manifests.
+Status: three of seven public test sets are complete. Cross-domain analysis
+remains incomplete pending the other four public manifests.
 
 ## Evidence
 
@@ -26,7 +26,7 @@ the official scorer (1.73%).
 | Meetings and overlapping speech | Not represented | Await AMI-Cleaned results |
 | Conversational speech | Not represented | Await public and private confirmation |
 | Accents | Not identified | Await per-dataset errors |
-| Financial terminology | Topic appears, no observed error | Await Earnings22 results |
+| Financial terminology | Earnings22 is the hardest completed set at 7.68 WER | High; classify utterance errors before choosing a change |
 | Names and rare words | `Creighton` -> `Crichton` twice | High diagnostic signal |
 | Numbers and abbreviations | Not represented | Await full results |
 | Disfluencies | Not represented | Await AMI-Cleaned results |
@@ -55,3 +55,14 @@ seconds of audio: 295 deletions, 182 insertions, and 289 substitutions. This
 accented parliamentary-speech set is materially harder than LibriSpeech clean
 for the baseline. Detailed error categories still require normalized
 utterance-level alignment rather than inference from aggregate counts.
+
+## Full Earnings22 baseline
+
+The official loader retained **2,737 of 2,741 raw rows** after removing four
+references that normalized to empty or its ignore sentinel. The official
+scorer measured **7.68% WER** over 19,531.592 seconds of audio: 1,015
+deletions, 986 insertions, and 1,736 substitutions. At 86.5395 RTFx, 464.446
+seconds wall time, and 4,220,642,304 peak VRAM bytes, batch 16 remained safely
+within the RTX 4070 constraint. Financial/long-form speech is now the largest
+measured opportunity, but aggregate counts alone do not establish whether
+terminology, names, numbers, segmentation, or acoustic conditions are causal.
