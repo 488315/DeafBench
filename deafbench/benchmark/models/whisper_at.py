@@ -144,6 +144,12 @@ def run_whisper_at(
                 f"Invalid Whisper-AT result for {wav_path.name}: "
                 "expected a mapping"
             )
+        text = result.get("text")
+        if not isinstance(text, str):
+            raise ValueError(
+                f"Invalid Whisper-AT transcript for {wav_path.name}: "
+                "expected a string"
+            )
         parsed = runtime.parse_at_label(
             result,
             language="follow_asr",
@@ -152,12 +158,6 @@ def run_whisper_at(
             include_class_list=include_class_list,
         )
         raw_tags, sounds = extract_audio_tags(parsed)
-        text = result.get("text")
-        if not isinstance(text, str):
-            raise ValueError(
-                f"Invalid Whisper-AT transcript for {wav_path.name}: "
-                "expected a string"
-            )
         records.append(
             {
                 "id": wav_path.stem,
