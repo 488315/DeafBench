@@ -6,6 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 import numpy
+from scipy.signal import resample_poly
 
 from deafbench.benchmark.models.qwen3_asr import run_qwen3_asr
 from deafbench.model_registry import ModelRegistryError
@@ -50,6 +51,8 @@ class _FakeOutput:
 
 
 class _FakeProcessor:
+    feature_extractor = SimpleNamespace(sampling_rate=16_000)
+
     def __init__(self) -> None:
         self.audio: list[object] = []
         self.inputs: list[_FakeInputs] = []
@@ -120,6 +123,7 @@ def test_qwen_adapter_pins_safe_runtime_and_writes_sorted_predictions(
         AutoProcessor=ProcessorFactory,
         AutoModelForMultimodalLM=ModelFactory,
         numpy=numpy,
+        resample_poly=resample_poly,
         torch=SimpleNamespace(
             cuda=SimpleNamespace(is_available=lambda: True),
             device=lambda name: name,
@@ -146,7 +150,7 @@ def test_qwen_adapter_pins_safe_runtime_and_writes_sorted_predictions(
     assert model.generations == [256, 256]
     assert all(inputs.moves == [("cuda", "bfloat16")] for inputs in processor.inputs)
     assert all(isinstance(audio, numpy.ndarray) for audio in processor.audio)
-    assert all(audio.shape == (16,) for audio in processor.audio)
+    assert all(audio.shape == (6,) for audio in processor.audio)
     assert all(audio.dtype == numpy.float32 for audio in processor.audio)
     assert [json.loads(line) for line in output.read_text().splitlines()] == [
         {"id": "sample-001", "text": "transcript 1"},

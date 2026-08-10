@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import wave
 from dataclasses import dataclass
+from math import gcd
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +22,7 @@ class _TransformersBackend:
     AutoProcessor: Any
     AutoModelForMultimodalLM: Any
     numpy: Any
+    resample_poly: Any
     torch: Any
 
 
@@ -28,9 +30,10 @@ def _load_backend() -> _TransformersBackend:
     try:
         import numpy
         import torch
+        from scipy.signal import resample_poly
         from transformers import AutoModelForMultimodalLM, AutoProcessor
     except ModuleNotFoundError as exc:
-        if exc.name not in {"numpy", "torch", "transformers"}:
+        if exc.name not in {"numpy", "scipy", "torch", "transformers"}:
             raise
         raise RuntimeError(
             "Qwen3-ASR is not installed. Run: "
@@ -40,6 +43,7 @@ def _load_backend() -> _TransformersBackend:
         AutoProcessor,
         AutoModelForMultimodalLM,
         numpy,
+        resample_poly,
         torch,
     )
 
@@ -74,12 +78,27 @@ def _decode_transcription(processor: Any, generated_ids: Any) -> str:
     return decoded[0]
 
 
-def _read_pcm16_mono(wav_path: Path, numpy: Any) -> Any:
+def _read_pcm16_mono(
+    wav_path: Path,
+    target_rate: int,
+    numpy: Any,
+    resample_poly: Any,
+) -> Any:
     with wave.open(str(wav_path), "rb") as handle:
         if handle.getnchannels() != 1 or handle.getsampwidth() != 2:
             raise ValueError(f"Qwen3-ASR requires mono PCM16 WAV: {wav_path}")
+        source_rate = handle.getframerate()
         frames = handle.readframes(handle.getnframes())
-    return numpy.frombuffer(frames, dtype="<i2").astype(numpy.float32) / 32_768.0
+    samples = numpy.frombuffer(frames, dtype="<i2").astype(numpy.float32)
+    samples /= 32_768.0
+    if source_rate == target_rate:
+        return samples
+    divisor = gcd(source_rate, target_rate)
+    return resample_poly(
+        samples,
+        target_rate // divisor,
+        source_rate // divisor,
+    ).astype(numpy.float32, copy=False)
 
 
 def run_qwen3_asr(
@@ -95,6 +114,7 @@ def run_qwen3_asr(
     runtime = _load_backend() if backend is None else backend
     load_options = {"revision": revision, "trust_remote_code": False}
     processor = runtime.AutoProcessor.from_pretrained(model_id, **load_options)
+    sampling_rate = processor.feature_extractor.sampling_rate
     model = runtime.AutoModelForMultimodalLM.from_pretrained(
         model_id,
         **load_options,
@@ -109,7 +129,12 @@ def run_qwen3_asr(
     with runtime.torch.inference_mode():
         for wav_path in wav_paths:
             inputs = processor.apply_transcription_request(
-                audio=_read_pcm16_mono(wav_path, runtime.numpy),
+                audio=_read_pcm16_mono(
+                    wav_path,
+                    sampling_rate,
+                    runtime.numpy,
+                    runtime.resample_poly,
+                ),
                 language="English",
             ).to(model.device, model.dtype)
             output_ids = model.generate(
