@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
+from typing import Mapping
 
 import soundfile as sf
 
@@ -59,15 +60,20 @@ class WindowsSapiGenerator:
         voice_name: str = "Microsoft Zira Desktop",
         powershell: str = "powershell.exe",
         rate: int = 4,
+        sample_rates: Mapping[str, int] | None = None,
     ) -> None:
         if not -10 <= rate <= 10:
             raise ValueError("Windows SAPI rate must be between -10 and 10")
+        resolved_sample_rates = dict(sample_rates or {})
+        if any(not -10 <= value <= 10 for value in resolved_sample_rates.values()):
+            raise ValueError("Windows SAPI sample rates must be between -10 and 10")
         executable = shutil.which(powershell)
         if executable is None:
             raise RuntimeError(f"Windows PowerShell is unavailable: {powershell}")
         self._powershell = executable
         self._voice_name = voice_name
         self._rate = rate
+        self._sample_rates = resolved_sample_rates
 
     def generate(
         self,
@@ -75,6 +81,7 @@ class WindowsSapiGenerator:
         prepared: SpokenReference,
     ) -> GeneratedSpeech:
         """Generate one waveform while retaining exact voice and alias metadata."""
+        rate = self._sample_rates.get(sample_id, self._rate)
         with tempfile.TemporaryDirectory(prefix=f"deafbench-{sample_id}-") as raw_dir:
             work = Path(raw_dir)
             script = work / "synthesize.ps1"
@@ -98,7 +105,7 @@ class WindowsSapiGenerator:
                     "-VoiceName",
                     self._voice_name,
                     "-VoiceRate",
-                    str(self._rate),
+                    str(rate),
                 ],
                 check=True,
                 capture_output=True,
