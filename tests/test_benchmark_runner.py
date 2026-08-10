@@ -132,6 +132,45 @@ def test_auto_uses_complete_human_set_without_synthetic_factory(
     assert "tts" not in metadata
 
 
+def test_run_metadata_preserves_model_performance_evidence(tmp_path: Path) -> None:
+    references = _write_dataset(tmp_path, human_complete=True)
+
+    def measured_runner(
+        _audio_dir: Path,
+        _references: Path,
+        output: Path,
+    ) -> ModelRunInfo:
+        atomic_write_jsonl(
+            output,
+            [
+                {"id": "core-001", "text": "Meet at platform four."},
+                {"id": "core-002", "text": "The alarm is active."},
+            ],
+        )
+        return ModelRunInfo(
+            "whisper",
+            "test-model",
+            performance={
+                "local_rtfx": 12.5,
+                "median_latency_ms": 40.0,
+                "peak_vram_bytes": 123_456,
+            },
+        )
+
+    result = run_benchmark(
+        BenchmarkConfig(tmp_path, "core-v1", "whisper"),
+        whisper_runner=measured_runner,
+    )
+
+    metadata = json.loads(result.metadata.read_text(encoding="utf-8"))
+    assert metadata["performance"] == {
+        "local_rtfx": 12.5,
+        "median_latency_ms": 40.0,
+        "peak_vram_bytes": 123_456,
+    }
+    assert references.is_file()
+
+
 def test_auto_generates_synthetic_transactional_run(tmp_path: Path) -> None:
     _write_dataset(tmp_path, human_complete=False)
     generated: list[tuple[str, int]] = []

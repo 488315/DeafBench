@@ -261,6 +261,8 @@ def _metadata(
         value["model_revision"] = model_info.revision
     if model_info.decoding is not None:
         value["decoding"] = dict(model_info.decoding)
+    if model_info.performance is not None:
+        value["performance"] = dict(model_info.performance)
     if source == "synthetic":
         if tts_info is None:
             raise ValueError("Synthetic run is missing TTS provenance")
