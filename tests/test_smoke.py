@@ -31,9 +31,12 @@ def test_module_cli_compare_smoke():
     assert "Samples: 3" in result.stdout
 
 
-def test_benchmark_help_does_not_require_heavy_dependencies():
+def test_benchmark_help_does_not_require_checkout_or_heavy_dependencies(
+    tmp_path: Path,
+):
     result = subprocess.run(
         [sys.executable, "-m", "deafbench", "benchmark", "--help"],
+        cwd=tmp_path,
         capture_output=True,
         text=True,
         check=False,
