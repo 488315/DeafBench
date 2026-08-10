@@ -1,9 +1,13 @@
+import builtins
 import json
 import wave
 from dataclasses import dataclass
 from pathlib import Path
 
+import pytest
+
 from deafbench.benchmark.models import ModelRunInfo
+from deafbench.benchmark.models import faster_whisper as adapter
 from deafbench.benchmark.models.faster_whisper import run_faster_whisper
 
 
@@ -65,3 +69,49 @@ def test_faster_whisper_writes_complete_segment_transcript(
         "beam_size": 5,
         "language": "en",
     }
+
+
+def test_faster_whisper_reports_missing_runtime(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    real_import = builtins.__import__
+
+    def missing_runtime(name: str, *args: object, **kwargs: object) -> object:
+        if name == "faster_whisper":
+            raise ModuleNotFoundError(name=name)
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", missing_runtime)
+
+    with pytest.raises(RuntimeError, match="pip install -U faster-whisper"):
+        adapter._load_backend()
+
+
+def test_faster_whisper_failure_preserves_previous_output(
+    tmp_path: Path,
+) -> None:
+    references, audio_dir = _write_dataset(tmp_path)
+    output = tmp_path / "predictions.jsonl"
+    output.write_text("previous predictions\n", encoding="utf-8")
+
+    @dataclass(frozen=True)
+    class InvalidSegment:
+        text: None = None
+
+    class FakeModel:
+        def transcribe(self, *_args: object, **_kwargs: object) -> tuple[object, None]:
+            return iter((InvalidSegment(),)), None
+
+    class FakeBackend:
+        def WhisperModel(self, *_args: object, **_kwargs: object) -> FakeModel:
+            return FakeModel()
+
+    with pytest.raises(ValueError, match="expected text to be a string"):
+        run_faster_whisper(
+            audio_dir,
+            references,
+            output,
+            backend=FakeBackend(),
+        )
+
+    assert output.read_text(encoding="utf-8") == "previous predictions\n"
