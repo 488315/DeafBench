@@ -1,0 +1,3 @@
+# Frozen benchmark evidence is byte-addressed and must not receive EOL conversion.
+benchmarks/synthetic-v2/*.json -text
+benchmarks/synthetic-v2/*.jsonl -text

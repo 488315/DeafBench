@@ -18,3 +18,9 @@ critical values, and typed critical-entity labels must remain unchanged for all
 Generated audio, quarantine files, and benchmark run artifacts are evidence,
 not source files, and must not be committed. Their cryptographic hashes and
 generation/validation metadata belong in the frozen corpus manifest.
+
+The accepted corpus is frozen in `freeze-manifest.json`. Its unchanged
+faster-whisper baseline is 25.2% WER, 69.4% strict lexical critical recall,
+96.8% canonical semantic critical recall, and 35/6/31 substitutions,
+insertions, and deletions. Compare these results with core-v1 only as a corpus
+change; they are not evidence of model improvement.
