@@ -63,14 +63,22 @@ Install the default synthetic-audio runtime, then run a complete benchmark:
 
 ```powershell
 python -m pip install "deafbench[benchmark]"
+
+# Both model backends require ffmpeg on PATH.
+# Core v1 with OpenAI Whisper
+python -m pip install -U openai-whisper
 deafbench benchmark core-v1 --model whisper
+
+# Non-speech v1 with Whisper-AT on Windows
+python -m pip install numba numpy torch tqdm more-itertools tiktoken==0.3.3
+python -m pip install --no-deps whisper-at
 deafbench benchmark non-speech-v1 --model whisper-at
 ```
 
 The `benchmark` extra installs WhisperSpeech and the audio dependencies used to
-build synthetic scenes. OpenAI Whisper and Whisper-AT still require their own
-model-specific installation steps below; the extra does not install either
-inference backend.
+build synthetic scenes. OpenAI Whisper and Whisper-AT are separate inference
+backends, so install the backend shown immediately before its benchmark command.
+The extra does not install either inference backend.
 
 With the default `--audio-source auto` policy, DeafBench selects one complete
 source for the whole run:
