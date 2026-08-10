@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import Any, Mapping, cast
+from typing import Any
 
 from deafbench.benchmark.models import ModelRunInfo, _validated_wavs
 from deafbench.benchmark.workspace import atomic_write_jsonl
@@ -39,13 +39,17 @@ AUDIOSET_TO_DEAFBENCH = {
 
 
 def _iter_segments(parsed: Any) -> Iterable[Mapping[str, Any]]:
-    if isinstance(parsed, dict):
+    if isinstance(parsed, Mapping):
         yield parsed
         return
-    if isinstance(parsed, Iterable) and not isinstance(parsed, (str, bytes)):
-        for segment in parsed:
-            if isinstance(segment, dict):
-                yield segment
+    if not isinstance(parsed, Iterable) or isinstance(parsed, (str, bytes)):
+        raise ValueError("Malformed Whisper-AT audio tags: expected segments")
+    for segment in parsed:
+        if not isinstance(segment, Mapping):
+            raise ValueError(
+                "Malformed Whisper-AT audio tags: expected segment mappings"
+            )
+        yield segment
 
 
 def extract_audio_tags(parsed: Any) -> tuple[list[str], list[str]]:
@@ -58,13 +62,19 @@ def extract_audio_tags(parsed: Any) -> tuple[list[str], list[str]]:
     for segment in _iter_segments(parsed):
         tags = segment.get("audio tags", [])
         if not isinstance(tags, Iterable) or isinstance(tags, (str, bytes)):
-            continue
+            raise ValueError(
+                "Malformed Whisper-AT audio tags: expected a tag list"
+            )
         for tag_entry in tags:
             if not isinstance(tag_entry, (list, tuple)) or not tag_entry:
-                continue
+                raise ValueError(
+                    "Malformed Whisper-AT audio tags: expected tag entries"
+                )
             label = tag_entry[0]
             if not isinstance(label, str) or not label:
-                continue
+                raise ValueError(
+                    "Malformed Whisper-AT audio tags: expected tag labels"
+                )
             if label not in seen_raw:
                 raw_tags.append(label)
                 seen_raw.add(label)
@@ -129,6 +139,11 @@ def run_whisper_at(
             verbose=False,
             at_time_res=at_time_res,
         )
+        if not isinstance(result, Mapping):
+            raise ValueError(
+                f"Invalid Whisper-AT result for {wav_path.name}: "
+                "expected a mapping"
+            )
         parsed = runtime.parse_at_label(
             result,
             language="follow_asr",
@@ -137,7 +152,7 @@ def run_whisper_at(
             include_class_list=include_class_list,
         )
         raw_tags, sounds = extract_audio_tags(parsed)
-        text = cast(Mapping[str, Any], result).get("text")
+        text = result.get("text")
         if not isinstance(text, str):
             raise ValueError(
                 f"Invalid Whisper-AT transcript for {wav_path.name}: "

@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Mapping, cast
+from typing import Any
 
 from deafbench.benchmark.models import ModelRunInfo, _validated_wavs
 from deafbench.benchmark.workspace import atomic_write_jsonl
@@ -42,7 +43,12 @@ def run_whisper(
             task="transcribe",
             verbose=False,
         )
-        text = cast(Mapping[str, Any], result).get("text")
+        if not isinstance(result, Mapping):
+            raise ValueError(
+                f"Invalid Whisper result for {wav_path.name}: "
+                "expected a mapping"
+            )
+        text = result.get("text")
         if not isinstance(text, str):
             raise ValueError(
                 f"Invalid Whisper transcript for {wav_path.name}: "
