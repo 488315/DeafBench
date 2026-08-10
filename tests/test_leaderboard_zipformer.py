@@ -96,6 +96,13 @@ def test_zipformer_runner_rejects_cpu_execution():
         _runner_argv(arguments, PinnedZipformerContract())
 
 
+def test_zipformer_runner_rejects_preloaded_upstream_module(monkeypatch):
+    monkeypatch.setitem(sys.modules, "run_eval", ModuleType("run_eval"))
+
+    with pytest.raises(RuntimeError, match="already loaded: run_eval"):
+        zipformer_runner._require_fresh_pinned_imports()
+
+
 def test_zipformer_runner_accepts_clean_pinned_source(tmp_path, monkeypatch):
     checkout = tmp_path / "source"
     required = checkout / "nested" / "runner.py"
@@ -220,6 +227,11 @@ def test_zipformer_runner_executes_reviewed_upstream_contract(
         lambda name: runner_module,
     )
     monkeypatch.setattr(zipformer_runner.os, "chdir", lambda path: None)
+    monkeypatch.setattr(
+        zipformer_runner,
+        "_require_fresh_pinned_imports",
+        lambda: None,
+    )
     clock = iter((10.0, 12.3456))
     monkeypatch.setattr(zipformer_runner.time, "time", lambda: next(clock))
     arguments = SimpleNamespace(

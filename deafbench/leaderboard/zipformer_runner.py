@@ -17,6 +17,22 @@ from .zipformer import PinnedZipformerContract
 
 ZIPFORMER_RUNNER_REVISION = "64c698c42932a54bc7a40a7f172d03c8c4838fe6"
 ICEFALL_REVISION = "3f848bb6d0acc970c9b294a30ca0a04a7c9c78d1"
+_PINNED_IMPORT_ROOTS = (
+    "run_eval",
+    "normalizer",
+    "beam_search",
+    "train",
+    "icefall",
+)
+
+
+def _require_fresh_pinned_imports() -> None:
+    """Reject module-cache state that could bypass verified source paths."""
+    loaded = [name for name in _PINNED_IMPORT_ROOTS if name in sys.modules]
+    if loaded:
+        raise RuntimeError(
+            "pinned Zipformer modules are already loaded: " + ", ".join(loaded)
+        )
 
 
 def _runner_argv(
@@ -98,6 +114,7 @@ def run(args: argparse.Namespace) -> dict[str, float]:
         "egs/librispeech/ASR/zipformer/train.py",
         "Icefall",
     )
+    _require_fresh_pinned_imports()
 
     output_dir.mkdir(parents=True, exist_ok=True)
     sys.dont_write_bytecode = True
