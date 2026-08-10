@@ -330,6 +330,53 @@ def test_whisper_at_rejects_malformed_result_before_parsing(
     assert output.read_text(encoding="utf-8") == "previous predictions\n"
 
 
+def test_whisper_at_rejects_invalid_text_before_parsing(tmp_path: Path) -> None:
+    references, audio_dir = _dataset(tmp_path, "ns-001")
+
+    class InvalidTextModel:
+        def transcribe(self, _path: str, **_kwargs: object) -> dict[str, None]:
+            return {"text": None}
+
+    class FakeBackend:
+        def load_model(self, _name: str) -> InvalidTextModel:
+            return InvalidTextModel()
+
+        def parse_at_label(self, *_args: object, **_kwargs: object) -> object:
+            raise AssertionError("invalid transcript must not be parsed")
+
+    with pytest.raises(ValueError, match="expected a string"):
+        run_whisper_at(
+            audio_dir,
+            references,
+            tmp_path / "predictions.jsonl",
+            backend=FakeBackend(),
+        )
+
+
+def test_whisper_at_malformed_tags_preserve_previous_predictions(
+    tmp_path: Path,
+) -> None:
+    references, audio_dir = _dataset(tmp_path, "ns-001")
+    output = tmp_path / "predictions.jsonl"
+    output.write_bytes(b"previous predictions\r\n")
+
+    class FakeModel:
+        def transcribe(self, _path: str, **_kwargs: object) -> dict[str, str]:
+            return {"text": "Transcript"}
+
+    class FakeBackend:
+        def load_model(self, _name: str) -> FakeModel:
+            return FakeModel()
+
+        def parse_at_label(self, *_args: object, **_kwargs: object) -> None:
+            return None
+
+    with pytest.raises(ValueError, match="Malformed Whisper-AT audio tags"):
+        run_whisper_at(audio_dir, references, output, backend=FakeBackend())
+
+    assert output.read_bytes() == b"previous predictions\r\n"
+
+
 @pytest.mark.parametrize("value", [0.0, -0.4, 0.5, math.inf, math.nan])
 def test_whisper_at_rejects_invalid_time_resolution_before_model_loading(
     tmp_path: Path,
