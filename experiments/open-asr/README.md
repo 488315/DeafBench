@@ -68,5 +68,6 @@ Parquet configs are about 19.4 GB. The completed full LibriSpeech test-clean
 run scored **1.31% official WER** over 2,620 rows, reached 97.3391 RTFx, took
 350.725 seconds wall time, and used 6,790,409,216 peak VRAM bytes. The runner's
 convenience WER for the same manifest was 1.67%; it is not the leaderboard
-score. See `results/zipformer-librispeech-clean-full-score.json` for the
-machine-readable official result.
+score. The completed VoxPopuli set scored **4.31% official WER** over 628 rows
+at 18.8164 RTFx. The two-set mean is 2.81%; it is not the seven-set composite.
+See `results/zipformer-public-2set-score.json` for the machine-readable result.

@@ -1,7 +1,7 @@
 # Zipformer baseline error analysis
 
-Status: one of seven public test sets is complete. Cross-domain analysis remains
-blocked on the other six public manifests.
+Status: two of seven public test sets are complete. Cross-domain analysis
+remains incomplete pending the other five public manifests.
 
 ## Evidence
 
@@ -47,3 +47,11 @@ substitutions. The same manifest's runner convenience metric was 1.67%, which
 confirms that only the official normalized score should be used for leaderboard
 comparisons. This clean-read-speech result does not address meetings, accents,
 financial speech, or conversational private tests.
+
+## Full VoxPopuli baseline
+
+The official scorer measured **4.31% WER** over all 628 rows and 7,122.378
+seconds of audio: 295 deletions, 182 insertions, and 289 substitutions. This
+accented parliamentary-speech set is materially harder than LibriSpeech clean
+for the baseline. Detailed error categories still require normalized
+utterance-level alignment rather than inference from aggregate counts.
