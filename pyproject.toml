@@ -47,6 +47,7 @@ where = ["."]
 exclude = ["tools", "tools.*"]
 
 [tool.setuptools.package-data]
+"deafbench" = ["model-registry.json"]
 "deafbench.recorder.data" = ["*.jsonl"]
 
 [tool.pytest.ini_options]
