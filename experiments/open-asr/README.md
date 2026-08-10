@@ -75,5 +75,7 @@ convenience WER for the same manifest was 1.67%; it is not the leaderboard
 score. The completed VoxPopuli set scored **4.31% official WER** over 628 rows
 at 18.8164 RTFx. Earnings22 scored **7.68% official WER** over 2,737 evaluable
 rows at 86.5395 RTFx and 4,220,642,304 peak VRAM bytes. The three-set mean is
-4.43%; it is not the seven-set composite. See
-`results/zipformer-public-3set-score.json` for the machine-readable result.
+4.43%. LibriSpeech test-other scored **3.01% official WER** over 2,939 rows,
+bringing the four-set mean to 4.08%; neither partial mean is the seven-set
+composite. See `results/zipformer-public-4set-score.json` for the current
+machine-readable result.

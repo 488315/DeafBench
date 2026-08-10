@@ -1,7 +1,7 @@
 # Zipformer baseline error analysis
 
-Status: three of seven public test sets are complete. Cross-domain analysis
-remains incomplete pending the other four public manifests.
+Status: four of seven public test sets are complete. Cross-domain analysis
+remains incomplete pending the other three public manifests.
 
 ## Evidence
 
@@ -66,3 +66,11 @@ seconds wall time, and 4,220,642,304 peak VRAM bytes, batch 16 remained safely
 within the RTX 4070 constraint. Financial/long-form speech is now the largest
 measured opportunity, but aggregate counts alone do not establish whether
 terminology, names, numbers, segmentation, or acoustic conditions are causal.
+
+## Full LibriSpeech test-other baseline
+
+The official scorer measured **3.01% WER** over all 2,939 rows and 19,229.570
+seconds of audio: 103 deletions, 144 insertions, and 1,343 substitutions. This
+is 1.70 WER points worse than test-clean under the same pinned model and
+decoder. Substitutions account for most of the gap; utterance-level alignment
+is still required before attributing it to acoustics, names, or rare words.
