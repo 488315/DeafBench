@@ -189,6 +189,27 @@ def test_whisper_preserves_transitive_import_failure(
     assert exc_info.value.name == "torch"
 
 
+def test_whisper_rejects_malformed_result_without_replacing_output(
+    tmp_path: Path,
+) -> None:
+    references, audio_dir = _dataset(tmp_path, "core-001")
+    output = tmp_path / "predictions.jsonl"
+    output.write_text("previous predictions\n", encoding="utf-8")
+
+    class MalformedModel:
+        def transcribe(self, _path: str, **_kwargs: object) -> None:
+            return None
+
+    class FakeBackend:
+        def load_model(self, _name: str) -> MalformedModel:
+            return MalformedModel()
+
+    with pytest.raises(ValueError, match="expected a mapping"):
+        run_whisper(audio_dir, references, output, backend=FakeBackend())
+
+    assert output.read_text(encoding="utf-8") == "previous predictions\n"
+
+
 def test_whisper_at_keeps_sounds_out_of_text(tmp_path: Path) -> None:
     references, audio_dir = _dataset(
         tmp_path,
@@ -274,6 +295,39 @@ def test_extract_audio_tags_preserves_mapping_and_raw_only_labels() -> None:
         "Telephone bell ringing",
     ]
     assert sounds == ["[alarm]", "[door closes]", "[phone rings]"]
+
+
+@pytest.mark.parametrize(
+    "parsed",
+    [None, "Alarm", ["not a segment"], [{"audio tags": "Alarm"}]],
+)
+def test_whisper_at_rejects_malformed_audio_tags(parsed: object) -> None:
+    with pytest.raises(ValueError, match="Malformed Whisper-AT audio tags"):
+        extract_audio_tags(parsed)
+
+
+def test_whisper_at_rejects_malformed_result_before_parsing(
+    tmp_path: Path,
+) -> None:
+    references, audio_dir = _dataset(tmp_path, "ns-001")
+    output = tmp_path / "predictions.jsonl"
+    output.write_text("previous predictions\n", encoding="utf-8")
+
+    class MalformedModel:
+        def transcribe(self, _path: str, **_kwargs: object) -> list[object]:
+            return []
+
+    class FakeBackend:
+        def load_model(self, _name: str) -> MalformedModel:
+            return MalformedModel()
+
+        def parse_at_label(self, *_args: object, **_kwargs: object) -> object:
+            raise AssertionError("malformed transcript must not be parsed")
+
+    with pytest.raises(ValueError, match="expected a mapping"):
+        run_whisper_at(audio_dir, references, output, backend=FakeBackend())
+
+    assert output.read_text(encoding="utf-8") == "previous predictions\n"
 
 
 @pytest.mark.parametrize("value", [0.0, -0.4, 0.5, math.inf, math.nan])
