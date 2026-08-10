@@ -24,6 +24,8 @@ REPLACEMENT_REASONS: Mapping[str, str] = {
     "core-016": "questionable synthesis truncates typed DIGIT_SEQUENCE",
 }
 
+EDGE_SILENCE_MS = 200
+
 
 @dataclass(frozen=True)
 class GeneratedSpeech:
@@ -49,6 +51,7 @@ def _scene_metadata(plan: Any) -> dict[str, Any]:
         "profile": plan.scene_profile,
         "seed": plan.seed,
         "sample_rate": plan.sample_rate,
+        "edge_silence_ms": EDGE_SILENCE_MS,
         "speech": {
             "start_ms": plan.speech_start_ms,
             "end_ms": plan.speech_end_ms,
@@ -97,6 +100,8 @@ def build_synthetic_v2_candidates(
         shutil.copyfile(references, staging / "references.jsonl")
         output_audio = staging / "audio-synthetic"
         output_audio.mkdir()
+        validation_speech = staging / "validation-speech"
+        validation_speech.mkdir()
         manifest: list[Mapping[str, Any]] = []
         for record in records:
             sample_id = cast(str, record["id"])
@@ -111,6 +116,7 @@ def build_synthetic_v2_candidates(
             )
             reason = REPLACEMENT_REASONS.get(sample_id)
             scene: Mapping[str, Any] | None = None
+            validation_speech_hash: str | None = None
             if reason is None:
                 shutil.copyfile(parent_audio, output)
                 generation: Mapping[str, Any] = {
@@ -120,6 +126,12 @@ def build_synthetic_v2_candidates(
             else:
                 generated = generator.generate(sample_id, prepared)
                 speech = resample_mono(generated.samples, generated.sample_rate)
+                speech_pcm = np.clip(
+                    np.rint(speech[:, 0] * 32_767.0), -32_768, 32_767
+                ).astype("<i2")
+                speech_path = validation_speech / parent_audio.name
+                atomic_write_wav(speech_path, speech_pcm.tobytes())
+                validation_speech_hash = _sha256(speech_path)
                 plan = plan_scene(
                     sample_id,
                     len(speech),
@@ -128,6 +140,9 @@ def build_synthetic_v2_candidates(
                     scene_profile=DEFAULT_SCENE_PROFILE,
                 )
                 mixed = mix_scene(speech, plan)
+                edge_frames = round(plan.sample_rate * EDGE_SILENCE_MS / 1000)
+                mixed[:edge_frames] = 0
+                mixed[-edge_frames:] = 0
                 atomic_write_wav(output, mixed.astype("<i2", copy=False).tobytes())
                 generation = dict(generated.metadata)
                 scene = _scene_metadata(plan)
@@ -139,6 +154,7 @@ def build_synthetic_v2_candidates(
                     "parent_audio_sha256": parent_hash,
                     "audio_sha256": _sha256(output),
                     "reference_sha256": prepared.reference_sha256,
+                    "validation_speech_sha256": validation_speech_hash,
                     "replacement_reason": reason,
                     "generation": generation,
                     "scene": scene,

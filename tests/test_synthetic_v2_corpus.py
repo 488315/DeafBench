@@ -100,8 +100,18 @@ def test_builder_regenerates_only_predeclared_samples(tmp_path: Path):
         assert manifest[sample_id]["parent_audio_sha256"] == parent_hashes[sample_id]
         assert manifest[sample_id]["audio_sha256"] != parent_hashes[sample_id]
         assert manifest[sample_id]["generation"]["engine"] == "fake-tts"
+        speech_path = destination / "validation-speech" / f"{sample_id}.wav"
+        assert manifest[sample_id]["validation_speech_sha256"] == hashlib.sha256(
+            speech_path.read_bytes()
+        ).hexdigest()
+        with wave.open(str(destination / "audio-synthetic" / f"{sample_id}.wav")) as wav:
+            pcm = np.frombuffer(wav.readframes(wav.getnframes()), dtype="<i2")
+        assert not np.any(pcm[: 48_000 // 5])
+        assert not np.any(pcm[-48_000 // 5 :])
     assert manifest["core-019"]["replacement_reason"] is None
     assert manifest["core-019"]["audio_sha256"] == parent_hashes["core-019"]
+    assert manifest["core-019"]["validation_speech_sha256"] is None
+    assert not (destination / "validation-speech" / "core-019.wav").exists()
 
 
 def test_builder_refuses_to_overwrite_a_candidate_corpus(tmp_path: Path):
