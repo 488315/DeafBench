@@ -115,10 +115,17 @@ def generation_fingerprint(
     tts_info: TTSInfo,
 ) -> str:
     """Hash all inputs that determine a generated synthetic set."""
+    records = load_reference_records(references)
+    synthesis_inputs = [
+        {
+            "id": record["id"],
+            "text": record["text"],
+            "sounds": record["sounds"],
+        }
+        for record in records
+    ]
     value = {
-        "references_sha256": hashlib.sha256(
-            Path(references).read_bytes()
-        ).hexdigest(),
+        "synthesis_inputs": synthesis_inputs,
         "scene_profile": scene_profile,
         "seed": seed,
         "tts_engine": tts_info.engine,
