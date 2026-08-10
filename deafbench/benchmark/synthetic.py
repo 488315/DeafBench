@@ -18,6 +18,7 @@ import numpy as np
 
 from deafbench.benchmark.scenes import (
     DEFAULT_SCENE_PROFILE,
+    ScenePlan,
     mix_scene,
     plan_scene,
     resample_mono,
@@ -68,6 +69,8 @@ def create_whisperspeech_generator() -> tuple[SpeechGenerator, TTSInfo]:
     try:
         from whisperspeech.pipeline import Pipeline
     except ImportError as exc:
+        if exc.name not in {"whisperspeech", "whisperspeech.pipeline"}:
+            raise
         raise RuntimeError(
             "WhisperSpeech is not installed. Run: "
             'python -m pip install "deafbench[benchmark]"'
@@ -199,6 +202,37 @@ def _valid_timing(record: Mapping[str, Any]) -> bool:
     return True
 
 
+def _scene_metadata_matches(
+    reference: Mapping[str, Any],
+    record: Mapping[str, Any],
+    scene_profile: str,
+    seed: int,
+) -> bool:
+    speech = cast(Mapping[str, Any], record["speech"])
+    duration_ms = cast(int, speech["end_ms"]) - cast(
+        int,
+        speech["start_ms"],
+    )
+    speech_frames = duration_ms * STANDARD_SAMPLE_RATE // 1_000
+    expected = plan_scene(
+        cast(str, reference["id"]),
+        speech_frames,
+        cast(list[str], reference["sounds"]),
+        seed=seed,
+        scene_profile=scene_profile,
+    )
+    expected_record = _manifest_record(
+        expected.sample_id,
+        expected,
+        "",
+        TTSInfo("", ""),
+    )
+    return all(
+        record[field] == expected_record[field]
+        for field in ("speech", "background", "events")
+    )
+
+
 def _wav_frame_count(path: Path) -> int:
     with wave.open(str(path), "rb") as handle:
         return handle.getnframes()
@@ -210,6 +244,8 @@ def _validate_synthetic_set(
     scene_profile: str,
     seed: int,
 ) -> None:
+    if not _integer(seed):
+        raise ValueError("Synthetic seed must be an integer")
     reference_records = load_reference_records(references)
     status = inspect_audio_set(references, audio_dir)
     if not status.complete:
@@ -227,7 +263,7 @@ def _validate_synthetic_set(
         raise ValueError("Invalid TTS provenance")
     engine = first_tts.get("engine")
     version = first_tts.get("version")
-    if not isinstance(engine, str) or not isinstance(version, str):
+    if not isinstance(engine, str) or not engine or not isinstance(version, str) or not version:
         raise ValueError("Invalid TTS provenance")
     expected_fingerprint = generation_fingerprint(
         references,
@@ -249,6 +285,7 @@ def _validate_synthetic_set(
         if (
             record.get("fingerprint") != expected_fingerprint
             or record.get("scene_profile") != scene_profile
+            or not _integer(record.get("seed"))
             or record.get("seed") != seed
             or record.get("sample_rate") != STANDARD_SAMPLE_RATE
             or record.get("tts") != first_tts
@@ -256,6 +293,13 @@ def _validate_synthetic_set(
             raise ValueError("Synthetic generation settings are inconsistent")
         if not _valid_timing(record):
             raise ValueError("Invalid synthetic timing metadata")
+        if not _scene_metadata_matches(
+            reference,
+            record,
+            scene_profile,
+            seed,
+        ):
+            raise ValueError("Synthetic scene metadata does not match inputs")
 
         background = cast(Mapping[str, Any], record["background"])
         end_ms = cast(int, background["end_ms"])
@@ -287,7 +331,7 @@ def synthetic_set_is_current(
 
 def _manifest_record(
     sample_id: str,
-    plan: Any,
+    plan: ScenePlan,
     fingerprint: str,
     tts_info: TTSInfo,
 ) -> dict[str, Any]:
@@ -323,7 +367,10 @@ def _manifest_record(
 def _promote_directory(staging: Path, audio_dir: Path) -> None:
     backup = audio_dir.with_name(f".{audio_dir.name}-backup")
     if backup.exists():
-        shutil.rmtree(backup)
+        if audio_dir.exists():
+            shutil.rmtree(backup)
+        else:
+            os.replace(backup, audio_dir)
     if audio_dir.exists():
         os.replace(audio_dir, backup)
     try:
@@ -334,7 +381,10 @@ def _promote_directory(staging: Path, audio_dir: Path) -> None:
         raise
     else:
         if backup.exists():
-            shutil.rmtree(backup)
+            try:
+                shutil.rmtree(backup)
+            except OSError:
+                pass
 
 
 def generate_synthetic_set(
@@ -346,6 +396,8 @@ def generate_synthetic_set(
     seed: int = 42,
 ) -> Path:
     """Generate, validate, and atomically replace one complete audio set."""
+    if not _integer(seed):
+        raise ValueError("Synthetic seed must be an integer")
     references = Path(references)
     audio_dir = Path(audio_dir)
     records = load_reference_records(references)
@@ -389,5 +441,8 @@ def generate_synthetic_set(
         promoted = True
     finally:
         if not promoted and staging.exists():
-            shutil.rmtree(staging)
+            try:
+                shutil.rmtree(staging)
+            except OSError:
+                pass
     return audio_dir / "manifest.jsonl"
