@@ -91,13 +91,14 @@ uses seed `42` unless overridden. Scene planning is reproducible for the same
 inputs, but DeafBench does not promise byte-identical TTS output across runtime,
 model, or hardware versions.
 
-Each successful run writes traceable, source-aware artifacts:
+Each successful run writes traceable, source-aware run artifacts. Synthetic
+generation additionally writes its reusable manifest:
 
 ```text
-benchmarks/<dataset>/audio-synthetic/manifest.jsonl
 benchmarks/<dataset>/runs/<model>/<audio-source>/predictions.jsonl
 benchmarks/<dataset>/runs/<model>/<audio-source>/report.md
 benchmarks/<dataset>/runs/<model>/<audio-source>/run.json
+benchmarks/<dataset>/audio-synthetic/manifest.jsonl  # synthetic only
 ```
 
 `run.json` records the resolved source, model identity, paths, sample count, and
