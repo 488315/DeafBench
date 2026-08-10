@@ -1,0 +1,111 @@
+{
+  "artifacts": {
+    "audio": [
+      {"path": "benchmarks/core-v1/audio-synthetic/core-001.wav", "sha256": "022a5aca906c2d7aacf9370525f71e5a8e7b0f5abcda39642f041f9279104c82"},
+      {"path": "benchmarks/core-v1/audio-synthetic/core-002.wav", "sha256": "0739d971c86f745e9d4bc1aed203590ada9453933ffd3a1fa41fa34f5b8e9ce5"},
+      {"path": "benchmarks/core-v1/audio-synthetic/core-003.wav", "sha256": "e64207dcc3db6fae84dae7d8f0318762480e9e1ced2866dd499cf23adf8a2a76"},
+      {"path": "benchmarks/core-v1/audio-synthetic/core-004.wav", "sha256": "14c767d22d044b6bd86e77d2ae68c9fcad1fec4df37b389b84190f907ae18104"},
+      {"path": "benchmarks/core-v1/audio-synthetic/core-005.wav", "sha256": "f045114c9a336619f68534cf3791b489b5b29d1317d51ae242eebd0cce20882a"},
+      {"path": "benchmarks/core-v1/audio-synthetic/core-006.wav", "sha256": "84ed61f1c4a5ded26dbb0bc79ee07d29a7018d45d26d3f4196c05d1c565ba411"},
+      {"path": "benchmarks/core-v1/audio-synthetic/core-007.wav", "sha256": "5cfb3a5703a1dc455dea24ff1d3e6639c0b3076f7d988d644537dd9ac550217a"},
+      {"path": "benchmarks/core-v1/audio-synthetic/core-008.wav", "sha256": "ae08e5531acd1d6c0a66218cc6fd5b18bdf87b5da67447fb01fc94221be2ec9c"},
+      {"path": "benchmarks/core-v1/audio-synthetic/core-009.wav", "sha256": "41d7a1024b7673600361ba965f287b3ff58cf4198d514aa41a3a0abe967c143a"},
+      {"path": "benchmarks/core-v1/audio-synthetic/core-010.wav", "sha256": "ef088561c2fbf4f5d6b3c3c65e5edf4646dde0f8fb7e506fb45264343d4cc348"},
+      {"path": "benchmarks/core-v1/audio-synthetic/core-011.wav", "sha256": "a24afd4ef2bb2a08f4f09f046453741343815780fc7ef6de355ffce032fb2817"},
+      {"path": "benchmarks/core-v1/audio-synthetic/core-012.wav", "sha256": "14f0254c15ae5ff59945a7867bdd1c086ffde85078727acd2f4102b23e5c9bdf"},
+      {"path": "benchmarks/core-v1/audio-synthetic/core-013.wav", "sha256": "670649af4fdf93feeb313faeff262379652d6b08d7654fd6bcb99146fe040b6e"},
+      {"path": "benchmarks/core-v1/audio-synthetic/core-014.wav", "sha256": "1a025724bc806c72965fa7a29b580b543b644aeb211daf461a73196dd5abfcf8"},
+      {"path": "benchmarks/core-v1/audio-synthetic/core-015.wav", "sha256": "bde0226ef1f00f3b5f0f4c8b8b8865255ec02530021c943e33d447d4cb8877e7"},
+      {"path": "benchmarks/core-v1/audio-synthetic/core-016.wav", "sha256": "a5423332d1b2b14b87139629eca7dbaa1c3037012ddf3a46ed6d260915f623b7"},
+      {"path": "benchmarks/core-v1/audio-synthetic/core-017.wav", "sha256": "8cb135edb7029455dc4e720f591d09e5758baae930227ef8bdc5d7ebde1ec359"},
+      {"path": "benchmarks/core-v1/audio-synthetic/core-018.wav", "sha256": "41fc7e5a2846fc540382d5716849710d3d82c108ef45be7f6fa32387300b5d55"},
+      {"path": "benchmarks/core-v1/audio-synthetic/core-019.wav", "sha256": "e843ac99c8b2ab0add00ba760ce9ff82c15bad314a4e265b6b7e3088fef40644"},
+      {"path": "benchmarks/core-v1/audio-synthetic/core-020.wav", "sha256": "775dbef4911c9383fe81bf790ff0b39f07d824683c8c8e89b68ab8db52dada44"},
+      {"path": "benchmarks/core-v1/audio-synthetic/core-021.wav", "sha256": "32305c6bd231b4dd7b9510d53241711e94d1fe0a116e1cec74e3a545f4dd734d"},
+      {"path": "benchmarks/core-v1/audio-synthetic/core-022.wav", "sha256": "9239085c4cd194ce5ac2ff66b43d3d2bfa065e11fc9831e0f552645da911dd6b"},
+      {"path": "benchmarks/core-v1/audio-synthetic/core-023.wav", "sha256": "d1ec839786e45b678b98f13df398614eb717c13ace120b758483c9238a0e38d4"},
+      {"path": "benchmarks/core-v1/audio-synthetic/core-024.wav", "sha256": "b253c92bc0942147ddbb14165569edd50fd8dd6424e4e37fabe0c6b7c4ebdd82"},
+      {"path": "benchmarks/core-v1/audio-synthetic/core-025.wav", "sha256": "42d5e67ae7815c5881b0c037ab37bca05d216995c4c0a9e6dc359355be2fb224"}
+    ],
+    "optional": {
+      "benchmarks/core-v1/audio-synthetic/manifest.jsonl": "fd4b69b15ac8971b47516dab09aafdea64f889a361ece9dfc2e95c6b856375ee",
+      "benchmarks/core-v1/runs/faster-whisper/synthetic/predictions.jsonl": "dc660df4e8b912068333e6d65132badd91e07dcae7d13669fe413df0ef475224",
+      "benchmarks/core-v1/runs/faster-whisper/synthetic/report.md": "d1e4bb54fc6f00b62ca94f86046e76bf16528108efbb20978ecf54494063bc1d",
+      "benchmarks/core-v1/runs/faster-whisper/synthetic/run.json": "96eb7c6a76feb4b816c35cc650d649ef016d7b8894de881c3aa1facb287a5413"
+    },
+    "required": {
+      "benchmarks/core-v1/references.jsonl": "e3569042c943c36ee91ed5c0c9ec2caba8b0141df311c1eff551abbae59a87f0",
+      "deafbench/recorder/data/core-v1.jsonl": "32d75adbc14d14cb480ac0357a02d593341788f5d43dd0d3da6a69e922cb4027"
+    }
+  },
+  "baseline": {
+    "canonical_semantic_critical_recall": 90.3,
+    "deletions": 33,
+    "insertions": 9,
+    "strict_lexical_critical_recall": 69.4,
+    "substitutions": 33,
+    "wer": 26.2
+  },
+  "corpus": "core-v1",
+  "dependencies": {
+    "Python": "3.14.6",
+    "WhisperSpeech": "0.8.9",
+    "av": "18.0.0",
+    "ctranslate2": "4.8.1",
+    "deafbench": "0.1.1",
+    "faster-whisper": "1.2.1",
+    "jiwer": "3.1.0",
+    "numpy": "2.4.6",
+    "onnxruntime": "1.28.0",
+    "soundfile": "0.14.0",
+    "tokenizers": "0.23.1",
+    "torch": "2.13.0",
+    "torchaudio": "2.11.0",
+    "vocos": "0.1.0",
+    "webdataset": "1.0.2"
+  },
+  "evaluator_commit": "236aa9bf293231737b0580f85cb56bca210a2fae",
+  "frozen_on": "2026-08-10",
+  "generation": {
+    "device": "not-recorded",
+    "sample_rate": 48000,
+    "scene_profile": "default-v1",
+    "seed": 42,
+    "tts": {
+      "package": "WhisperSpeech",
+      "package_version": "0.8.9",
+      "s2a": {
+        "artifact": "s2a-q4-small-en+pl.model",
+        "repository": "collabora/whisperspeech",
+        "revision": "0f05dcab0838f1afc061063d432c2664901a5eef"
+      },
+      "t2s": {
+        "artifact": "t2s-small-en+pl.model",
+        "repository": "collabora/whisperspeech",
+        "revision": "0f05dcab0838f1afc061063d432c2664901a5eef"
+      },
+      "vocoder": {
+        "repository": "charactr/vocos-encodec-24khz",
+        "revision": "4e61d082c08045a4c11e5b148ad93b1d0c591a14"
+      }
+    }
+  },
+  "model": {
+    "adapter": "faster-whisper",
+    "decoding": {
+      "beam_size": 5,
+      "compute_type": "int8",
+      "device": "cpu",
+      "language": "en"
+    },
+    "id": "Systran/faster-whisper-small.en",
+    "revision": "d1d751a5f8271d482d14ca55d9e2deeebbae577f",
+    "runtime_version": "1.2.1"
+  },
+  "reference": {
+    "path": "benchmarks/core-v1/references.jsonl",
+    "sha256": "e3569042c943c36ee91ed5c0c9ec2caba8b0141df311c1eff551abbae59a87f0"
+  },
+  "schema_version": 1,
+  "status": "frozen"
+}
