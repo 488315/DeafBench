@@ -57,6 +57,54 @@ cd DeafBench
 pip install -e .
 ```
 
+### Automated benchmark workflow
+
+Install the default synthetic-audio runtime, then run a complete benchmark:
+
+```powershell
+python -m pip install "deafbench[benchmark]"
+deafbench benchmark core-v1 --model whisper
+deafbench benchmark non-speech-v1 --model whisper-at
+```
+
+The `benchmark` extra installs WhisperSpeech and the audio dependencies used to
+build synthetic scenes. OpenAI Whisper and Whisper-AT still require their own
+model-specific installation steps below; the extra does not install either
+inference backend.
+
+With the default `--audio-source auto` policy, DeafBench selects one complete
+source for the whole run:
+
+```text
+complete audio/ set   -> human run
+incomplete audio/ set -> complete audio-synthetic/ run
+never mix sources
+```
+
+Use `--audio-source human` or `--audio-source synthetic` to require a specific
+source. Human mode fails if `audio/` is incomplete. Synthetic mode generates or
+reuses a complete synthetic set before inference begins.
+
+WhisperSpeech supplies the speech signal. DeafBench supplies ambience,
+environmental-event timing, and final mixing. The `default-v1` scene profile
+uses seed `42` unless overridden. Scene planning is reproducible for the same
+inputs, but DeafBench does not promise byte-identical TTS output across runtime,
+model, or hardware versions.
+
+Each successful run writes traceable, source-aware artifacts:
+
+```text
+benchmarks/<dataset>/audio-synthetic/manifest.jsonl
+benchmarks/<dataset>/runs/<model>/<audio-source>/predictions.jsonl
+benchmarks/<dataset>/runs/<model>/<audio-source>/report.md
+benchmarks/<dataset>/runs/<model>/<audio-source>/run.json
+```
+
+`run.json` records the resolved source, model identity, paths, sample count, and
+benchmark version. Synthetic runs also record the scene profile, seed, and TTS
+engine/version. Run directories include both model and source so human and
+synthetic results cannot overwrite one another.
+
 ### Usage
 
 **1. Compare predictions against reference captions:**
