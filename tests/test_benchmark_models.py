@@ -1,5 +1,6 @@
 import json
 import math
+import builtins
 import wave
 from pathlib import Path
 
@@ -7,6 +8,8 @@ import pytest
 
 from deafbench.benchmark.models import ModelRunInfo
 from deafbench.benchmark.models.whisper import run_whisper
+from deafbench.benchmark.models import whisper as whisper_adapter
+from deafbench.benchmark.models import whisper_at as whisper_at_adapter
 from deafbench.benchmark.models.whisper_at import (
     extract_audio_tags,
     run_whisper_at,
@@ -136,6 +139,54 @@ def test_whisper_failure_preserves_previous_predictions(tmp_path: Path) -> None:
         )
 
     assert output.read_text(encoding="utf-8") == "previous predictions\n"
+
+
+@pytest.mark.parametrize(
+    ("adapter", "module_name", "message"),
+    [
+        (whisper_adapter, "whisper", "openai-whisper"),
+        (whisper_at_adapter, "whisper_at", "Whisper-AT installation"),
+    ],
+)
+def test_adapter_reports_missing_optional_backend(
+    monkeypatch: pytest.MonkeyPatch,
+    adapter: object,
+    module_name: str,
+    message: str,
+) -> None:
+    real_import = builtins.__import__
+
+    def missing_backend(name: str, *args: object, **kwargs: object) -> object:
+        if name == module_name:
+            raise ModuleNotFoundError(name=module_name)
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", missing_backend)
+
+    with pytest.raises(RuntimeError, match=message):
+        adapter._load_backend()  # type: ignore[attr-defined]
+
+
+def test_whisper_preserves_transitive_import_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    real_import = builtins.__import__
+
+    def missing_dependency(
+        name: str,
+        *args: object,
+        **kwargs: object,
+    ) -> object:
+        if name == "whisper":
+            raise ModuleNotFoundError(name="torch")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", missing_dependency)
+
+    with pytest.raises(ModuleNotFoundError) as exc_info:
+        whisper_adapter._load_backend()
+
+    assert exc_info.value.name == "torch"
 
 
 def test_whisper_at_keeps_sounds_out_of_text(tmp_path: Path) -> None:
