@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import hashlib
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence
 
 import numpy as np
 
@@ -33,6 +33,7 @@ class ScenePlan:
     """Reproducible timing and ambience metadata for one audio scene."""
 
     sample_id: str
+    speech_frames: int
     scene_profile: str
     seed: int
     sample_rate: int
@@ -118,7 +119,12 @@ def _plan_events(
         len(sound_labels),
     )
     events: list[TimedEvent] = []
-    for label, center, offset in zip(sound_labels, centers, jitter):
+    for label, center, offset in zip(
+        sound_labels,
+        centers,
+        jitter,
+        strict=True,
+    ):
         cue = synthesize_sound_event(label)
         cue_duration_ms = round(1_000 * len(cue) / DEFAULT_SAMPLE_RATE)
         target_center_ms = (
@@ -181,6 +187,7 @@ def plan_scene(
     scene_end_ms = content_end_ms + SCENE_TAIL_MS
     return ScenePlan(
         sample_id=sample_id,
+        speech_frames=speech_frames,
         scene_profile=scene_profile,
         seed=seed,
         sample_rate=sample_rate,
@@ -235,6 +242,8 @@ def mix_scene(speech_pcm: np.ndarray, plan: ScenePlan) -> np.ndarray:
         raise ValueError("default-v1 requires a 48000 Hz sample rate")
 
     speech = _as_float_mono(speech_pcm)[:, 0]
+    if len(speech) != plan.speech_frames:
+        raise ValueError("Speech length does not match the scene plan")
     scene_frames = _frame_at(plan.scene_end_ms, plan.sample_rate)
     scene = _office_background(speech, plan, scene_frames)
 
