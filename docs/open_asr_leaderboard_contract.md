@@ -1,7 +1,7 @@
 # Hugging Face Open ASR Leaderboard: public contract snapshot
 
-**Status:** researched public contract, not an executed reproduction.  
-**Observed:** 2026-08-10.  
+**Status:** researched public contract, not an executed reproduction.
+**Observed:** 2026-08-10.
 **Scope:** the current public English short-form contract for soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M. This supports DeafBench comparison design; it is not a claim that the leaderboard measures caption accessibility.
 
 ## Source pins and evidence quality
@@ -68,4 +68,3 @@ The final scorer whitespace-tokenizes and calls kaldialign.batch_error_rate with
 - **Verified public gap:** audio is pre-segmented. The runner does not evaluate diarization, live streaming, turn segmentation, VAD, latency beyond aggregate RTFx, or a caption display.
 - **Verified public gap:** the executable seven-set script contains no private data. The README says maintainers also use private sets, but their contents, protocol, scoring, and results were not public in sources inspected.
 - **DeafBench safeguard:** retain raw references/outputs; pin every source and normalizer revision; report every corpus/split separately; and add semantic, timing, speaker, and critical-information measures rather than treating normalized average WER as an accessibility score.
-
