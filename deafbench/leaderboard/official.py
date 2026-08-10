@@ -129,7 +129,7 @@ class OfficialEvaluator:
             )
         if not model_id.strip():
             raise OfficialEvaluatorError("model_id must not be empty")
-        if limit <= 0:
+        if isinstance(limit, bool) or not isinstance(limit, int) or limit <= 0:
             raise OfficialEvaluatorError("analysis limit must be positive")
 
         return self._invoke_worker(

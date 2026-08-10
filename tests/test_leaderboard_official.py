@@ -161,6 +161,27 @@ def test_evaluator_analyzes_rows_with_pinned_normalization(tmp_path):
     }
 
 
+def test_evaluator_rejects_analysis_without_public_manifests(tmp_path):
+    checkout, revision = _commit_fake_evaluator(tmp_path)
+    evaluator = OfficialEvaluator(checkout, expected_revision=revision)
+    results_dir = tmp_path / "results"
+    results_dir.mkdir()
+
+    with pytest.raises(OfficialEvaluatorError, match="public manifests"):
+        evaluator.analyze(results_dir, "owner/model")
+
+
+@pytest.mark.parametrize("limit", (0, 1.5, True))
+def test_evaluator_rejects_invalid_analysis_limit(tmp_path, limit):
+    checkout, revision = _commit_fake_evaluator(tmp_path)
+    evaluator = OfficialEvaluator(checkout, expected_revision=revision)
+    results_dir = tmp_path / "results"
+    results_dir.mkdir()
+
+    with pytest.raises(OfficialEvaluatorError, match="limit"):
+        evaluator.analyze(results_dir, "owner/model", limit=limit)
+
+
 def test_evaluator_rejects_missing_results_directory(tmp_path):
     checkout, revision = _commit_fake_evaluator(tmp_path)
     evaluator = OfficialEvaluator(checkout, expected_revision=revision)

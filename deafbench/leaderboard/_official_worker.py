@@ -123,6 +123,8 @@ def _analyze(payload: dict) -> dict:
         payload["results_dir"],
         payload["model_id"],
     )
+    if not manifests:
+        raise ValueError("no matching official public manifests found")
     for dataset_id, manifest_path in sorted(manifests.items()):
         with manifest_path.open(encoding="utf-8") as handle:
             records = [json.loads(line) for line in handle if line.strip()]
