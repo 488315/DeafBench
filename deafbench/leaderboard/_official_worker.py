@@ -11,7 +11,8 @@ import sys
 _RESULT_MARKER = "DEAFBENCH_OFFICIAL_RESULT="
 _PUBLIC_EXPECTED_ROWS = {
     "hf-audio-open-asr-leaderboard_ami_cleaned_test": 7805,
-    "hf-audio-open-asr-leaderboard_earnings22_test": 2741,
+    # The pinned loader removes four references that normalize to empty/ignore.
+    "hf-audio-open-asr-leaderboard_earnings22_test": 2737,
     "hf-audio-open-asr-leaderboard_gigaspeech_cleaned_test": 18768,
     "hf-audio-open-asr-leaderboard_librispeech_test.clean": 2620,
     "hf-audio-open-asr-leaderboard_librispeech_test.other": 2939,

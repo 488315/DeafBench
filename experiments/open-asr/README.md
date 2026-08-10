@@ -65,11 +65,15 @@ Use `full` as the third argument only at a defined public-test milestone:
 wsl -d archlinux -- bash /mnt/c/Users/kjones/Documents/DeafBench/experiments/open-asr/run_zipformer_wsl.sh librispeech test.clean full
 ```
 
-The seven public sets total 74,842 rows and 161.316 hours. Their selected
+The seven public sets contain 74,842 raw rows and 161.316 hours. The official
+loader may remove references that normalize to empty or its ignore sentinel;
+Earnings22 therefore emits 2,737 result rows from 2,741 raw rows. Their selected
 Parquet configs are about 19.4 GB. The completed full LibriSpeech test-clean
 run scored **1.31% official WER** over 2,620 rows, reached 97.3391 RTFx, took
 350.725 seconds wall time, and used 6,790,409,216 peak VRAM bytes. The runner's
 convenience WER for the same manifest was 1.67%; it is not the leaderboard
 score. The completed VoxPopuli set scored **4.31% official WER** over 628 rows
-at 18.8164 RTFx. The two-set mean is 2.81%; it is not the seven-set composite.
-See `results/zipformer-public-2set-score.json` for the machine-readable result.
+at 18.8164 RTFx. Earnings22 scored **7.68% official WER** over 2,737 evaluable
+rows at 86.5395 RTFx and 4,220,642,304 peak VRAM bytes. The three-set mean is
+4.43%; it is not the seven-set composite. See
+`results/zipformer-public-3set-score.json` for the machine-readable result.
