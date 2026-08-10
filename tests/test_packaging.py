@@ -16,6 +16,17 @@ def test_benchmark_extra_installs_whisperspeech_runtime_dependencies() -> None:
     ]["benchmark"]
 
 
+def test_qwen_asr_extra_is_isolated_from_base_installation() -> None:
+    pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+    metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+
+    dependencies = metadata["project"]["dependencies"]
+    qwen_dependencies = metadata["project"]["optional-dependencies"]["qwen-asr"]
+
+    assert qwen_dependencies == ["transformers[torch]>=5.13.0,<6.0.0"]
+    assert all("transformers" not in dependency for dependency in dependencies)
+
+
 @pytest.mark.integration
 @pytest.mark.skipif(
     os.environ.get("DEAFBENCH_RUN_PACKAGING_INTEGRATION") != "1",
