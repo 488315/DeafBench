@@ -12,6 +12,7 @@ from typing import Mapping
 from deafbench.critical_entities import ENTITY_TYPES, canonical_contains
 
 from .quality_audio import inspect_audio
+from .spoken_reference import prepare_spoken_reference
 
 
 @dataclass(frozen=True)
@@ -110,8 +111,14 @@ def _reference_sha256(reference_text: str) -> str:
     return hashlib.sha256(reference_text.encode("utf-8")).hexdigest()
 
 
-def _duration_gate(duration: float, reference_text: str, rules: QualityRules) -> bool:
-    word_count = max(1, len(reference_text.split()))
+def _duration_gate(
+    duration: float,
+    reference_text: str,
+    critical_types: Mapping[str, str],
+    rules: QualityRules,
+) -> bool:
+    prepared = prepare_spoken_reference(reference_text, critical_types)
+    word_count = max(1, len(prepared.words))
     seconds_per_word = duration / word_count
     return rules.min_seconds_per_word <= seconds_per_word <= rules.max_seconds_per_word
 
@@ -183,7 +190,12 @@ def evaluate_synthetic_sample(
         ),
         _gate(
             "plausible_duration",
-            _duration_gate(audio.duration_seconds, reference_text, rules),
+            _duration_gate(
+                audio.duration_seconds,
+                reference_text,
+                critical_types,
+                rules,
+            ),
             f"duration={audio.duration_seconds:.3f} seconds",
         ),
         _gate(

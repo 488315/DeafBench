@@ -120,7 +120,7 @@ def test_all_predeclared_quality_gates_accept_valid_sample(tmp_path: Path):
         ),
         (
             "plausible_duration",
-            lambda path: _write_wav(path, speech=3.0),
+            lambda path: _write_wav(path, speech=4.0),
         ),
     ],
 )
@@ -136,6 +136,15 @@ def test_each_waveform_gate_quarantines_its_failure(
 
     assert decision.status == "quarantined"
     assert not decision.gate(gate).passed
+
+
+def test_duration_uses_typed_spoken_words_not_display_tokens(tmp_path: Path):
+    wav = tmp_path / "spoken-duration.wav"
+    _write_wav(wav, speech=2.5)
+
+    decision = _evaluate(wav)
+
+    assert decision.gate("plausible_duration").passed
 
 
 def test_reference_hash_mismatch_is_quarantined(tmp_path: Path):
