@@ -232,12 +232,18 @@ def test_zipformer_runner_executes_reviewed_upstream_contract(
         "_require_fresh_pinned_imports",
         lambda: None,
     )
+    monkeypatch.setattr(
+        zipformer_runner,
+        "verify_evaluation_policy",
+        lambda path: captured.setdefault("policy", path),
+    )
     clock = iter((10.0, 12.3456))
     monkeypatch.setattr(zipformer_runner.time, "time", lambda: next(clock))
     arguments = SimpleNamespace(
         runner_repo=tmp_path / "runner",
         official_repo=tmp_path / "official",
         icefall_repo=tmp_path / "icefall",
+        evaluation_policy=tmp_path / "evaluation-policy.json",
         output_dir=tmp_path / "output",
         dataset="librispeech",
         split="test.clean",
@@ -252,6 +258,7 @@ def test_zipformer_runner_executes_reviewed_upstream_contract(
 
     assert summary == {"wall_seconds": 2.346, "peak_vram_bytes": 1234}
     assert captured["device"] == 0
+    assert captured["policy"] == tmp_path / "evaluation-policy.json"
     assert captured["parsed"] == captured["argv"]
     assert runner_module.data_utils.load_data is not None
     assert runner_module.snapshot_download is not None
@@ -273,6 +280,8 @@ def test_zipformer_runner_main_parses_cli_arguments(tmp_path, monkeypatch):
             str(tmp_path / "official"),
             "--icefall-repo",
             str(tmp_path / "icefall"),
+            "--evaluation-policy",
+            str(tmp_path / "evaluation-policy.json"),
             "--output-dir",
             str(tmp_path / "output"),
             "--dataset",
@@ -286,3 +295,6 @@ def test_zipformer_runner_main_parses_cli_arguments(tmp_path, monkeypatch):
     assert exit_code == 0
     assert captured["args"].streaming is True
     assert captured["args"].batch_size == 16
+    assert captured["args"].evaluation_policy == str(
+        tmp_path / "evaluation-policy.json"
+    )

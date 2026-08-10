@@ -32,6 +32,7 @@ exec "${venv_dir}/bin/python" -m deafbench.leaderboard.zipformer_runner \
   --runner-repo "${cache_root}/open-asr-zipformer-64c6-clean" \
   --official-repo "${cache_root}/open-asr-official-9585-clean" \
   --icefall-repo "${cache_root}/icefall" \
+  --evaluation-policy "${repo_root}/experiments/open-asr/evaluation-policy.json" \
   --output-dir "${DEAFBENCH_RUN_DIR:-${cache_root}/open-asr-runs}" \
   --dataset "${dataset}" \
   --split "${split}" \

@@ -7,3 +7,4 @@ experiments/open-asr/evidence-manifest.json -text
 experiments/open-asr/results/*.json -text
 experiments/open-asr/results/*.jsonl -text
 experiments/open-asr/results/full-public/*.jsonl -text
+experiments/open-asr/*.sh text eol=lf

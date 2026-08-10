@@ -12,6 +12,7 @@ import sys
 import time
 
 from .official import open_asr_evaluator
+from .policy import verify_evaluation_policy
 from .zipformer import PinnedZipformerContract
 
 
@@ -101,6 +102,7 @@ def run(args: argparse.Namespace) -> dict[str, float]:
     icefall_repo = Path(args.icefall_repo).resolve()
     output_dir = Path(args.output_dir).resolve()
 
+    verify_evaluation_policy(args.evaluation_policy)
     _require_source(
         runner_repo,
         ZIPFORMER_RUNNER_REVISION,
@@ -161,6 +163,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--runner-repo", required=True)
     parser.add_argument("--official-repo", required=True)
     parser.add_argument("--icefall-repo", required=True)
+    parser.add_argument("--evaluation-policy", required=True)
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--dataset", required=True)
     parser.add_argument("--split", required=True)
