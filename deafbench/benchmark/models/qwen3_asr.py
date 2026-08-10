@@ -20,21 +20,28 @@ MAX_NEW_TOKENS = 256
 class _TransformersBackend:
     AutoProcessor: Any
     AutoModelForMultimodalLM: Any
+    numpy: Any
     torch: Any
 
 
 def _load_backend() -> _TransformersBackend:
     try:
+        import numpy
         import torch
         from transformers import AutoModelForMultimodalLM, AutoProcessor
     except ModuleNotFoundError as exc:
-        if exc.name not in {"torch", "transformers"}:
+        if exc.name not in {"numpy", "torch", "transformers"}:
             raise
         raise RuntimeError(
             "Qwen3-ASR is not installed. Run: "
             'python -m pip install "deafbench[qwen-asr]"'
         ) from exc
-    return _TransformersBackend(AutoProcessor, AutoModelForMultimodalLM, torch)
+    return _TransformersBackend(
+        AutoProcessor,
+        AutoModelForMultimodalLM,
+        numpy,
+        torch,
+    )
 
 
 def _licensed_revision(model_id: str) -> str:
@@ -67,14 +74,12 @@ def _decode_transcription(processor: Any, generated_ids: Any) -> str:
     return decoded[0]
 
 
-def _read_pcm16_mono(wav_path: Path, torch: Any) -> Any:
+def _read_pcm16_mono(wav_path: Path, numpy: Any) -> Any:
     with wave.open(str(wav_path), "rb") as handle:
         if handle.getnchannels() != 1 or handle.getsampwidth() != 2:
             raise ValueError(f"Qwen3-ASR requires mono PCM16 WAV: {wav_path}")
         frames = handle.readframes(handle.getnframes())
-    return torch.frombuffer(frames, dtype=torch.int16).clone().to(
-        dtype=torch.float32
-    ).div_(32_768)
+    return numpy.frombuffer(frames, dtype="<i2").astype(numpy.float32) / 32_768.0
 
 
 def run_qwen3_asr(
@@ -104,7 +109,7 @@ def run_qwen3_asr(
     with runtime.torch.inference_mode():
         for wav_path in wav_paths:
             inputs = processor.apply_transcription_request(
-                audio=_read_pcm16_mono(wav_path, runtime.torch),
+                audio=_read_pcm16_mono(wav_path, runtime.numpy),
                 language="English",
             ).to(model.device, model.dtype)
             output_ids = model.generate(
