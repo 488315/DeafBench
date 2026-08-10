@@ -1,5 +1,32 @@
 {
   "schema_version": 1,
   "legal_advice": false,
-  "models": []
+  "models": [
+    {
+      "model_id": "Qwen/Qwen3-ASR-0.6B-hf",
+      "revision": "7f1569a48a89f3e3f4dc3a5c9d28bddd903bc76c",
+      "upstream_url": "https://huggingface.co/Qwen/Qwen3-ASR-0.6B-hf",
+      "spdx_license": "Apache-2.0",
+      "commercial_use": "commercial_permitted",
+      "attribution_requirements": [
+        "Retain the Apache-2.0 license text and applicable copyright notices in redistributions."
+      ],
+      "redistribution_restrictions": [
+        "Meet the Apache-2.0 Section 4 redistribution conditions and preserve NOTICE content if upstream later supplies one."
+      ],
+      "remote_code_required": false,
+      "supported_languages": [
+        "zh", "en", "yue", "ar", "de", "fr", "es", "pt", "id", "it",
+        "ko", "ru", "th", "vi", "ja", "tr", "hi", "ms", "nl", "sv",
+        "da", "fi", "pl", "cs", "fil", "fa", "el", "hu", "mk", "ro"
+      ],
+      "parameter_count": 782426112,
+      "expected_weight_size_bytes": 1564928088,
+      "tested_peak_vram_bytes": null,
+      "supported_runtimes": ["transformers>=5.13.0", "torch"],
+      "intended_lane": "commercial_candidate",
+      "license_files": ["licenses/Apache-2.0.txt"],
+      "notice_files": []
+    }
+  ]
 }

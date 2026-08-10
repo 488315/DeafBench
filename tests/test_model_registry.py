@@ -1,4 +1,6 @@
+import hashlib
 from copy import deepcopy
+from importlib.resources import files
 
 import pytest
 
@@ -36,7 +38,24 @@ def _registry(model: dict[str, object]) -> dict[str, object]:
 
 
 def test_packaged_model_registry_is_valid() -> None:
-    assert load_model_registry() == ()
+    models = load_model_registry()
+
+    assert len(models) == 1
+    assert models[0].model_id == "Qwen/Qwen3-ASR-0.6B-hf"
+    assert models[0].revision == "7f1569a48a89f3e3f4dc3a5c9d28bddd903bc76c"
+    assert models[0].spdx_license == "Apache-2.0"
+    assert models[0].intended_lane == "commercial_candidate"
+    assert models[0].remote_code_required is False
+
+
+def test_packaged_apache_license_matches_canonical_bytes() -> None:
+    license_bytes = files("deafbench").joinpath(
+        "licenses", "Apache-2.0.txt"
+    ).read_bytes()
+
+    assert hashlib.sha256(license_bytes).hexdigest() == (
+        "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    )
 
 
 def test_registry_rejects_missing_license_metadata() -> None:
