@@ -12,16 +12,28 @@ pytestmark = pytest.mark.functional
 def test_benchmark_launcher_explains_missing_runner():
     sys.modules.pop("deafbench.benchmark.runner", None)
 
-    with pytest.raises(SystemExit, match="Benchmark runtime is not available in this build"):
+    with pytest.raises(
+        SystemExit,
+        match="Benchmark runtime is not available in this build",
+    ):
         cli._run_benchmark([])
 
 
 def test_benchmark_launcher_reraises_missing_runtime_dependency(monkeypatch):
     original_import = builtins.__import__
 
-    def import_with_missing_dependency(name, globals=None, locals=None, fromlist=(), level=0):
+    def import_with_missing_dependency(
+        name,
+        globals=None,
+        locals=None,
+        fromlist=(),
+        level=0,
+    ):
         if name == "benchmark.runner" and level == 1:
-            raise ModuleNotFoundError("No module named 'model_runtime'", name="model_runtime")
+            raise ModuleNotFoundError(
+                "No module named 'model_runtime'",
+                name="model_runtime",
+            )
         return original_import(name, globals, locals, fromlist, level)
 
     monkeypatch.setattr(builtins, "__import__", import_with_missing_dependency)

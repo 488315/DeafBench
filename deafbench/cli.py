@@ -57,7 +57,9 @@ def _run_benchmark(benchmark_args: list[str]) -> int:
         from .benchmark.runner import main as benchmark_main
     except ModuleNotFoundError as exc:
         if exc.name == "deafbench.benchmark.runner":
-            raise SystemExit("Benchmark runtime is not available in this build.") from exc
+            raise SystemExit(
+                "Benchmark runtime is not available in this build."
+            ) from exc
         raise
     return benchmark_main(benchmark_args)
 
@@ -113,8 +115,15 @@ def main(args: Optional[List[str]] = None) -> int | None:
         "benchmark",
         help="Run a complete DeafBench model benchmark.",
     )
-    benchmark_parser.add_argument("dataset", help="Benchmark directory under benchmarks/")
-    benchmark_parser.add_argument("--model", required=True, choices=("whisper", "whisper-at"))
+    benchmark_parser.add_argument(
+        "dataset",
+        help="Benchmark directory under benchmarks/",
+    )
+    benchmark_parser.add_argument(
+        "--model",
+        required=True,
+        choices=("whisper", "whisper-at"),
+    )
     benchmark_parser.add_argument(
         "--audio-source",
         choices=("auto", "human", "synthetic"),
