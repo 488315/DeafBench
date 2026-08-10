@@ -26,14 +26,15 @@ def _load_backend() -> Any:
     return faster_whisper
 
 
-def run_faster_whisper(
+def _run_local_whisper(
     audio_dir: Path,
     references: Path,
     output: Path,
-    model_id: str = DEFAULT_MODEL,
+    model_name: str,
+    model_id: str,
+    transcribe_options: Mapping[str, object],
     backend: Any | None = None,
 ) -> ModelRunInfo:
-    """Transcribe a complete audio set with CPU INT8 Faster-Whisper."""
     wav_paths = _validated_wavs(audio_dir, references)
     runtime = _load_backend() if backend is None else backend
     model = runtime.WhisperModel(
@@ -46,19 +47,37 @@ def run_faster_whisper(
     for wav_path in wav_paths:
         segments, _info = model.transcribe(
             str(wav_path),
-            beam_size=5,
-            language="en",
+            **transcribe_options,
         )
         text_parts: list[str] = []
         for segment in segments:
             text = getattr(segment, "text", None)
             if not isinstance(text, str):
                 raise ValueError(
-                    f"Invalid Faster-Whisper segment for {wav_path.name}: "
+                    f"Invalid {model_name} segment for {wav_path.name}: "
                     "expected text to be a string"
                 )
             text_parts.append(text)
         records.append({"id": wav_path.stem, "text": "".join(text_parts)})
 
     atomic_write_jsonl(output, records)
-    return ModelRunInfo("faster-whisper", model_id)
+    return ModelRunInfo(model_name, model_id)
+
+
+def run_faster_whisper(
+    audio_dir: Path,
+    references: Path,
+    output: Path,
+    model_id: str = DEFAULT_MODEL,
+    backend: Any | None = None,
+) -> ModelRunInfo:
+    """Transcribe a complete audio set with CPU INT8 Faster-Whisper."""
+    return _run_local_whisper(
+        audio_dir,
+        references,
+        output,
+        "faster-whisper",
+        model_id,
+        {"beam_size": 5, "language": "en"},
+        backend,
+    )
