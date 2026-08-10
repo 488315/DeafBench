@@ -441,6 +441,13 @@ def test_generator_reuses_pipeline_and_reports_actual_audio(
 ) -> None:
     calls: list[tuple[Path, str, str]] = []
     instances = 0
+    allow_soundfile = False
+    original_import = builtins.__import__
+
+    def guarded_import(name: str, *args: object, **kwargs: object) -> object:
+        if name == "soundfile" and not allow_soundfile:
+            raise AssertionError("soundfile must stay lazy until generation")
+        return original_import(name, *args, **kwargs)
 
     class FakePipeline:
         def __init__(self) -> None:
@@ -474,8 +481,10 @@ def test_generator_reuses_pipeline_and_reports_actual_audio(
     monkeypatch.setitem(sys.modules, "whisperspeech.pipeline", pipeline)
     monkeypatch.setitem(sys.modules, "soundfile", soundfile)
     monkeypatch.setattr(synthetic_module.metadata, "version", lambda _: "0.8.9")
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
 
     generate, info = create_whisperspeech_generator()
+    allow_soundfile = True
     first = generate("Stay seated.")
     second = generate("Wait outside.")
 
