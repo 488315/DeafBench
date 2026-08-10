@@ -85,3 +85,13 @@ The final scorer whitespace-tokenizes and calls kaldialign.batch_error_rate with
 - **Verified public gap:** audio is pre-segmented. The runner does not evaluate diarization, live streaming, turn segmentation, VAD, latency beyond aggregate RTFx, or a caption display.
 - **Verified public gap:** the executable seven-set script contains no private data. The README says maintainers also use private sets, but their contents, protocol, scoring, and results were not public in sources inspected.
 - **DeafBench safeguard:** retain raw references/outputs; pin every source and normalizer revision; report every corpus/split separately; and add semantic, timing, speaker, and critical-information measures rather than treating normalized average WER as an accessibility score.
+
+The implemented safeguards are machine-readable:
+
+- `experiments/open-asr/evidence-manifest.json` hashes all seven reproduced
+  public manifests and their official score/error artifacts and labels RTFx as
+  local RTX 4070 performance.
+- `experiments/open-asr/evaluation-policy.json` prohibits official-test
+  training and repeated label tuning, requires disjoint data roles, and records
+  the baseline model's contamination status as indeterminate because complete
+  sample-level training provenance is unavailable.

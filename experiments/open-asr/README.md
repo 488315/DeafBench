@@ -18,6 +18,12 @@ dataset, model, and Icefall revisions are recorded in
   conversational evaluation is available only through an authorized official
   submission.
 - Do not train on these test manifests or tune repeatedly against their labels.
+- `evaluation-policy.json` is the machine-tested data-use boundary. It keeps
+  training, development, and official evaluation disjoint and blocks a final
+  claim while model-training contamination remains indeterminate.
+- `evidence-manifest.json` freezes the seven public manifests, official score,
+  error analysis, source revisions, decoding contract, and local RTX 4070
+  label. Its integrity test must pass before these results are reported.
 
 ## Environment
 
@@ -110,3 +116,17 @@ score is 0.19 points below the pinned leaderboard snapshot's 5.42 best public
 average and 0.33 below Zipformer's published 5.56, but it does not establish a
 private leaderboard win and the checkpoint's noncommercial license prevents
 using it as DeafBench's commercial foundation without separate permission.
+
+## Contamination status and next evaluation milestone
+
+No sample-level overlap has been confirmed for the reproduced Zipformer
+baseline. Its published materials do not provide a complete sample-level
+training inventory, however, so contamination status is **indeterminate**, not
+clear. This result is therefore baseline compatibility evidence and is not
+eligible to support a final model claim.
+
+Before evaluating a future DeafBench candidate, record immutable revisions for
+every training and development source and compare stable sample or audio-content
+identities against every official evaluation manifest. Select model and decoding
+changes using disjoint development data. The next official public-test run must
+be a predeclared candidate milestone, not another tuning iteration.
