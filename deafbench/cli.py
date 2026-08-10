@@ -5,6 +5,7 @@ from .parser import parse_jsonl, align_records
 from .metrics import evaluate_dataset
 from .report import generate_markdown_report
 from .benchmark.models import MODEL_NAMES
+from .leaderboard.cli import add_leaderboard_parser, run_leaderboard
 
 
 _BENCHMARK_RUNTIME_UNAVAILABLE = (
@@ -138,6 +139,8 @@ def main(args: Optional[List[str]] = None) -> int | None:
     benchmark_parser.add_argument("--repo-root", dest="benchmark_repo_root")
     benchmark_parser.add_argument("--scene-profile", default="default-v1")
     benchmark_parser.add_argument("--seed", type=int, default=42)
+
+    add_leaderboard_parser(subparsers)
     
     parsed = parser.parse_args(args)
 
@@ -155,6 +158,9 @@ def main(args: Optional[List[str]] = None) -> int | None:
         if parsed.benchmark_repo_root is not None:
             benchmark_args.extend(["--repo-root", parsed.benchmark_repo_root])
         return _run_benchmark(benchmark_args)
+
+    if parsed.command == "leaderboard":
+        return run_leaderboard(parsed)
     
     try:
         references = parse_jsonl(parsed.references)
