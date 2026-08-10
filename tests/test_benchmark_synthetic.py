@@ -454,14 +454,41 @@ def test_generator_reuses_pipeline_and_reports_actual_audio(
     calls: list[tuple[str, str]] = []
     instances = 0
 
+    class FakeTensor:
+        def __init__(self, values: np.ndarray) -> None:
+            self.values = values
+            self.detached = False
+            self.on_cpu = False
+
+        def detach(self) -> "FakeTensor":
+            self.detached = True
+            return self
+
+        def cpu(self) -> "FakeTensor":
+            assert self.detached
+            self.on_cpu = True
+            return self
+
+        def __array__(
+            self,
+            dtype: np.dtype[np.float32] | None = None,
+            copy: bool | None = None,
+        ) -> np.ndarray:
+            assert self.on_cpu
+            return np.asarray(self.values, dtype=dtype)
+
+    generated_audio: list[FakeTensor] = []
+
     class FakePipeline:
         def __init__(self) -> None:
             nonlocal instances
             instances += 1
 
-        def generate(self, text: str, *, lang: str) -> np.ndarray:
+        def generate(self, text: str, *, lang: str) -> "FakeTensor":
             calls.append((text, lang))
-            return np.ones((1, 3), dtype=np.float32)
+            audio = FakeTensor(np.ones((1, 3), dtype=np.float32))
+            generated_audio.append(audio)
+            return audio
 
     whisperspeech = types.ModuleType("whisperspeech")
     whisperspeech.__path__ = []  # type: ignore[attr-defined]
@@ -481,8 +508,27 @@ def test_generator_reuses_pipeline_and_reports_actual_audio(
         ("Stay seated.", "en"),
         ("Wait outside.", "en"),
     ]
+    assert all(audio.detached and audio.on_cpu for audio in generated_audio)
     assert first.sample_rate == second.sample_rate == 24_000
     np.testing.assert_array_equal(first.samples, np.ones((3, 1)))
+
+
+def test_whisperspeech_audio_adds_channel_to_mono_samples() -> None:
+    samples = synthetic_module._normalize_whisperspeech_audio(
+        np.ones(3, dtype=np.float32)
+    )
+
+    assert samples.shape == (3, 1)
+
+
+def test_whisperspeech_audio_rejects_invalid_shape() -> None:
+    with pytest.raises(
+        RuntimeError,
+        match=r"WhisperSpeech returned invalid audio shape \(1, 2, 3\)",
+    ):
+        synthetic_module._normalize_whisperspeech_audio(
+            np.ones((1, 2, 3), dtype=np.float32)
+        )
 
 
 def test_interrupted_promotion_restores_last_complete_set_on_failure(

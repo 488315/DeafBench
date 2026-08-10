@@ -50,6 +50,25 @@ class TTSInfo:
 
 SpeechGenerator = Callable[[str], SpeechAudio]
 
+
+class _InvalidWhisperSpeechAudioError(RuntimeError):
+    def __init__(self, shape: tuple[int, ...]) -> None:
+        super().__init__(f"WhisperSpeech returned invalid audio shape {shape}")
+
+
+def _normalize_whisperspeech_audio(audio: Any) -> np.ndarray:
+    if hasattr(audio, "detach"):
+        audio = audio.detach()
+    if hasattr(audio, "cpu"):
+        audio = audio.cpu()
+    samples = np.asarray(audio, dtype=np.float32)
+    if samples.ndim == 1:
+        return samples[:, np.newaxis]
+    if samples.ndim == 2:
+        return samples.T
+    raise _InvalidWhisperSpeechAudioError(samples.shape)
+
+
 _MANIFEST_FIELDS = {
     "id",
     "wav",
@@ -84,18 +103,7 @@ def create_whisperspeech_generator() -> tuple[SpeechGenerator, TTSInfo]:
 
     def generate(text: str) -> SpeechAudio:
         audio = pipeline.generate(text, lang="en")
-        if hasattr(audio, "detach"):
-            audio = audio.detach()
-        if hasattr(audio, "cpu"):
-            audio = audio.cpu()
-        samples = np.asarray(audio, dtype=np.float32)
-        if samples.ndim == 1:
-            samples = samples[:, np.newaxis]
-        elif samples.ndim == 2:
-            samples = samples.T
-        else:
-            raise RuntimeError("WhisperSpeech returned an invalid audio shape")
-        return SpeechAudio(samples, 24_000)
+        return SpeechAudio(_normalize_whisperspeech_audio(audio), 24_000)
 
     return generate, TTSInfo("whisperspeech", version)
 
