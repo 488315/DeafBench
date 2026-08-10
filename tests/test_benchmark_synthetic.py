@@ -148,6 +148,11 @@ def test_generate_synthetic_set_writes_complete_wavs_and_timestamp_manifest(
                 int(background["end_ms"]) * int(record["sample_rate"]) // 1000
             )
             assert handle.getnframes() == expected_frames
+            samples = np.frombuffer(
+                handle.readframes(expected_frames),
+                dtype="<i2",
+            )
+        assert np.any(samples != 0)
 
 
 def test_failed_regeneration_preserves_previous_complete_set(
@@ -183,6 +188,7 @@ def test_failed_regeneration_preserves_previous_complete_set(
         if path.is_file()
     }
     assert after == before
+    assert not list(tmp_path.glob(".audio-synthetic-*"))
 
 
 def test_untouched_matching_set_is_current(tmp_path: Path) -> None:
@@ -381,14 +387,16 @@ def test_cache_validation_never_imports_whisperspeech(
     )
 
 
+@pytest.mark.parametrize("error_type", [ImportError, ModuleNotFoundError])
 def test_generator_preserves_unrelated_import_error(
     monkeypatch: pytest.MonkeyPatch,
+    error_type: type[ImportError],
 ) -> None:
     original_import = builtins.__import__
 
     def failing_import(name: str, *args: object, **kwargs: object) -> object:
         if name == "whisperspeech.pipeline":
-            raise ImportError("No module named 'torch'", name="torch")
+            raise error_type("No module named 'torch'", name="torch")
         return original_import(name, *args, **kwargs)
 
     monkeypatch.setattr(builtins, "__import__", failing_import)
@@ -513,11 +521,7 @@ def test_interrupted_promotion_restores_last_complete_set_on_failure(
     original_replace = synthetic_module.os.replace
 
     def failing_replace(source: object, destination: object) -> None:
-        source_path = Path(source)
-        if (
-            source_path.name.startswith(".audio-synthetic-")
-            and source_path != backup
-        ):
+        if Path(source) != backup and Path(destination) == audio_dir:
             raise OSError("promotion failed")
         original_replace(source, destination)
 
