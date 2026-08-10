@@ -80,7 +80,7 @@ def validate_replacement_candidates(
             prepared,
             score_threshold=rules.min_alignment_token_score,
         )
-        asr_text = independent_asr.transcribe(audio_path)
+        asr_text = independent_asr.transcribe(alignment_audio_path)
         decision = evaluate_synthetic_sample(
             audio_path,
             reference_text=cast(str, reference["text"]),
@@ -118,6 +118,9 @@ def validate_replacement_candidates(
                     ),
                 },
                 "independent_asr": {
+                    "audio_sha256": hashlib.sha256(
+                        alignment_audio_path.read_bytes()
+                    ).hexdigest(),
                     "adapter": "torchaudio-WAV2VEC2_ASR_BASE_960H",
                     "adapter_revision": independent_asr.adapter_revision,
                     "text": asr_text,

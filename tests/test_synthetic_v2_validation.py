@@ -94,4 +94,4 @@ def test_validation_records_all_gate_and_validator_evidence(tmp_path: Path):
         "independent_asr_revision": "asr-test-revision",
     }
     assert aligner.paths == [validation_speech / "sample-1.wav"]
-    assert independent_asr.paths == [audio / "sample-1.wav"]
+    assert independent_asr.paths == [validation_speech / "sample-1.wav"]
