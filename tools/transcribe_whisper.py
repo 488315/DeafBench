@@ -167,34 +167,15 @@ def main(argv: list[str] | None = None) -> None:
     audio_dir = args.audio_dir or default_audio_dir
     output = args.output or default_output
 
-    try:
-        import whisper
-    except ImportError as exc:
-        raise SystemExit(
-            "Whisper is not installed. Run: python -m pip install -U openai-whisper"
-        ) from exc
+    from deafbench.benchmark.models.whisper import run_whisper
 
-    model = whisper.load_model("turbo")
-
-    def transcribe(wav: Path) -> str:
-        print(f"Transcribing {wav.stem}...")
-        result = model.transcribe(
-            str(wav),
-            language="en",
-            task="transcribe",
-            verbose=False,
-        )
-        text = result["text"]
-        print(f"  {text}")
-        return text
-
-    records = transcribe_directory(
+    run_whisper(
         audio_dir,
+        references,
         output,
-        transcribe,
-        references=references,
+        model_id="turbo",
     )
-    print(f"\nSaved {len(records)} predictions to {output}")
+    print(f"Saved predictions to {output}")
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 import math
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -25,27 +25,6 @@ DEFAULT_MODEL = "medium.en"
 DEFAULT_AT_TIME_RES = 10.0
 DEFAULT_TOP_K = 5
 DEFAULT_P_THRESHOLD = -1.0
-AUDIOSET_CLASS_COUNT = 527
-
-AUDIOSET_TO_DEAFBENCH = {
-    "Alarm": "[alarm]",
-    "Alarm clock": "[alarm]",
-    "Smoke detector, smoke alarm": "[alarm]",
-    "Fire alarm": "[alarm]",
-    "Car alarm": "[alarm]",
-    "Slam": "[door closes]",
-    "Telephone bell ringing": "[phone rings]",
-    "Ringtone": "[phone rings]",
-    "Knock": "[knock]",
-    "Beep, bleep": "[error notification]",
-    "Ping": "[error notification]",
-    "Ding": "[error notification]",
-    "Siren": "[siren]",
-    "Civil defense siren": "[siren]",
-    "Police car (siren)": "[siren]",
-    "Ambulance (siren)": "[siren]",
-    "Fire engine, fire truck (siren)": "[siren]",
-}
 
 
 def resolve_dataset_paths(
@@ -66,48 +45,11 @@ def resolve_dataset_paths(
     )
 
 
-def _iter_parsed_segments(parsed: Any) -> Iterable[dict[str, Any]]:
-    """Yield dictionary segments from Whisper-AT parsed output."""
-    if isinstance(parsed, dict):
-        yield parsed
-        return
-
-    if isinstance(parsed, Iterable) and not isinstance(parsed, (str, bytes)):
-        for segment in parsed:
-            if isinstance(segment, dict):
-                yield segment
-
-
 def extract_audio_tags(parsed: Any) -> tuple[list[str], list[str]]:
-    """Return unique raw AudioSet tags and mapped DeafBench sound labels."""
-    raw_tags: list[str] = []
-    sounds: list[str] = []
-    seen_raw: set[str] = set()
-    seen_sounds: set[str] = set()
+    """Return packaged AudioSet tags while preserving this legacy import."""
+    from deafbench.benchmark.models.whisper_at import extract_audio_tags as extract
 
-    for segment in _iter_parsed_segments(parsed):
-        tags = segment.get("audio tags", [])
-        if not isinstance(tags, Iterable) or isinstance(tags, (str, bytes)):
-            continue
-
-        for tag_entry in tags:
-            if not isinstance(tag_entry, (list, tuple)) or not tag_entry:
-                continue
-
-            label = tag_entry[0]
-            if not isinstance(label, str) or not label:
-                continue
-
-            if label not in seen_raw:
-                raw_tags.append(label)
-                seen_raw.add(label)
-
-            mapped = AUDIOSET_TO_DEAFBENCH.get(label)
-            if mapped is not None and mapped not in seen_sounds:
-                sounds.append(mapped)
-                seen_sounds.add(mapped)
-
-    return raw_tags, sounds
+    return extract(parsed)
 
 
 def transcribe_directory(
@@ -223,53 +165,18 @@ def main(argv: list[str] | None = None) -> None:
     audio_dir = args.audio_dir or default_audio_dir
     output = args.output or default_output
 
-    try:
-        import whisper_at as whisper
-    except ImportError as exc:
-        raise SystemExit(
-            "Whisper-AT is not installed. See the upstream Whisper-AT installation instructions."
-        ) from exc
+    from deafbench.benchmark.models.whisper_at import run_whisper_at
 
-    model = whisper.load_model(args.model)
-    include_class_list = list(range(AUDIOSET_CLASS_COUNT))
-
-    def transcribe(wav: Path) -> dict[str, Any]:
-        """Transcribe one WAV and return structured sound predictions."""
-        print(f"Transcribing {wav.stem}...")
-        result = model.transcribe(
-            str(wav),
-            language="en",
-            task="transcribe",
-            verbose=False,
-            at_time_res=args.at_time_res,
-        )
-        parsed = whisper.parse_at_label(
-            result,
-            language="follow_asr",
-            top_k=args.top_k,
-            p_threshold=args.p_threshold,
-            include_class_list=include_class_list,
-        )
-        raw_tags, sounds = extract_audio_tags(parsed)
-        text = result["text"]
-        print(f"  {text}")
-        if sounds:
-            print(f"  sounds: {', '.join(sounds)}")
-        if raw_tags:
-            print(f"  audio tags: {', '.join(raw_tags)}")
-        return {
-            "text": text,
-            "sounds": sounds,
-            "audio_tags": raw_tags,
-        }
-
-    records = transcribe_directory(
+    run_whisper_at(
         audio_dir,
+        references,
         output,
-        transcribe,
-        references=references,
+        model_id=args.model,
+        at_time_res=args.at_time_res,
+        top_k=args.top_k,
+        p_threshold=args.p_threshold,
     )
-    print(f"\nSaved {len(records)} predictions to {output}")
+    print(f"Saved predictions to {output}")
 
 
 if __name__ == "__main__":
