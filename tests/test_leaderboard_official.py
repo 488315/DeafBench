@@ -7,6 +7,7 @@ from deafbench.leaderboard._official_worker import (
     _PUBLIC_EXPECTED_ROWS,
     _evaluation_status,
     _mean_wer_by_model,
+    _public_manifest_rows,
 )
 from deafbench.leaderboard.official import (
     OfficialEvaluator,
@@ -151,3 +152,19 @@ def test_worker_requires_all_exact_public_row_counts_for_composite():
 
     assert status["status"] == "partial"
     assert status["completed_sets"] == 6
+
+
+def test_worker_scans_only_requested_model_and_rejects_duplicates(tmp_path):
+    dataset_id = "hf-audio-open-asr-leaderboard_librispeech_test.clean"
+    requested = tmp_path / f"MODEL_owner-model_DATASET_{dataset_id}.jsonl"
+    wrong_model = tmp_path / f"MODEL_other-model_DATASET_{dataset_id}.jsonl"
+    requested.write_text("{}\n{}\n", encoding="utf-8")
+    wrong_model.write_text("{}\n{}\n{}\n", encoding="utf-8")
+
+    assert _public_manifest_rows(tmp_path, "owner/model") == {dataset_id: 2}
+
+    duplicate_dir = tmp_path / "duplicate"
+    duplicate_dir.mkdir()
+    (duplicate_dir / requested.name).write_text("{}\n{}\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="duplicate public manifest"):
+        _public_manifest_rows(tmp_path, "owner/model")

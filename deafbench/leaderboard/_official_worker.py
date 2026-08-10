@@ -46,14 +46,16 @@ def _evaluation_status(observed_rows: dict[str, int]) -> dict:
     }
 
 
-def _public_manifest_rows(results_dir: str) -> dict[str, int]:
+def _public_manifest_rows(results_dir: str, model_id: str) -> dict[str, int]:
     observed = {}
+    expected_prefix = "MODEL_" + model_id.replace("/", "-") + "_DATASET_"
     for result_file in Path(results_dir).rglob("*.jsonl"):
-        marker = "_DATASET_"
-        if marker not in result_file.stem:
+        if not result_file.stem.startswith(expected_prefix):
             continue
-        dataset_id = result_file.stem.split(marker, 1)[1]
+        dataset_id = result_file.stem.removeprefix(expected_prefix)
         if dataset_id in _PUBLIC_EXPECTED_ROWS:
+            if dataset_id in observed:
+                raise ValueError(f"duplicate public manifest: {dataset_id}")
             with result_file.open(encoding="utf-8") as handle:
                 observed[dataset_id] = sum(1 for line in handle if line.strip())
     return observed
@@ -83,7 +85,10 @@ def _score(payload: dict) -> dict:
         payload["model_id"],
         families=["public"],
     )
-    observed_rows = _public_manifest_rows(payload["results_dir"])
+    observed_rows = _public_manifest_rows(
+        payload["results_dir"],
+        payload["model_id"],
+    )
     evaluation = _evaluation_status(observed_rows)
     mean_key = "composite_wer" if evaluation["status"] == "complete" else "partial_mean_wer"
     return {
