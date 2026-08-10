@@ -150,6 +150,9 @@ def test_worker_requires_all_exact_public_row_counts_for_composite():
     assert _PUBLIC_EXPECTED_ROWS[
         "hf-audio-open-asr-leaderboard_earnings22_test"
     ] == 2737
+    assert _PUBLIC_EXPECTED_ROWS[
+        "hf-audio-open-asr-leaderboard_gigaspeech_cleaned_test"
+    ] == 18757
     assert _evaluation_status(dict(_PUBLIC_EXPECTED_ROWS))["status"] == "complete"
 
     incomplete = dict(_PUBLIC_EXPECTED_ROWS)

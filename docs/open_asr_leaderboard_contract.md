@@ -33,10 +33,11 @@ The model-specific [launcher](https://github.com/huggingface/open_asr_leaderboar
 
 **Verified:** every listed config has audio (declared 16 kHz), dataset, text, id, and audio_length_s in the [pinned dataset card](https://huggingface.co/datasets/hf-audio/open-asr-leaderboard/blob/b6bdcd0beb34f8975dc659796176d88f43aff502/README.md). The [published evaluation YAML](https://huggingface.co/soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M/blob/d410fb15a71cbf87ec5e0a860356563deb9d8f01/.eval_results/open_asr_leaderboard.yaml) reports 5.56 mean WER and the seven per-set WERs dated 2026-07-19.
 
-The table reports raw dataset rows. The pinned loader filters 90 AMI-Cleaned
-and four Earnings22 references that normalize to empty or its ignore sentinel,
-producing 7,715 and 2,737 official result rows respectively. DeafBench's
-completeness gate uses post-filter result counts, not raw dataset size.
+The table reports raw dataset rows. The pinned loader filters 90 AMI-Cleaned,
+four Earnings22, and 11 GigaSpeech-Cleaned references that normalize to empty
+or its ignore sentinel, producing 7,715, 2,737, and 18,757 official result
+rows respectively. DeafBench's completeness gate uses post-filter result
+counts, not raw dataset size.
 
 ## Score-to-beat correction
 

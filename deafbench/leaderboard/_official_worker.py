@@ -14,7 +14,8 @@ _PUBLIC_EXPECTED_ROWS = {
     "hf-audio-open-asr-leaderboard_ami_cleaned_test": 7715,
     # The pinned loader removes four references that normalize to empty/ignore.
     "hf-audio-open-asr-leaderboard_earnings22_test": 2737,
-    "hf-audio-open-asr-leaderboard_gigaspeech_cleaned_test": 18768,
+    # The pinned loader removes 11 references that normalize to empty/ignore.
+    "hf-audio-open-asr-leaderboard_gigaspeech_cleaned_test": 18757,
     "hf-audio-open-asr-leaderboard_librispeech_test.clean": 2620,
     "hf-audio-open-asr-leaderboard_librispeech_test.other": 2939,
     "hf-audio-open-asr-leaderboard_spgispeech_test": 39341,
