@@ -1,0 +1,23 @@
+model:
+  id: soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M
+  revision: d410fb15a71cbf87ec5e0a860356563deb9d8f01
+  license: CC-BY-NC-4.0
+  commercial_use: prohibited_without_separate_permission
+evaluation:
+  evaluator_revision: 9585fc39bff55697a2ec1c5f13921b18812bfde8
+  runner_revision: 64c698c42932a54bc7a40a7f172d03c8c4838fe6
+  dataset_id: hf-audio/open-asr-leaderboard
+  dataset_revision: b6bdcd0beb34f8975dc659796176d88f43aff502
+  icefall_revision: 3f848bb6d0acc970c9b294a30ca0a04a7c9c78d1
+  public_tasks:
+    - [ami_cleaned, test]
+    - [earnings22, test]
+    - [gigaspeech_cleaned, test]
+    - [librispeech, test.clean]
+    - [librispeech, test.other]
+    - [spgispeech, test]
+    - [voxpopuli_cleaned_aa, test]
+submission:
+  status: blocked
+  reason: Full public evaluation and private official evaluation are incomplete.
+  upload_authorized: false

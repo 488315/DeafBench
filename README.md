@@ -14,6 +14,14 @@ DeafBench is an **ASR benchmark for Deaf and hard-of-hearing captions** built fo
 
 The goal is simple: compare ASR and audio-captioning systems based on what a Deaf or hard-of-hearing user actually gets, not just how close the transcript is word for word.
 
+DeafBench also includes a pinned, fail-closed Open ASR Leaderboard research
+workflow. Its first complete public-set baseline is Zipformer at **1.31%
+official WER on LibriSpeech test-clean** (2,620 utterances). That is one of
+seven public sets, not a leaderboard composite or private-test result. The
+baseline checkpoint is CC-BY-NC-4.0 and therefore is not a commercial product
+foundation without separate permission. Reproduction commands and exact
+revisions are in `experiments/open-asr/README.md`.
+
 ## OpenAI Whisper turbo results
 
 `Model A` uses OpenAI Whisper `turbo` through `tools/transcribe_whisper.py`.

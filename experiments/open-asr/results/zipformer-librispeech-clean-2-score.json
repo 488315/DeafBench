@@ -1,0 +1,16 @@
+{
+  "composite_wer": {
+    "soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M": 1.73
+  },
+  "datasets": {
+    "soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M | hf-audio-open-asr-leaderboard_librispeech_test.clean": {
+      "audio_length": 68.865,
+      "del": 0,
+      "inference_time": 3.4374125003814697,
+      "ins": 0,
+      "rtfx": 20.034,
+      "sub": 3,
+      "wer": 1.73
+    }
+  }
+}

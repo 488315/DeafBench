@@ -1,0 +1,49 @@
+# Zipformer baseline error analysis
+
+Status: one of seven public test sets is complete. Cross-domain analysis remains
+blocked on the other six public manifests.
+
+## Evidence
+
+The pinned official scorer measured 1.73% WER on the first two
+`librispeech/test.clean` rows: 0 deletions, 0 insertions, and 3 substitutions.
+The two rows contain 68.865 seconds of audio. This tiny sample is suitable for
+pipeline validation only and must not be used to claim model quality.
+
+Observed substitutions:
+
+- `guests` -> `guest`: singular/plural inflection.
+- `Creighton` -> `Crichton` twice: a name or rare-word error.
+
+`tonight` -> `to night` does not count after the official compound-boundary
+normalization. This is why the runner's convenience WER (2.89%) differs from
+the official scorer (1.73%).
+
+## Requested categories
+
+| Category | Diagnostic evidence | Priority before full baseline |
+|---|---|---|
+| Meetings and overlapping speech | Not represented | Await AMI-Cleaned results |
+| Conversational speech | Not represented | Await public and private confirmation |
+| Accents | Not identified | Await per-dataset errors |
+| Financial terminology | Topic appears, no observed error | Await Earnings22 results |
+| Names and rare words | `Creighton` -> `Crichton` twice | High diagnostic signal |
+| Numbers and abbreviations | Not represented | Await full results |
+| Disfluencies | Not represented | Await AMI-Cleaned results |
+| Long-form segmentation | Rows are about 34 seconds; no segmentation failure | Reassess across AMI/Earnings22 |
+| Substitutions | 3 | Current observed error type |
+| Insertions | 0 | No diagnostic evidence |
+| Deletions | 0 | No diagnostic evidence |
+
+No improvement experiment should be selected from two rows. Rank opportunities
+only after the seven public manifests are complete and analyzed, then develop
+against training/validation data rather than repeatedly tuning on test labels.
+
+## Full LibriSpeech test-clean baseline
+
+The pinned official scorer measured **1.31% WER** over all 2,620 rows and
+19,452.481 seconds of audio: 60 deletions, 59 insertions, and 575
+substitutions. The same manifest's runner convenience metric was 1.67%, which
+confirms that only the official normalized score should be used for leaderboard
+comparisons. This clean-read-speech result does not address meetings, accents,
+financial speech, or conversational private tests.
