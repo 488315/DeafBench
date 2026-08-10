@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import subprocess
@@ -32,8 +33,13 @@ def _write_wav(path: Path) -> None:
         handle.writeframes(b"\x00\x00" * 32)
 
 
-def _write_dataset(root: Path, *, human_complete: bool) -> Path:
-    dataset_dir = root / "benchmarks" / "core-v1"
+def _write_dataset(
+    root: Path,
+    *,
+    human_complete: bool,
+    dataset: str = "core-v1",
+) -> Path:
+    dataset_dir = root / "benchmarks" / dataset
     dataset_dir.mkdir(parents=True)
     references = dataset_dir / "references.jsonl"
     records = [
@@ -206,6 +212,46 @@ def test_current_synthetic_set_does_not_construct_whisperspeech(
         "engine": "whisperspeech",
         "version": "persisted-test-version",
     }
+
+
+def test_validated_v2_set_does_not_regenerate_synthetic_audio(tmp_path: Path) -> None:
+    references = _write_dataset(
+        tmp_path,
+        human_complete=False,
+        dataset="synthetic-v2",
+    )
+    audio_dir = references.parent / "audio-synthetic"
+    generation = []
+    accepted = []
+    for line in references.read_text(encoding="utf-8").splitlines():
+        sample_id = json.loads(line)["id"]
+        wav = audio_dir / f"{sample_id}.wav"
+        _write_wav(wav)
+        generation.append(
+            {
+                "id": sample_id,
+                "audio_sha256": hashlib.sha256(wav.read_bytes()).hexdigest(),
+                "replacement_reason": "test replacement",
+            }
+        )
+        accepted.append({"id": sample_id, "status": "accepted"})
+    atomic_write_jsonl(references.parent / "generation-manifest.jsonl", generation)
+    (references.parent / "quality-report.json").write_text(
+        json.dumps({"samples": accepted}),
+        encoding="utf-8",
+    )
+
+    def fail_synthetic_factory() -> tuple[object, TTSInfo]:
+        raise AssertionError("validated v2 audio must not be regenerated")
+
+    result = run_benchmark(
+        BenchmarkConfig(tmp_path, "synthetic-v2", "whisper"),
+        synthetic_factory=fail_synthetic_factory,
+        whisper_runner=_fake_model_runner,
+    )
+
+    metadata = json.loads(result.metadata.read_text(encoding="utf-8"))
+    assert metadata["tts"]["engine"] == "validated-synthetic-v2"
 
 
 def test_failed_rerun_preserves_every_previous_run_byte(tmp_path: Path) -> None:

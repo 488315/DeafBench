@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import shutil
@@ -86,6 +87,61 @@ def _load_cached_tts(audio_dir: Path) -> TTSInfo:
     return TTSInfo(cast(str, tts["engine"]), cast(str, tts["version"]))
 
 
+def _load_validated_v2_tts(paths: RunPaths) -> TTSInfo | None:
+    """Recognize an admitted v2 corpus without invoking a mutable TTS cache."""
+    from deafbench.benchmark.synthetic import TTSInfo
+
+    generation_path = paths.dataset_dir / "generation-manifest.jsonl"
+    quality_path = paths.dataset_dir / "quality-report.json"
+    if not generation_path.is_file() and not quality_path.is_file():
+        return None
+    if not generation_path.is_file() or not quality_path.is_file():
+        raise ValueError("Synthetic-v2 admission evidence is incomplete")
+
+    records = [
+        json.loads(line)
+        for line in generation_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    expected_ids = {
+        cast(str, record["id"])
+        for record in load_reference_records(paths.references)
+    }
+    actual_ids = {record.get("id") for record in records}
+    if actual_ids != expected_ids or len(records) != len(actual_ids):
+        raise ValueError("Synthetic-v2 generation manifest is incomplete")
+    for record in records:
+        sample_id = cast(str, record["id"])
+        audio_path = paths.synthetic_audio / f"{sample_id}.wav"
+        expected_hash = record.get("audio_sha256")
+        if (
+            not isinstance(expected_hash, str)
+            or not audio_path.is_file()
+            or hashlib.sha256(audio_path.read_bytes()).hexdigest() != expected_hash
+        ):
+            raise ValueError(f"Synthetic-v2 audio hash mismatch: {sample_id}")
+
+    replacement_ids = {
+        cast(str, record["id"])
+        for record in records
+        if record.get("replacement_reason") is not None
+    }
+    quality = json.loads(quality_path.read_text(encoding="utf-8"))
+    samples = quality.get("samples")
+    if not isinstance(samples, list):
+        raise ValueError("Synthetic-v2 quality report is invalid")
+    accepted_ids = {
+        sample.get("id")
+        for sample in samples
+        if isinstance(sample, dict) and sample.get("status") == "accepted"
+    }
+    if len(samples) != len(accepted_ids) or accepted_ids != replacement_ids:
+        raise ValueError("Synthetic-v2 contains unaccepted replacements")
+
+    revision = hashlib.sha256(generation_path.read_bytes()).hexdigest()
+    return TTSInfo("validated-synthetic-v2", f"manifest-sha256:{revision}")
+
+
 def _prepare_synthetic(
     config: BenchmarkConfig,
     paths: RunPaths,
@@ -93,6 +149,10 @@ def _prepare_synthetic(
     synthetic_generator: SyntheticGenerator,
 ) -> TTSInfo:
     from deafbench.benchmark.synthetic import synthetic_set_is_current
+
+    validated_v2 = _load_validated_v2_tts(paths)
+    if validated_v2 is not None:
+        return validated_v2
 
     if synthetic_set_is_current(
         paths.synthetic_audio,
