@@ -1,7 +1,7 @@
 # Zipformer baseline error analysis
 
-Status: five of seven public test sets are complete. Cross-domain analysis
-remains incomplete pending the other two public manifests.
+Status: all seven public test sets are complete and analyzed. Private scripted
+and conversational sets remain unavailable without an authorized submission.
 
 ## Evidence
 
@@ -21,14 +21,14 @@ the official scorer (1.73%).
 
 ## Requested categories
 
-| Category | Diagnostic evidence | Priority before full baseline |
+| Category | Diagnostic evidence | Next validation priority |
 |---|---|---|
 | Meetings and overlapping speech | AMI-Cleaned is the hardest completed set at 10.30 WER | High; classify utterance errors before choosing a change |
-| Conversational speech | Not represented | Await public and private confirmation |
-| Accents | Not identified | Await per-dataset errors |
-| Financial terminology | Earnings22 is the hardest completed set at 7.68 WER | High; classify utterance errors before choosing a change |
+| Conversational speech | AMI and GigaSpeech contain conversational segments, but the private conversational set is unavailable | Develop only on matching train/validation data |
+| Accents | VoxPopuli scored 4.31 WER; retained errors include short function-word and inflection differences | Validate any accent intervention off the public test set |
+| Financial terminology | Earnings22 scored 7.68 WER and retained rows contain domain wording and numbers | High; classify utterance errors before choosing a change |
 | Names and rare words | `Creighton` -> `Crichton` twice | High diagnostic signal |
-| Numbers and abbreviations | Not represented | Await full results |
+| Numbers and abbreviations | GigaSpeech and SPGISpeech retained errors include numeric and domain-term confusions | Build train/validation slices before changing decoding |
 | Disfluencies | AMI-Cleaned aggregate errors do not isolate disfluencies | Await utterance-level alignment |
 | Long-form segmentation | Rows are about 34 seconds; no segmentation failure | Reassess across AMI/Earnings22 |
 | Substitutions | 3 | Current observed error type |
@@ -58,10 +58,26 @@ and pronunciation; LibriSpeech-clean includes archaic wording, names, and
 number renderings. VoxPopuli's largest rows are mostly shorter function-word,
 inflection, and title differences.
 
-AMI and Earnings22 remain the first diagnostic targets because they have the
-two highest completed-set WERs. That is a prioritization signal, not permission
-to tune on public test labels: candidate changes must be selected and measured
-on corresponding training or validation data.
+AMI, GigaSpeech, and Earnings22 are the first diagnostic targets because they
+have the three highest public-set WERs. That is a prioritization signal, not
+permission to tune on public test labels: candidate changes must be selected
+and measured on corresponding training or validation data.
+
+## Seven-set utterance diagnostics
+
+`results/zipformer-public-7set-errors.json` analyzes every officially
+evaluable row and exactly reproduces the deletion, insertion, and substitution
+totals in the complete scorer artifact. SPGISpeech adds 39,341 rows with 3,216
+deletions, 3,620 insertions, and 9,083 substitutions for **1.64% official
+WER**. Its largest retained errors include fluent near-matches, reference and
+hypothesis boundary differences, domain terms, and numeric confusions such as
+`8000` versus `800`; these observations do not establish a single cause.
+
+Across the complete public suite, AMI-Cleaned (10.30), GigaSpeech-Cleaned
+(8.33), and Earnings22 (7.68) are the highest-WER domains. The next legitimate
+improvement work should therefore construct meeting, broad conversational,
+and financial validation slices from permitted non-test data, then compare one
+bounded intervention at a time. Public test labels must remain evaluation-only.
 
 ## Six-set utterance diagnostics
 
@@ -135,3 +151,13 @@ deletions, 7,212 insertions, and 18,526 substitutions. At 99.2171 RTFx,
 2,025.625 seconds wall time, and 2,567,505,408 peak VRAM bytes, batch 16 stayed
 within the RTX 4070 constraint. Two identical official scoring runs produced
 SHA-256 `10FE1A88D5AEBAA6B968D4B937CEBBE4BF9896C562D72A9063FEC1856686FFB6`.
+
+## Full SPGISpeech baseline
+
+The official scorer measured **1.64% WER** over all 39,341 rows and
+360,007.500 seconds of audio: 3,216 deletions, 3,620 insertions, and 9,083
+substitutions. At 100.6914 RTFx, 5,451.722 seconds wall time, and
+3,062,188,544 peak VRAM bytes, batch 32 stayed within the RTX 4070 constraint.
+The runner convenience metric was 1.81% and is not the leaderboard score. Two
+identical complete seven-set scoring runs produced SHA-256
+`634398F9F58415214F82720933B648AE135AFA28727B00FFC3AB401B50DDCA0E`.

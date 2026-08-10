@@ -102,6 +102,11 @@ composite. AMI-Cleaned scored **10.30% official WER** over 7,715 evaluable
 rows at 89.4465 RTFx and 2,829,196,800 peak VRAM bytes, bringing the five-set
 mean to 5.32%. GigaSpeech-Cleaned scored **8.33% official WER** over 18,757
 evaluable rows at 99.2171 RTFx and 2,567,505,408 peak VRAM bytes, bringing the
-six-set mean to 5.82%. See `results/zipformer-public-6set-score.json` for the
-current machine-readable result. The remaining SPGISpeech set is required
-before this can be called a public leaderboard composite.
+six-set mean to 5.82%. SPGISpeech scored **1.64% official WER** over all
+39,341 rows at 100.6914 RTFx, 5,451.722 seconds wall time, and 3,062,188,544
+peak VRAM bytes. The resulting complete seven-set composite is **5.23%**, as
+recorded in `results/zipformer-public-7set-score.json`. This reproduced public
+score is 0.19 points below the pinned leaderboard snapshot's 5.42 best public
+average and 0.33 below Zipformer's published 5.56, but it does not establish a
+private leaderboard win and the checkpoint's noncommercial license prevents
+using it as DeafBench's commercial foundation without separate permission.

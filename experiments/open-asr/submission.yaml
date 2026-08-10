@@ -19,5 +19,5 @@ evaluation:
     - [voxpopuli_cleaned_aa, test]
 submission:
   status: blocked
-  reason: Full public evaluation and private official evaluation are incomplete.
+  reason: Private official evaluation and upload authorization are unavailable.
   upload_authorized: false
