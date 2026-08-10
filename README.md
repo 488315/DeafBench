@@ -88,11 +88,11 @@ extra that supplies WhisperSpeech and its runtime dependencies:
 # Existing human audio
 python -m pip install "deafbench[local-models]"
 
-# Synthetic audio
-python -m pip install "deafbench[benchmark,local-models]"
+# Synthetic audio from an editable repository checkout
+python -m pip install -e ".[benchmark,local-models]"
 
 # CPU-friendly INT8 baseline; downloads small.en on first use.
-deafbench benchmark core-v1 --model faster-whisper
+python -m deafbench benchmark core-v1 --model faster-whisper --audio-source synthetic --repo-root .
 
 # Distilled comparison; downloads distil-large-v3 on first use.
 deafbench benchmark core-v1 --model distil-whisper
