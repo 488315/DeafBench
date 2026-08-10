@@ -106,6 +106,8 @@ def test_qwen_adapter_pins_safe_runtime_and_writes_sorted_predictions(
     model = _FakeModel()
     processor_options: list[tuple[str, dict[str, object]]] = []
     model_options: list[tuple[str, dict[str, object]]] = []
+    clock_values = iter((1.0, 1.1, 2.0, 2.2))
+    peak_resets: list[bool] = []
 
     class ProcessorFactory:
         @staticmethod
@@ -122,10 +124,15 @@ def test_qwen_adapter_pins_safe_runtime_and_writes_sorted_predictions(
     backend = SimpleNamespace(
         AutoProcessor=ProcessorFactory,
         AutoModelForMultimodalLM=ModelFactory,
+        clock=lambda: next(clock_values),
         numpy=numpy,
         resample_poly=resample_poly,
         torch=SimpleNamespace(
-            cuda=SimpleNamespace(is_available=lambda: True),
+            cuda=SimpleNamespace(
+                is_available=lambda: True,
+                max_memory_allocated=lambda: 123_456,
+                reset_peak_memory_stats=lambda: peak_resets.append(True),
+            ),
             device=lambda name: name,
             inference_mode=nullcontext,
         ),
@@ -146,6 +153,7 @@ def test_qwen_adapter_pins_safe_runtime_and_writes_sorted_predictions(
     assert processor_options == [expected_load]
     assert model_options == [expected_load]
     assert model.moved_to == ["cuda"]
+    assert peak_resets == [True]
     assert model.evaluated is True
     assert model.generations == [256, 256]
     assert all(inputs.moves == [("cuda", "bfloat16")] for inputs in processor.inputs)
@@ -153,8 +161,8 @@ def test_qwen_adapter_pins_safe_runtime_and_writes_sorted_predictions(
     assert all(audio.shape == (6,) for audio in processor.audio)
     assert all(audio.dtype == numpy.float32 for audio in processor.audio)
     assert [json.loads(line) for line in output.read_text().splitlines()] == [
-        {"id": "sample-001", "text": "transcript 1"},
-        {"id": "sample-002", "text": "transcript 2"},
+        {"id": "sample-001", "latency_ms": 100.0, "text": "transcript 1"},
+        {"id": "sample-002", "latency_ms": 200.0, "text": "transcript 2"},
     ]
     assert info.model_id == "Qwen/Qwen3-ASR-0.6B-hf"
     assert info.revision == revision
@@ -164,6 +172,12 @@ def test_qwen_adapter_pins_safe_runtime_and_writes_sorted_predictions(
         "language": "English",
         "max_new_tokens": 256,
         "trust_remote_code": False,
+    }
+    assert info.performance == {
+        "local_rtfx": pytest.approx(0.0022222222),
+        "median_latency_ms": pytest.approx(150.0),
+        "peak_vram_bytes": 123_456,
+        "timing_scope": "decode_only_excludes_model_load",
     }
 
 

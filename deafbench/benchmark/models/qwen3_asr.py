@@ -6,6 +6,8 @@ import wave
 from dataclasses import dataclass
 from math import gcd
 from pathlib import Path
+from statistics import median
+from time import perf_counter
 from typing import Any
 
 from deafbench.benchmark.models import ModelRunInfo, _validated_wavs
@@ -21,6 +23,7 @@ MAX_NEW_TOKENS = 256
 class _TransformersBackend:
     AutoProcessor: Any
     AutoModelForMultimodalLM: Any
+    clock: Any
     numpy: Any
     resample_poly: Any
     torch: Any
@@ -42,6 +45,7 @@ def _load_backend() -> _TransformersBackend:
     return _TransformersBackend(
         AutoProcessor,
         AutoModelForMultimodalLM,
+        perf_counter,
         numpy,
         resample_poly,
         torch,
@@ -83,22 +87,26 @@ def _read_pcm16_mono(
     target_rate: int,
     numpy: Any,
     resample_poly: Any,
-) -> Any:
+) -> tuple[Any, float]:
     with wave.open(str(wav_path), "rb") as handle:
         if handle.getnchannels() != 1 or handle.getsampwidth() != 2:
             raise ValueError(f"Qwen3-ASR requires mono PCM16 WAV: {wav_path}")
         source_rate = handle.getframerate()
+        duration_seconds = handle.getnframes() / source_rate
         frames = handle.readframes(handle.getnframes())
     samples = numpy.frombuffer(frames, dtype="<i2").astype(numpy.float32)
     samples /= 32_768.0
     if source_rate == target_rate:
-        return samples
+        return samples, duration_seconds
     divisor = gcd(source_rate, target_rate)
-    return resample_poly(
-        samples,
-        target_rate // divisor,
-        source_rate // divisor,
-    ).astype(numpy.float32, copy=False)
+    return (
+        resample_poly(
+            samples,
+            target_rate // divisor,
+            source_rate // divisor,
+        ).astype(numpy.float32, copy=False),
+        duration_seconds,
+    )
 
 
 def run_qwen3_asr(
@@ -112,6 +120,9 @@ def run_qwen3_asr(
     revision = _licensed_revision(model_id)
     wav_paths = _validated_wavs(audio_dir, references)
     runtime = _load_backend() if backend is None else backend
+    use_cuda = runtime.torch.cuda.is_available()
+    if use_cuda:
+        runtime.torch.cuda.reset_peak_memory_stats()
     load_options = {"revision": revision, "trust_remote_code": False}
     processor = runtime.AutoProcessor.from_pretrained(model_id, **load_options)
     sampling_rate = processor.feature_extractor.sampling_rate
@@ -120,21 +131,25 @@ def run_qwen3_asr(
         **load_options,
     )
     target_device = runtime.torch.device(
-        "cuda" if runtime.torch.cuda.is_available() else "cpu"
+        "cuda" if use_cuda else "cpu"
     )
     model.to(target_device)
     model.eval()
 
-    records: list[dict[str, str]] = []
+    records: list[dict[str, object]] = []
+    latencies_ms: list[float] = []
+    total_audio_seconds = 0.0
     with runtime.torch.inference_mode():
         for wav_path in wav_paths:
+            started = runtime.clock()
+            audio, audio_seconds = _read_pcm16_mono(
+                wav_path,
+                sampling_rate,
+                runtime.numpy,
+                runtime.resample_poly,
+            )
             inputs = processor.apply_transcription_request(
-                audio=_read_pcm16_mono(
-                    wav_path,
-                    sampling_rate,
-                    runtime.numpy,
-                    runtime.resample_poly,
-                ),
+                audio=audio,
                 language="English",
             ).to(model.device, model.dtype)
             output_ids = model.generate(
@@ -143,14 +158,20 @@ def run_qwen3_asr(
             )
             prompt_length = inputs["input_ids"].shape[1]
             generated_ids = output_ids[:, prompt_length:]
+            text = _decode_transcription(processor, generated_ids)
+            latency_ms = round((runtime.clock() - started) * 1_000.0, 6)
+            latencies_ms.append(latency_ms)
+            total_audio_seconds += audio_seconds
             records.append(
                 {
                     "id": wav_path.stem,
-                    "text": _decode_transcription(processor, generated_ids),
+                    "latency_ms": latency_ms,
+                    "text": text,
                 }
             )
 
     atomic_write_jsonl(output, records)
+    total_latency_seconds = sum(latencies_ms) / 1_000.0
     return ModelRunInfo(
         name="qwen3-asr-0.6b",
         model_id=model_id,
@@ -161,5 +182,13 @@ def run_qwen3_asr(
             "language": "English",
             "max_new_tokens": MAX_NEW_TOKENS,
             "trust_remote_code": False,
+        },
+        performance={
+            "local_rtfx": total_audio_seconds / total_latency_seconds,
+            "median_latency_ms": median(latencies_ms),
+            "peak_vram_bytes": (
+                runtime.torch.cuda.max_memory_allocated() if use_cuda else None
+            ),
+            "timing_scope": "decode_only_excludes_model_load",
         },
     )
