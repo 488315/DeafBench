@@ -7,8 +7,9 @@ from .report import generate_markdown_report
 
 
 _BENCHMARK_RUNTIME_UNAVAILABLE = (
-    "Benchmark runtime is not available in this build; use `deafbench compare` "
-    "until a release with benchmark runner support is installed."
+    "Benchmark runtime is not available in this build; "
+    "use `deafbench compare` until a release with benchmark runner support is "
+    "installed."
 )
 
 
