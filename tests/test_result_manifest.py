@@ -87,3 +87,73 @@ def test_result_manifest_is_byte_stable() -> None:
     reordered = json.loads(json.dumps(_PAYLOAD, sort_keys=True))
 
     assert canonical_result_bytes(_PAYLOAD) == canonical_result_bytes(reordered)
+
+
+@pytest.mark.parametrize(
+    ("mutation", "message"),
+    [
+        (lambda payload: payload.pop("claim_boundary"), "result manifest missing"),
+        (lambda payload: payload.update(schema_version=2), "unsupported"),
+        (lambda payload: payload.update(status="draft"), "unsupported"),
+        (lambda payload: payload.update(claim_boundary=""), "claim_boundary"),
+        (lambda payload: payload.update(evaluator_revision="main"), "evaluator revision"),
+        (lambda payload: payload.update(decoding=[]), "decoding must be an object"),
+        (lambda payload: payload.update(corpora="synthetic-v2"), "corpora"),
+        (lambda payload: payload.update(corpora=[]), "corpora"),
+        (
+            lambda payload: payload["corpora"][0].update(manifest_sha256="bad"),
+            "corpus manifest hash",
+        ),
+        (lambda payload: payload.update(evaluations={}), "evaluations must be a list"),
+        (
+            lambda payload: payload["evaluations"][0].update(lane="unknown"),
+            "invalid or duplicate",
+        ),
+        (
+            lambda payload: payload["evaluations"][1].update(lane="synthetic-v2"),
+            "invalid or duplicate",
+        ),
+        (
+            lambda payload: payload["evaluations"][0].update(sample_count=0),
+            "invalid sample count",
+        ),
+        (
+            lambda payload: payload["evaluations"][0].update(metrics=[]),
+            "metrics must be an object",
+        ),
+        (
+            lambda payload: payload["evaluations"][0]["metrics"].pop("wer_percent"),
+            "metrics missing",
+        ),
+        (
+            lambda payload: payload["evaluations"][0].update(critical_failures={}),
+            "critical_failures",
+        ),
+    ],
+)
+def test_result_manifest_rejects_incomplete_evidence(mutation, message) -> None:
+    payload = deepcopy(_PAYLOAD)
+    mutation(payload)
+
+    with pytest.raises(ResultManifestError, match=message):
+        validate_result_manifest(payload)
+
+
+def test_result_manifest_rejects_unknown_model() -> None:
+    payload = deepcopy(_PAYLOAD)
+    payload["model"]["model_id"] = "unknown/model"
+
+    with pytest.raises(ValueError, match="missing license metadata"):
+        validate_result_manifest(payload)
+
+
+def test_result_manifest_rejects_revision_or_lane_drift() -> None:
+    revision = deepcopy(_PAYLOAD)
+    revision["model"]["revision"] = "a" * 40
+    with pytest.raises(ResultManifestError, match="revision differs"):
+        validate_result_manifest(revision)
+
+    lane = deepcopy(_PAYLOAD)
+    lane["license_classification"] = "research_only"
+    with pytest.raises(ResultManifestError, match="classification differs"):
+        validate_result_manifest(lane)
