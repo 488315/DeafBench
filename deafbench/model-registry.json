@@ -70,7 +70,7 @@
       "supported_languages": ["en"],
       "parameter_count": 600000000,
       "expected_weight_size_bytes": 2472222720,
-      "tested_peak_vram_bytes": null,
+      "tested_peak_vram_bytes": 5014955008,
       "supported_runtimes": ["nemo_toolkit[asr]>=2.4,<3"],
       "intended_lane": "commercial_candidate",
       "license_files": ["licenses/CC-BY-4.0.txt"],
