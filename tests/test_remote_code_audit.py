@@ -76,6 +76,18 @@ def test_file_verification_accepts_exact_bytes(tmp_path) -> None:
     verify_audited_files(audit, tmp_path)
 
 
+def test_file_verification_accepts_hugging_face_blob_symlink(tmp_path) -> None:
+    audit = validate_remote_code_audit(_AUDIT)
+    blob = tmp_path / "blobs" / "reviewed"
+    blob.parent.mkdir()
+    blob.write_bytes(_SOURCE)
+    snapshot = tmp_path / "snapshots" / audit.revision
+    snapshot.mkdir(parents=True)
+    (snapshot / "modeling.py").symlink_to(blob)
+
+    verify_audited_files(audit, snapshot)
+
+
 def test_file_verification_rejects_changed_bytes(tmp_path) -> None:
     audit = validate_remote_code_audit(_AUDIT)
     (tmp_path / "modeling.py").write_bytes(b"changed source\n")

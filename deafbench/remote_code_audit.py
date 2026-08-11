@@ -123,10 +123,10 @@ def verify_audited_files(audit: RemoteCodeAudit, snapshot_root: Path) -> None:
     for audited_file in audit.audited_files:
         candidate = root.joinpath(*PurePosixPath(audited_file.path).parts)
         try:
-            resolved = candidate.resolve(strict=True)
-            resolved.relative_to(root)
-            payload = resolved.read_bytes()
-        except (OSError, ValueError) as exc:
+            # Hub snapshots link into a sibling content-addressed blob store.
+            # The validated relative path and exact digest remain the boundary.
+            payload = candidate.read_bytes()
+        except OSError as exc:
             raise RemoteCodeAuditError(
                 f"missing audited file for model {audit.model_id}: {audited_file.path}"
             ) from exc
