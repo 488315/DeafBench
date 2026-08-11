@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import json
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from statistics import median
 import sys
+from tempfile import TemporaryDirectory
 from time import perf_counter
-from typing import Any, Mapping, Sequence
+from typing import Any, Iterator, Mapping, Sequence
 
 from deafbench.benchmark.models._isolated import RESULT_MARKER
 from deafbench.remote_code_audit import load_remote_code_audit, verify_audited_files
@@ -86,15 +88,38 @@ def _bad_words_ids(tokenizer: Any) -> list[list[int]]:
     return [[token_id] for token_id in sorted(bad_ids)]
 
 
-def _audio_duration(wav_path: Path, soundfile: Any) -> float:
+@contextmanager
+def _audio_chunks(
+    wav_path: Path,
+    soundfile: Any,
+) -> Iterator[tuple[float, tuple[Path, ...]]]:
     info = soundfile.info(str(wav_path))
     if info.channels != 1:
         raise ValueError(f"ARK-ASR requires mono audio: {wav_path}")
     if info.duration <= 0:
         raise ValueError(f"ARK-ASR requires nonempty audio: {wav_path}")
-    if info.duration > MAX_AUDIO_SECONDS:
-        raise ValueError(f"ARK-ASR audio exceeds its 30-second limit: {wav_path}")
-    return float(info.duration)
+    duration = float(info.duration)
+    if duration <= MAX_AUDIO_SECONDS:
+        yield duration, (wav_path,)
+        return
+
+    frames_per_chunk = int(MAX_AUDIO_SECONDS * info.samplerate)
+    with TemporaryDirectory(prefix="deafbench-ark-") as directory:
+        chunk_paths: list[Path] = []
+        for index, start in enumerate(range(0, info.frames, frames_per_chunk)):
+            frame_count = min(frames_per_chunk, info.frames - start)
+            audio, sample_rate = soundfile.read(
+                str(wav_path),
+                start=start,
+                frames=frame_count,
+                always_2d=False,
+            )
+            if sample_rate != info.samplerate:
+                raise ValueError(f"ARK-ASR audio sample rate changed: {wav_path}")
+            chunk_path = Path(directory) / f"chunk-{index:04d}.wav"
+            soundfile.write(str(chunk_path), audio, sample_rate)
+            chunk_paths.append(chunk_path)
+        yield duration, tuple(chunk_paths)
 
 
 def _conversation(wav_path: Path) -> list[dict[str, object]]:
@@ -157,44 +182,54 @@ def run_request(
     total_audio_seconds = 0.0
     with runtime.torch.inference_mode():
         for wav_path in wav_paths:
-            audio_seconds = _audio_duration(wav_path, runtime.soundfile)
-            runtime.torch.cuda.synchronize()
-            started = runtime.clock()
-            inputs = processor.apply_chat_template(
-                _conversation(wav_path),
-                add_generation_prompt=True,
-                return_tensors="pt",
-                sampling_rate=SAMPLE_RATE,
-                audio_padding="longest",
-                text_kwargs={"padding": "longest"},
-                audio_max_length=int(MAX_AUDIO_SECONDS * SAMPLE_RATE),
-            ).to(device)
-            if "audios" in inputs:
-                inputs["audios"] = inputs["audios"].to(dtype=dtype)
-            outputs = model.generate(
-                **inputs,
-                do_sample=False,
-                max_new_tokens=256,
-                pad_token_id=tokenizer.pad_token_id,
-                eos_token_id=tokenizer.eos_token_id,
-                bad_words_ids=bad_words_ids,
-            )
-            decoded = tokenizer.batch_decode(
-                outputs[:, inputs.input_ids.shape[1] :],
-                skip_special_tokens=True,
-            )
-            runtime.torch.cuda.synchronize()
-            latency_ms = round((runtime.clock() - started) * 1_000.0, 6)
-            if (
-                not isinstance(decoded, list)
-                or len(decoded) != 1
-                or not isinstance(decoded[0], str)
+            with _audio_chunks(wav_path, runtime.soundfile) as (
+                audio_seconds,
+                chunk_paths,
             ):
-                raise ValueError("ARK-ASR returned an invalid transcription")
+                runtime.torch.cuda.synchronize()
+                started = runtime.clock()
+                chunk_texts: list[str] = []
+                for chunk_path in chunk_paths:
+                    inputs = processor.apply_chat_template(
+                        _conversation(chunk_path),
+                        add_generation_prompt=True,
+                        return_tensors="pt",
+                        sampling_rate=SAMPLE_RATE,
+                        audio_padding="longest",
+                        text_kwargs={"padding": "longest"},
+                        audio_max_length=int(MAX_AUDIO_SECONDS * SAMPLE_RATE),
+                    ).to(device)
+                    if "audios" in inputs:
+                        inputs["audios"] = inputs["audios"].to(dtype=dtype)
+                    outputs = model.generate(
+                        **inputs,
+                        do_sample=False,
+                        max_new_tokens=256,
+                        pad_token_id=tokenizer.pad_token_id,
+                        eos_token_id=tokenizer.eos_token_id,
+                        bad_words_ids=bad_words_ids,
+                    )
+                    decoded = tokenizer.batch_decode(
+                        outputs[:, inputs.input_ids.shape[1] :],
+                        skip_special_tokens=True,
+                    )
+                    if (
+                        not isinstance(decoded, list)
+                        or len(decoded) != 1
+                        or not isinstance(decoded[0], str)
+                    ):
+                        raise ValueError("ARK-ASR returned an invalid transcription")
+                    chunk_texts.append(decoded[0].strip())
+                runtime.torch.cuda.synchronize()
+                latency_ms = round((runtime.clock() - started) * 1_000.0, 6)
             latencies_ms.append(latency_ms)
             total_audio_seconds += audio_seconds
             records.append(
-                {"id": wav_path.stem, "latency_ms": latency_ms, "text": decoded[0]}
+                {
+                    "id": wav_path.stem,
+                    "latency_ms": latency_ms,
+                    "text": " ".join(text for text in chunk_texts if text),
+                }
             )
 
     total_latency_seconds = sum(latencies_ms) / 1_000.0
@@ -208,6 +243,7 @@ def run_request(
             "dtype": str(dtype),
             "do_sample": False,
             "max_new_tokens": 256,
+            "long_audio_strategy": "contiguous_30_second_chunks_without_overlap",
             "prompt": PROMPT,
             "trust_remote_code": True,
         },

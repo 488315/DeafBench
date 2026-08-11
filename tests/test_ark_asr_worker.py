@@ -1,4 +1,5 @@
 from contextlib import nullcontext
+from dataclasses import replace
 from types import SimpleNamespace
 
 import pytest
@@ -185,7 +186,7 @@ def test_worker_rejects_revision_before_backend_load(monkeypatch, tmp_path) -> N
         )
 
 
-def test_worker_rejects_audio_longer_than_official_limit(
+def test_worker_chunks_audio_longer_than_official_limit(
     monkeypatch,
     tmp_path,
 ) -> None:
@@ -197,19 +198,40 @@ def test_worker_rejects_audio_longer_than_official_limit(
     monkeypatch.setattr(worker, "load_remote_code_audit", lambda model_id: audit)
     monkeypatch.setattr(worker, "verify_audited_files", lambda audit, root: None)
     backend, _ = _backend()
+    writes: list[tuple[str, int]] = []
     backend.soundfile.info = lambda path: SimpleNamespace(
         channels=1,
         duration=30.01,
+        frames=480_160,
         samplerate=16_000,
     )
+    backend.soundfile.read = lambda path, **options: (
+        [0] * options["frames"],
+        16_000,
+    )
+    backend.soundfile.write = lambda path, audio, sample_rate: writes.append(
+        (path, len(audio))
+    )
+    backend = replace(backend, clock=iter([10.0, 10.5]).__next__)
 
-    with pytest.raises(ValueError, match="30-second limit"):
-        worker.run_request(
-            {
-                "model_id": worker.MODEL_ID,
-                "revision": "a" * 40,
-                "snapshot_root": str(snapshot.resolve()),
-                "wav_paths": [str(wav.resolve())],
-            },
-            backend,
-        )
+    result = worker.run_request(
+        {
+            "model_id": worker.MODEL_ID,
+            "revision": "a" * 40,
+            "snapshot_root": str(snapshot.resolve()),
+            "wav_paths": [str(wav.resolve())],
+        },
+        backend,
+    )
+
+    assert [frames for _, frames in writes] == [480_000, 160]
+    assert result["records"] == [
+        {
+            "id": "sample",
+            "latency_ms": 500.0,
+            "text": "recognized speech recognized speech",
+        }
+    ]
+    assert result["decoding"]["long_audio_strategy"] == (
+        "contiguous_30_second_chunks_without_overlap"
+    )
