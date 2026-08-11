@@ -114,3 +114,48 @@ def test_manifest_contract_fails_closed(mutation, tmp_path: Path) -> None:
             payload=payload,
             key_path=tmp_path / "private-key.pem",
         )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        lambda value: value.update(evaluator_version="unpinned"),
+        lambda value: value.update(models=[]),
+        lambda value: value["models"][0].update(revision="unpinned"),
+        lambda value: value["models"].append(dict(value["models"][0])),
+        lambda value: value["models"][0].update(aggregate_metrics={}),
+        lambda value: value.update(artifact_hashes=[]),
+        lambda value: value["artifact_hashes"][0].update(artifact_type="audio"),
+        lambda value: value["artifact_hashes"][0].update(
+            model_id="unregistered/model"
+        ),
+    ],
+)
+def test_manifest_rejects_unverifiable_boundaries(mutation, tmp_path: Path) -> None:
+    payload = _payload()
+    mutation(payload)
+
+    with pytest.raises(ValueError, match="manifest"):
+        write_signed_manifest(
+            tmp_path / "export" / "manifest.json",
+            payload=payload,
+            key_path=tmp_path / "private-key.pem",
+        )
+
+
+@pytest.mark.parametrize(
+    ("signature_field", "value"),
+    [("algorithm", "RSA"), ("unexpected", "field")],
+)
+def test_manifest_verification_rejects_signature_contract_changes(
+    tmp_path: Path, signature_field: str, value: str
+) -> None:
+    manifest = tmp_path / "export" / "manifest.json"
+    write_signed_manifest(
+        manifest, payload=_payload(), key_path=tmp_path / "private-key.pem"
+    )
+    document = json.loads(manifest.read_text(encoding="utf-8"))
+    document["signature"][signature_field] = value
+    manifest.write_text(json.dumps(document), encoding="utf-8")
+
+    assert verify_signed_manifest(manifest) is False

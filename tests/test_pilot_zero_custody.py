@@ -64,3 +64,28 @@ def test_attestation_fails_closed_on_missing_or_extra_fields(tmp_path: Path) -> 
         load_execution_attestation(_write(tmp_path / "missing.json", missing))
     with pytest.raises(ValueError, match="fields"):
         load_execution_attestation(_write(tmp_path / "extra.json", extra))
+
+
+@pytest.mark.parametrize("content", ["not json", "["])
+def test_attestation_rejects_unreadable_content(tmp_path: Path, content: str) -> None:
+    path = tmp_path / "attestation.json"
+    path.write_text(content, encoding="utf-8")
+
+    with pytest.raises(ValueError, match="unreadable"):
+        load_execution_attestation(path)
+
+
+def test_attestation_rejects_unsupported_schema(tmp_path: Path) -> None:
+    payload = _attestation()
+    payload["schema_version"] = 2
+
+    with pytest.raises(ValueError, match="schema"):
+        load_execution_attestation(_write(tmp_path / "attestation.json", payload))
+
+
+def test_attestation_requires_literal_booleans(tmp_path: Path) -> None:
+    payload = _attestation()
+    payload["credentials_shared"] = "false"
+
+    with pytest.raises(ValueError, match="Boolean"):
+        load_execution_attestation(_write(tmp_path / "attestation.json", payload))
