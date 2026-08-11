@@ -3,15 +3,14 @@
 from __future__ import annotations
 
 import json
-from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from statistics import median
 import sys
-from tempfile import TemporaryDirectory
 from time import perf_counter
-from typing import Any, Iterator, Mapping, Sequence
+from typing import Any, Mapping, Sequence
 
+from deafbench.benchmark.models._audio_chunks import contiguous_audio_chunks
 from deafbench.benchmark.models._isolated import RESULT_MARKER
 from deafbench.remote_code_audit import load_remote_code_audit, verify_audited_files
 
@@ -88,40 +87,6 @@ def _bad_words_ids(tokenizer: Any) -> list[list[int]]:
     return [[token_id] for token_id in sorted(bad_ids)]
 
 
-@contextmanager
-def _audio_chunks(
-    wav_path: Path,
-    soundfile: Any,
-) -> Iterator[tuple[float, tuple[Path, ...]]]:
-    info = soundfile.info(str(wav_path))
-    if info.channels != 1:
-        raise ValueError(f"ARK-ASR requires mono audio: {wav_path}")
-    if info.duration <= 0:
-        raise ValueError(f"ARK-ASR requires nonempty audio: {wav_path}")
-    duration = float(info.duration)
-    if duration <= MAX_AUDIO_SECONDS:
-        yield duration, (wav_path,)
-        return
-
-    frames_per_chunk = int(MAX_AUDIO_SECONDS * info.samplerate)
-    with TemporaryDirectory(prefix="deafbench-ark-") as directory:
-        chunk_paths: list[Path] = []
-        for index, start in enumerate(range(0, info.frames, frames_per_chunk)):
-            frame_count = min(frames_per_chunk, info.frames - start)
-            audio, sample_rate = soundfile.read(
-                str(wav_path),
-                start=start,
-                frames=frame_count,
-                always_2d=False,
-            )
-            if sample_rate != info.samplerate:
-                raise ValueError(f"ARK-ASR audio sample rate changed: {wav_path}")
-            chunk_path = Path(directory) / f"chunk-{index:04d}.wav"
-            soundfile.write(str(chunk_path), audio, sample_rate)
-            chunk_paths.append(chunk_path)
-        yield duration, tuple(chunk_paths)
-
-
 def _conversation(wav_path: Path) -> list[dict[str, object]]:
     return [
         {
@@ -182,7 +147,12 @@ def run_request(
     total_audio_seconds = 0.0
     with runtime.torch.inference_mode():
         for wav_path in wav_paths:
-            with _audio_chunks(wav_path, runtime.soundfile) as (
+            with contiguous_audio_chunks(
+                wav_path,
+                runtime.soundfile,
+                max_audio_seconds=MAX_AUDIO_SECONDS,
+                runtime_name="ARK-ASR",
+            ) as (
                 audio_seconds,
                 chunk_paths,
             ):
