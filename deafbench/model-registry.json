@@ -48,7 +48,7 @@
       ],
       "parameter_count": 2038052480,
       "expected_weight_size_bytes": 4076193080,
-      "tested_peak_vram_bytes": null,
+      "tested_peak_vram_bytes": 4353538048,
       "supported_runtimes": ["transformers>=5.13.0", "torch"],
       "intended_lane": "commercial_candidate",
       "license_files": ["licenses/Apache-2.0.txt"],
