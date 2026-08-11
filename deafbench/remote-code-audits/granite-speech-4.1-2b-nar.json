@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "model_id": "ibm-granite/granite-speech-4.1-2b-nar",
+  "revision": "a1e3416e25ce29ab3852778e54fa8b3bd59c4bf2",
+  "reviewed_utc": "2026-08-10",
+  "execution_policy": {
+    "allow_network_during_inference": false,
+    "isolate_from_main_process": true,
+    "require_exact_file_hashes": true,
+    "trust_remote_code": true
+  },
+  "review_findings": {
+    "dynamic_code_execution": [],
+    "filesystem_access": [],
+    "network_access": [],
+    "process_execution": [],
+    "transformers_hub_kernels": [
+      "RMSNorm",
+      "rotary_pos_emb"
+    ]
+  },
+  "files": [
+    {
+      "path": "__init__.py",
+      "sha256": "bb0b146ef994d40b86ea97790d4ddf2cf00e05f3205c2c93d8e810f2923ace04"
+    },
+    {
+      "path": "config.json",
+      "sha256": "d6c760e672df122eedd873adb77a318b785221b06f9fbe9db08c51a1f8302936"
+    },
+    {
+      "path": "configuration_granite_speech_nar.py",
+      "sha256": "bfeeef9fe0ebae2133fc96b04a2fe5e60b8dd2cc82d834dcda71272cb84a4d55"
+    },
+    {
+      "path": "feature_extraction_granite_speech_nar.py",
+      "sha256": "627b0cf465ffcaf7d4042fd9287dfa0914c68dd170e46d28b90240592b14e761"
+    },
+    {
+      "path": "modeling_granite_speech_nar.py",
+      "sha256": "dd8cfd71523acf5a4220dd35566d56c60e29771fd1c4d30291f72edbb2e47171"
+    },
+    {
+      "path": "processing_granite_speech_nar.py",
+      "sha256": "47280a8d34eff709b98c6baa016873cb5a84ff1ec08d853a7de082e489e7c408"
+    }
+  ]
+}
