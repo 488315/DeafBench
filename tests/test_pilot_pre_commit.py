@@ -28,7 +28,12 @@ def test_pre_commit_hook_blocks_staged_audio(tmp_path: Path) -> None:
         capture_output=True,
         text=True,
         check=False,
-        env={**os.environ, "PYTHONPATH": str(source)},
+        env={
+            **os.environ,
+            "PYTHONPATH": str(source),
+            "COVERAGE_RCFILE": str(source / "pyproject.toml"),
+            "COV_CORE_CONFIG": str(source / "pyproject.toml"),
+        },
     )
 
     assert completed.returncode == 1
