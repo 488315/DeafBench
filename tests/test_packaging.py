@@ -63,6 +63,26 @@ def test_granite_asr_extra_is_isolated_from_base_installation() -> None:
     assert all("transformers" not in dependency for dependency in dependencies)
 
 
+def test_granite_nar_extra_is_isolated_from_base_installation() -> None:
+    pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+    metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+
+    dependencies = metadata["project"]["dependencies"]
+    granite_dependencies = metadata["project"]["optional-dependencies"][
+        "granite-nar-asr"
+    ]
+
+    assert granite_dependencies == [
+        "accelerate>=1.10,<2.0",
+        "flash-attn==2.8.3; platform_system == 'Linux'",
+        "soundfile>=0.13,<1.0",
+        "torch==2.9.1",
+        "torchaudio==2.9.1",
+        "transformers>=5.5.3,<6.0.0",
+    ]
+    assert all("transformers" not in dependency for dependency in dependencies)
+
+
 @pytest.mark.integration
 @pytest.mark.skipif(
     os.environ.get("DEAFBENCH_RUN_PACKAGING_INTEGRATION") != "1",
