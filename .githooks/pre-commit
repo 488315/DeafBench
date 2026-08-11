@@ -2,4 +2,4 @@
 set -eu
 
 repo_root="$(git rev-parse --show-toplevel)"
-exec python "$repo_root/tools/check_customer_artifacts.py" --repo-root "$repo_root"
+exec python -m deafbench.pilot.hook --repo-root "$repo_root"
