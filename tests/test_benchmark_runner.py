@@ -364,6 +364,7 @@ def test_failed_run_promotion_restores_previous_bundle(
         ("granite-speech-4.1-2b", "run_granite_speech"),
         ("granite-speech-4.1-2b-nar", "run_granite_nar"),
         ("ark-asr-0.6b", "run_ark_asr"),
+        ("ark-asr-0.6b-int8-onnx", "run_ark_asr_onnx"),
     ],
 )
 def test_default_model_runner_is_selected_lazily(
@@ -386,6 +387,7 @@ def test_default_model_runner_is_selected_lazily(
         "granite-speech-4.1-2b",
         "granite-speech-4.1-2b-nar",
         "ark-asr-0.6b",
+        "ark-asr-0.6b-int8-onnx",
     ],
 )
 def test_main_accepts_additional_local_models(

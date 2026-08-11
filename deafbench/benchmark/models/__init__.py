@@ -20,6 +20,7 @@ MODEL_NAMES = (
     "granite-speech-4.1-2b",
     "granite-speech-4.1-2b-nar",
     "ark-asr-0.6b",
+    "ark-asr-0.6b-int8-onnx",
 )
 
 
