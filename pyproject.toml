@@ -39,6 +39,7 @@ parakeet-asr = [
 ]
 granite-asr = [
     "scipy>=1.15,<2.0",
+    "torchaudio>=2.8,<3.0",
     "transformers[torch]>=5.13.0,<6.0.0",
 ]
 recorder = [

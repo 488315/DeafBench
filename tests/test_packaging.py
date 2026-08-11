@@ -57,6 +57,7 @@ def test_granite_asr_extra_is_isolated_from_base_installation() -> None:
 
     assert granite_dependencies == [
         "scipy>=1.15,<2.0",
+        "torchaudio>=2.8,<3.0",
         "transformers[torch]>=5.13.0,<6.0.0",
     ]
     assert all("transformers" not in dependency for dependency in dependencies)
