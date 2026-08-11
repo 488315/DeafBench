@@ -64,6 +64,9 @@ test = [
 [project.scripts]
 deafbench = "deafbench.cli:main"
 
+[tool.setuptools]
+include-package-data = false
+
 [tool.setuptools.packages.find]
 where = ["."]
 namespaces = false
