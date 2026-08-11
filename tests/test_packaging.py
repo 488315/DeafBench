@@ -30,6 +30,19 @@ def test_qwen_asr_extra_is_isolated_from_base_installation() -> None:
     assert all("transformers" not in dependency for dependency in dependencies)
 
 
+def test_parakeet_asr_extra_is_isolated_from_base_installation() -> None:
+    pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+    metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+
+    dependencies = metadata["project"]["dependencies"]
+    parakeet_dependencies = metadata["project"]["optional-dependencies"][
+        "parakeet-asr"
+    ]
+
+    assert parakeet_dependencies == ["nemo_toolkit[asr]>=2.4,<3"]
+    assert all("nemo_toolkit" not in dependency for dependency in dependencies)
+
+
 @pytest.mark.integration
 @pytest.mark.skipif(
     os.environ.get("DEAFBENCH_RUN_PACKAGING_INTEGRATION") != "1",

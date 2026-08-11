@@ -33,6 +33,9 @@ qwen-asr = [
     "scipy>=1.15,<2.0",
     "transformers[torch]>=5.13.0,<6.0.0",
 ]
+parakeet-asr = [
+    "nemo_toolkit[asr]>=2.4,<3",
+]
 recorder = [
     "numpy>=1.26",
     "sounddevice>=0.5.1",
