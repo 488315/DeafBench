@@ -114,7 +114,7 @@
       "supported_languages": ["en", "fr", "de", "es", "pt"],
       "parameter_count": 2254635356,
       "expected_weight_size_bytes": 4509382472,
-      "tested_peak_vram_bytes": null,
+      "tested_peak_vram_bytes": 4544981504,
       "supported_runtimes": [
         "transformers>=5.5.3",
         "torch>=2.9.1",
