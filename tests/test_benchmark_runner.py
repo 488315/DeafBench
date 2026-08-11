@@ -361,6 +361,7 @@ def test_failed_run_promotion_restores_previous_bundle(
         ("qwen3-asr-0.6b", "run_qwen3_asr"),
         ("qwen3-asr-1.7b", "run_qwen3_asr_1_7b"),
         ("parakeet-tdt-0.6b-v2", "run_parakeet"),
+        ("granite-speech-4.1-2b", "run_granite_speech"),
     ],
 )
 def test_default_model_runner_is_selected_lazily(
@@ -380,6 +381,7 @@ def test_default_model_runner_is_selected_lazily(
         "qwen3-asr-0.6b",
         "qwen3-asr-1.7b",
         "parakeet-tdt-0.6b-v2",
+        "granite-speech-4.1-2b",
     ],
 )
 def test_main_accepts_additional_local_models(
