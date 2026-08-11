@@ -1,0 +1,106 @@
+{
+  "claim_boundary": "Local reproducibility evidence only. The two-row public smoke is partial, is not a seven-set macro-average, and is not a Hugging Face verified leaderboard result.",
+  "corpora": [
+    {
+      "frozen": true,
+      "manifest_sha256": "b962df9c122870825e75fdd4d628acc1101cff7bfc023d11fe967ed116cf0055",
+      "name": "synthetic-v2"
+    },
+    {
+      "frozen": true,
+      "manifest_sha256": "4615d2d50d6fe8377a5836130c39c9c6daf5b26dec46861bc7fef53208811823",
+      "name": "librispeech-test.clean-two-row-smoke"
+    }
+  ],
+  "decoding": {
+    "device": "cuda:0",
+    "dtype": "torch.bfloat16",
+    "language": "English",
+    "max_new_tokens": 256,
+    "trust_remote_code": false
+  },
+  "evaluations": [
+    {
+      "critical_failures": [
+        {
+          "entity_type": "UNCLASSIFIED",
+          "id": "core-007",
+          "term": "192 dot 168 dot 1 dot 25"
+        },
+        {
+          "entity_type": "CODE",
+          "id": "core-010",
+          "term": "503"
+        },
+        {
+          "entity_type": "UNCLASSIFIED",
+          "id": "core-012",
+          "term": "March 18th"
+        },
+        {
+          "entity_type": "TIME",
+          "id": "core-012",
+          "term": "11:45 PM"
+        },
+        {
+          "entity_type": "UNCLASSIFIED",
+          "id": "core-018",
+          "term": "security update"
+        },
+        {
+          "entity_type": "CODE",
+          "id": "core-019",
+          "term": "alpha seven nine"
+        }
+      ],
+      "evidence": {
+        "predictions_sha256": "249da4b7983d2df2acb8bb60a42e2c1614486c06f3d29371e756da11fa446473",
+        "report_sha256": "f6c5eb55d2e823c38b93083c766c573dd47e5bd2423d6fde5cd3ecfa13a1fbf2",
+        "run_metadata_sha256": "3e4c2e9cadcf879a9ece7734df073e7bb19b18cf3a402b97c3fe3be9319c2353"
+      },
+      "lane": "synthetic-v2",
+      "metrics": {
+        "canonical_semantic_recall_percent": 90.3,
+        "deletions": 1,
+        "insertions": 27,
+        "local_rtfx": 10.466095988296846,
+        "median_latency_ms": 477.3847,
+        "peak_vram_bytes": 1635682304,
+        "strict_lexical_recall_percent": 67.7,
+        "substitutions": 48,
+        "wer_percent": 26.6
+      },
+      "sample_count": 25,
+      "scope": "complete"
+    },
+    {
+      "critical_failures": [],
+      "evidence": {
+        "dataset_revision": "b6bdcd0beb34f8975dc659796176d88f43aff502",
+        "official_evaluator_revision": "9585fc39bff55697a2ec1c5f13921b18812bfde8",
+        "official_manifest_sha256": "a585c8278f0c3462506688badcc204a39fc683bda883b11bb8b586635f7a069b",
+        "predictions_sha256": "23bedd6cd3e0b7c54c12a3973dc950ac4095828924cd473cc0a4658437257cc3"
+      },
+      "lane": "hugging-face-compatibility-smoke",
+      "metrics": {
+        "deletions": 0,
+        "insertions": 0,
+        "local_rtfx": 12.2738,
+        "median_latency_ms": 2805.357,
+        "peak_vram_bytes": 1843668480,
+        "substitutions": 4,
+        "wer_percent": 2.31
+      },
+      "sample_count": 2,
+      "scope": "partial"
+    }
+  ],
+  "evaluator_revision": "6f5b294c07a2d7b37094336cec8e01011556850b",
+  "license_classification": "commercial_candidate",
+  "model": {
+    "model_id": "Qwen/Qwen3-ASR-0.6B-hf",
+    "revision": "7f1569a48a89f3e3f4dc3a5c9d28bddd903bc76c"
+  },
+  "schema_version": 1,
+  "status": "smoke_complete"
+}
