@@ -359,6 +359,7 @@ def test_failed_run_promotion_restores_previous_bundle(
         ("faster-whisper", "run_faster_whisper"),
         ("distil-whisper", "run_distil_whisper"),
         ("qwen3-asr-0.6b", "run_qwen3_asr"),
+        ("qwen3-asr-1.7b", "run_qwen3_asr_1_7b"),
     ],
 )
 def test_default_model_runner_is_selected_lazily(
@@ -371,7 +372,13 @@ def test_default_model_runner_is_selected_lazily(
 
 
 @pytest.mark.parametrize(
-    "model", ["faster-whisper", "distil-whisper", "qwen3-asr-0.6b"]
+    "model",
+    [
+        "faster-whisper",
+        "distil-whisper",
+        "qwen3-asr-0.6b",
+        "qwen3-asr-1.7b",
+    ],
 )
 def test_main_accepts_additional_local_models(
     tmp_path: Path,

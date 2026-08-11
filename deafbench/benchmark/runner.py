@@ -41,6 +41,7 @@ ModelName = Literal[
     "faster-whisper",
     "distil-whisper",
     "qwen3-asr-0.6b",
+    "qwen3-asr-1.7b",
 ]
 SyntheticFactory = Callable[[], tuple["SpeechGenerator", "TTSInfo"]]
 SyntheticGenerator = Callable[..., Path]
@@ -206,6 +207,10 @@ def _default_model_runner(model: ModelName) -> ModelRunner:
         from deafbench.benchmark.models.qwen3_asr import run_qwen3_asr
 
         return run_qwen3_asr
+    if model == "qwen3-asr-1.7b":
+        from deafbench.benchmark.models.qwen3_asr import run_qwen3_asr_1_7b
+
+        return run_qwen3_asr_1_7b
     from deafbench.benchmark.models.distil_whisper import run_distil_whisper
 
     return run_distil_whisper

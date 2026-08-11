@@ -15,6 +15,7 @@ MODEL_NAMES = (
     "faster-whisper",
     "distil-whisper",
     "qwen3-asr-0.6b",
+    "qwen3-asr-1.7b",
 )
 
 

@@ -202,3 +202,17 @@ def run_qwen3_asr(
             "timing_scope": "decode_only_excludes_model_load",
         },
     )
+
+
+def run_qwen3_asr_1_7b(
+    audio_dir: Path,
+    references: Path,
+    output: Path,
+) -> ModelRunInfo:
+    """Run the pinned balanced Qwen3-ASR candidate through the shared adapter."""
+    return run_qwen3_asr(
+        audio_dir,
+        references,
+        output,
+        model_id="Qwen/Qwen3-ASR-1.7B-hf",
+    )
