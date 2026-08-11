@@ -49,6 +49,62 @@ def _load_result(path: Path) -> dict[str, object]:
     return value
 
 
+def _authorize_synthetic_case(
+    workspace_root: Path, case_id: str, now: datetime
+) -> None:
+    authorization_path = workspace_root / "input" / "authorization.json"
+    authorization = {
+        "schema_version": 1,
+        "case_id": case_id,
+        "authorization_reference": "synthetic-rehearsal-only",
+        "authorization_date": now.date().isoformat(),
+        "ownership_confirmed": True,
+        "scope": "DeafBench authorized frozen synthetic corpus",
+        "permitted_models": list(MODEL_RESULTS),
+        "planned_delivery_date": now.date().isoformat(),
+        "planned_deletion_date": (now.date() + timedelta(days=14)).isoformat(),
+        "sensitivity_classification": "synthetic",
+        "deletion_agreement": True,
+    }
+    authorization_path.write_text(json.dumps(authorization), encoding="utf-8")
+    load_authorization(authorization_path, expected_case_id=case_id)
+
+
+def _validate_model_results(
+    repo: Path, case_id: str, ledger: Path, incident: IncidentStop
+) -> list[dict[str, object]]:
+    results = []
+    for name in MODEL_RESULTS:
+        value = incident.run_gate(
+            "integrity",
+            lambda name=name: _load_result(repo / "experiments/model-results" / name),
+        )
+        results.append(value)
+        append_event(
+            ledger,
+            case_id=case_id,
+            event="model_execution",
+            metadata={"model_id": str(value["model"]["model_id"])},
+        )
+    return results
+
+
+def _write_demo_report(
+    workspace_root: Path, results: list[dict[str, object]]
+) -> None:
+    report_dir = workspace_root / "output" / "reports"
+    report_dir.mkdir(parents=True)
+    report = {
+        "demonstration": True,
+        "corpus": "DeafBench synthetic-v2",
+        "models": [value["model"] for value in results],
+        "metrics": [value["evaluations"][0]["metrics"] for value in results],
+    }
+    (report_dir / "audit.json").write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+
 def run_synthetic_rehearsal(
     *,
     repo_root: Path,
@@ -80,24 +136,9 @@ def run_synthetic_rehearsal(
         ),
     )
     now = (delivered_at or datetime.now(timezone.utc)).astimezone(timezone.utc)
-    authorization_path = workspace.root / "input" / "authorization.json"
-    authorization = {
-        "schema_version": 1,
-        "case_id": workspace.case_id,
-        "authorization_reference": "synthetic-rehearsal-only",
-        "authorization_date": now.date().isoformat(),
-        "ownership_confirmed": True,
-        "scope": "DeafBench authorized frozen synthetic corpus",
-        "permitted_models": list(MODEL_RESULTS),
-        "planned_delivery_date": now.date().isoformat(),
-        "planned_deletion_date": (now.date() + timedelta(days=14)).isoformat(),
-        "sensitivity_classification": "synthetic",
-        "deletion_agreement": True,
-    }
-    authorization_path.write_text(json.dumps(authorization), encoding="utf-8")
     incident.run_gate(
         "authorization",
-        lambda: load_authorization(authorization_path, expected_case_id=workspace.case_id),
+        lambda: _authorize_synthetic_case(workspace.root, workspace.case_id, now),
     )
     decision = evaluate_intake(
         sensitivity_classification="synthetic",
@@ -109,30 +150,8 @@ def run_synthetic_rehearsal(
     shutil.copy2(source_audio, workspace.root / "input" / "authorized-synthetic.wav")
     append_event(ledger, case_id=workspace.case_id, event="validation")
 
-    results = []
-    for name in MODEL_RESULTS:
-        value = incident.run_gate(
-            "integrity",
-            lambda name=name: _load_result(repo / "experiments/model-results" / name),
-        )
-        results.append(value)
-        append_event(
-            ledger,
-            case_id=workspace.case_id,
-            event="model_execution",
-            metadata={"model_id": str(value["model"]["model_id"])},
-        )
-    report_dir = workspace.root / "output" / "reports"
-    report_dir.mkdir(parents=True)
-    report = {
-        "demonstration": True,
-        "corpus": "DeafBench synthetic-v2",
-        "models": [value["model"] for value in results],
-        "metrics": [value["evaluations"][0]["metrics"] for value in results],
-    }
-    (report_dir / "audit.json").write_text(
-        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+    results = _validate_model_results(repo, workspace.case_id, ledger, incident)
+    _write_demo_report(workspace.root, results)
     append_event(ledger, case_id=workspace.case_id, event="report_generation")
     append_event(ledger, case_id=workspace.case_id, event="delivery")
     schedule = schedule_after_delivery(now)
