@@ -18,6 +18,7 @@ DELETION_TARGETS = (
     "output/transcripts",
     "output/predictions",
     "output/runs",
+    "output/reports",
     "output/sensitive-drafts",
 )
 
