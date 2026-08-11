@@ -97,6 +97,32 @@
       "intended_lane": "commercial_candidate",
       "license_files": ["licenses/Apache-2.0.txt"],
       "notice_files": []
+    },
+    {
+      "model_id": "ibm-granite/granite-speech-4.1-2b-nar",
+      "revision": "a1e3416e25ce29ab3852778e54fa8b3bd59c4bf2",
+      "upstream_url": "https://huggingface.co/ibm-granite/granite-speech-4.1-2b-nar",
+      "spdx_license": "Apache-2.0",
+      "commercial_use": "commercial_permitted",
+      "attribution_requirements": [
+        "Retain the Apache-2.0 license text and applicable copyright notices in redistributions."
+      ],
+      "redistribution_restrictions": [
+        "Meet the Apache-2.0 Section 4 redistribution conditions and preserve NOTICE content if upstream later supplies one."
+      ],
+      "remote_code_required": true,
+      "supported_languages": ["en", "fr", "de", "es", "pt"],
+      "parameter_count": 2254635356,
+      "expected_weight_size_bytes": 4509382472,
+      "tested_peak_vram_bytes": null,
+      "supported_runtimes": [
+        "transformers>=5.5.3",
+        "torch>=2.9.1",
+        "flash-attn==2.8.3"
+      ],
+      "intended_lane": "commercial_candidate",
+      "license_files": ["licenses/Apache-2.0.txt"],
+      "notice_files": []
     }
   ]
 }
