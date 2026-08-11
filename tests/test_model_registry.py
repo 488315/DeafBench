@@ -11,6 +11,7 @@ from deafbench.model_registry import (
     validate_model_registry,
     verify_model_license_files,
 )
+import deafbench.model_registry as model_registry
 
 
 _MODEL = {
@@ -111,3 +112,80 @@ def test_registry_accepts_declared_license_file(tmp_path) -> None:
     license_path.write_text("license evidence", encoding="utf-8")
 
     verify_model_license_files((model,), tmp_path)
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("model_id", "", "invalid model_id"),
+        ("revision", "main", "invalid revision"),
+        ("commercial_use", "unknown", "invalid commercial_use"),
+        ("intended_lane", "unknown", "invalid intended_lane"),
+        ("remote_code_required", "false", "invalid remote_code_required"),
+        ("tested_peak_vram_bytes", True, "invalid tested_peak_vram_bytes"),
+        ("supported_languages", [], "invalid supported_languages"),
+        ("parameter_count", 0, "invalid parameter_count"),
+        ("supported_runtimes", "transformers", "invalid supported_runtimes"),
+    ],
+)
+def test_registry_rejects_invalid_typed_metadata(field, value, message) -> None:
+    model = deepcopy(_MODEL)
+    model[field] = value
+    if field == "model_id":
+        model["upstream_url"] = "https://huggingface.co/"
+
+    with pytest.raises(ModelRegistryError, match=message):
+        validate_model_registry(_registry(model))
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        [],
+        {"schema_version": 2, "legal_advice": False, "models": []},
+        {"schema_version": 1, "legal_advice": True, "models": []},
+        {"schema_version": 1, "legal_advice": False, "models": {}},
+    ],
+)
+def test_registry_rejects_invalid_top_level_contract(payload) -> None:
+    with pytest.raises(ModelRegistryError):
+        validate_model_registry(payload)
+
+
+def test_registry_rejects_duplicate_model_ids() -> None:
+    payload = _registry(deepcopy(_MODEL))
+    payload["models"].append(deepcopy(_MODEL))
+
+    with pytest.raises(ModelRegistryError, match="duplicate model IDs"):
+        validate_model_registry(payload)
+
+
+@pytest.mark.parametrize("relative", ["../LICENSE", "/LICENSE"])
+def test_registry_rejects_unsafe_license_paths(tmp_path, relative) -> None:
+    model = deepcopy(_MODEL)
+    model["license_files"] = [relative]
+    validated = validate_model_registry(_registry(model))[0]
+
+    with pytest.raises(ModelRegistryError, match="unsafe license file"):
+        verify_model_license_files((validated,), tmp_path)
+
+
+def test_registry_rejects_non_object_model_entry() -> None:
+    payload = {"schema_version": 1, "legal_advice": False, "models": ["model"]}
+
+    with pytest.raises(ModelRegistryError, match="entries must be objects"):
+        validate_model_registry(payload)
+
+
+def test_registry_wraps_unreadable_packaged_json(monkeypatch) -> None:
+    class UnreadableResource:
+        def joinpath(self, *parts):
+            return self
+
+        def read_text(self, **kwargs):
+            raise OSError("unavailable")
+
+    monkeypatch.setattr(model_registry, "files", lambda package: UnreadableResource())
+
+    with pytest.raises(ModelRegistryError, match="unavailable or invalid"):
+        load_model_registry()
