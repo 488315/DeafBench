@@ -130,3 +130,65 @@ def test_adapter_rejects_incomplete_worker_output(monkeypatch, tmp_path) -> None
                 "records": [],
             },
         )
+
+
+def test_registered_revision_requires_audited_flash_runtime(monkeypatch) -> None:
+    license_entry = SimpleNamespace(
+        revision="a" * 40,
+        remote_code_required=False,
+        supported_runtimes=(),
+    )
+    monkeypatch.setattr(granite_nar, "get_model_license", lambda model_id: license_entry)
+
+    with pytest.raises(granite_nar.ModelRegistryError, match="remote-code"):
+        granite_nar._licensed_revision()
+
+    license_entry.remote_code_required = True
+    with pytest.raises(granite_nar.ModelRegistryError, match="FlashAttention"):
+        granite_nar._licensed_revision()
+
+    license_entry.supported_runtimes = ("flash-attn==2.8.3",)
+    monkeypatch.setattr(
+        granite_nar,
+        "load_remote_code_audit",
+        lambda model_id: SimpleNamespace(revision="b" * 40),
+    )
+    with pytest.raises(granite_nar.ModelRegistryError, match="differs"):
+        granite_nar._licensed_revision()
+
+
+def test_registered_revision_accepts_matching_audit(monkeypatch) -> None:
+    license_entry = SimpleNamespace(
+        revision="a" * 40,
+        remote_code_required=True,
+        supported_runtimes=("flash-attn==2.8.3",),
+    )
+    monkeypatch.setattr(granite_nar, "get_model_license", lambda model_id: license_entry)
+    monkeypatch.setattr(
+        granite_nar,
+        "load_remote_code_audit",
+        lambda model_id: SimpleNamespace(revision="a" * 40),
+    )
+
+    assert granite_nar._licensed_revision() == "a" * 40
+
+
+@pytest.mark.parametrize(
+    "record",
+    [
+        1,
+        {"id": "wrong", "latency_ms": 1.0, "text": "ok"},
+        {"id": "sample-1", "latency_ms": 1.0, "text": 1},
+        {"id": "sample-1", "latency_ms": True, "text": "ok"},
+        {"id": "sample-1", "latency_ms": -1.0, "text": "ok"},
+    ],
+)
+def test_worker_record_validation_rejects_invalid_records(record) -> None:
+    with pytest.raises(ValueError, match="invalid prediction"):
+        granite_nar._validated_records([record], ["sample-1"])
+
+
+@pytest.mark.parametrize("field", ["decoding", "performance"])
+def test_adapter_requires_worker_metadata(field) -> None:
+    with pytest.raises(ValueError, match=f"omitted {field}"):
+        granite_nar._required_mapping({}, field)
