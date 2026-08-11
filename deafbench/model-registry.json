@@ -177,6 +177,31 @@
       "intended_lane": "commercial_candidate",
       "license_files": ["licenses/Apache-2.0.txt"],
       "notice_files": []
+    },
+    {
+      "model_id": "soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M",
+      "revision": "d410fb15a71cbf87ec5e0a860356563deb9d8f01",
+      "upstream_url": "https://huggingface.co/soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M",
+      "spdx_license": "CC-BY-NC-4.0",
+      "commercial_use": "noncommercial",
+      "attribution_requirements": [
+        "Give appropriate credit, link CC-BY-NC-4.0, indicate changes, and retain the model source and pinned revision in evaluation evidence."
+      ],
+      "redistribution_restrictions": [
+        "Do not use the model or adapted material for commercial purposes without separate permission from the rights holder.",
+        "Do not impose additional legal terms or effective technological measures that restrict exercise of the licensed rights."
+      ],
+      "remote_code_required": false,
+      "supported_languages": ["en"],
+      "parameter_count": 288000000,
+      "expected_weight_size_bytes": 1155177039,
+      "tested_peak_vram_bytes": 6794249216,
+      "supported_runtimes": ["icefall", "k2", "torch"],
+      "intended_lane": "research_only",
+      "license_files": [
+        "licenses/Zipformer-cr-ctc-transducer-XL-290M/MODEL_CARD_LICENSE.txt"
+      ],
+      "notice_files": []
     }
   ]
 }
