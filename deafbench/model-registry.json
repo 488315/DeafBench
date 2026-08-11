@@ -53,6 +53,28 @@
       "intended_lane": "commercial_candidate",
       "license_files": ["licenses/Apache-2.0.txt"],
       "notice_files": []
+    },
+    {
+      "model_id": "nvidia/parakeet-tdt-0.6b-v2",
+      "revision": "ae9ad07059c7c739ffaf932226a8fe64ae2620b0",
+      "upstream_url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2",
+      "spdx_license": "CC-BY-4.0",
+      "commercial_use": "commercial_with_attribution",
+      "attribution_requirements": [
+        "Identify NVIDIA as the creator, retain the copyright notice supplied with the model, name and link CC-BY-4.0, retain the license disclaimer, link the model source when reasonably practicable, and indicate modifications."
+      ],
+      "redistribution_restrictions": [
+        "Do not impose additional legal terms or effective technological measures that restrict exercise of the CC-BY-4.0 licensed rights."
+      ],
+      "remote_code_required": false,
+      "supported_languages": ["en"],
+      "parameter_count": 600000000,
+      "expected_weight_size_bytes": 2472222720,
+      "tested_peak_vram_bytes": null,
+      "supported_runtimes": ["nemo_toolkit[asr]>=2.4,<3"],
+      "intended_lane": "commercial_candidate",
+      "license_files": ["licenses/CC-BY-4.0.txt"],
+      "notice_files": []
     }
   ]
 }
