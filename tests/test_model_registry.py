@@ -39,13 +39,13 @@ def _registry(model: dict[str, object]) -> dict[str, object]:
 
 def test_packaged_model_registry_is_valid() -> None:
     models = load_model_registry()
+    models_by_id = {model.model_id: model for model in models}
+    model = models_by_id["Qwen/Qwen3-ASR-0.6B-hf"]
 
-    assert len(models) == 1
-    assert models[0].model_id == "Qwen/Qwen3-ASR-0.6B-hf"
-    assert models[0].revision == "7f1569a48a89f3e3f4dc3a5c9d28bddd903bc76c"
-    assert models[0].spdx_license == "Apache-2.0"
-    assert models[0].intended_lane == "commercial_candidate"
-    assert models[0].remote_code_required is False
+    assert model.revision == "7f1569a48a89f3e3f4dc3a5c9d28bddd903bc76c"
+    assert model.spdx_license == "Apache-2.0"
+    assert model.intended_lane == "commercial_candidate"
+    assert model.remote_code_required is False
 
 
 def test_packaged_apache_license_matches_canonical_bytes() -> None:
