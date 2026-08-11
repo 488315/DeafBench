@@ -23,6 +23,9 @@ benchmark = [
 local-models = [
     "faster-whisper>=1.2.1,<2.0.0",
 ]
+zero-custody-pilot = [
+    "cryptography>=48.0,<49.0",
+]
 open-asr-evaluator = [
     "datasets==3.6.0",
     "kaldialign==0.12.0",
