@@ -1,4 +1,5 @@
 from contextlib import nullcontext
+import json
 from types import SimpleNamespace
 
 import pytest
@@ -161,3 +162,158 @@ def test_worker_requires_cuda(monkeypatch, tmp_path) -> None:
             },
             backend,
         )
+
+
+@pytest.mark.parametrize(
+    ("payload", "message"),
+    [
+        ({}, "requires model_id"),
+        ({"model_id": "wrong/model", "revision": "a"}, "unexpected"),
+        (
+            {
+                "model_id": worker.MODEL_ID,
+                "revision": "a" * 40,
+                "snapshot_root": "relative",
+            },
+            "snapshot must be absolute",
+        ),
+    ],
+)
+def test_worker_rejects_invalid_request_fields(
+    monkeypatch,
+    payload,
+    message,
+) -> None:
+    monkeypatch.setattr(
+        worker,
+        "load_remote_code_audit",
+        lambda model_id: SimpleNamespace(revision="a" * 40),
+    )
+
+    with pytest.raises(ValueError, match=message):
+        worker.run_request(payload)
+
+
+@pytest.mark.parametrize(
+    ("values", "message"),
+    [
+        ("sample.wav", "requires WAV paths"),
+        ([1], "invalid WAV path"),
+        (["relative.wav"], "unsafe WAV path"),
+        ([], "unique WAV paths"),
+    ],
+)
+def test_wav_path_validation_fails_closed(values, message) -> None:
+    with pytest.raises(ValueError, match=message):
+        worker._validated_wav_paths({"wav_paths": values})
+
+
+def test_wav_path_validation_rejects_duplicates(tmp_path) -> None:
+    wav = tmp_path / "sample.wav"
+    wav.write_bytes(b"fixture")
+
+    with pytest.raises(ValueError, match="unique WAV paths"):
+        worker._validated_wav_paths({"wav_paths": [str(wav), str(wav)]})
+
+
+def _request(snapshot, wav):
+    return {
+        "model_id": worker.MODEL_ID,
+        "revision": "a" * 40,
+        "snapshot_root": str(snapshot.resolve()),
+        "wav_paths": [str(wav.resolve())],
+    }
+
+
+def test_worker_resamples_nonstandard_audio(monkeypatch, tmp_path) -> None:
+    snapshot = tmp_path / "snapshot"
+    snapshot.mkdir()
+    wav = tmp_path / "sample.wav"
+    wav.write_bytes(b"fixture")
+    monkeypatch.setattr(
+        worker,
+        "load_remote_code_audit",
+        lambda model_id: SimpleNamespace(revision="a" * 40),
+    )
+    monkeypatch.setattr(worker, "verify_audited_files", lambda audit, root: None)
+    backend, _ = _backend()
+    waveform = _Waveform()
+    backend.torchaudio.load = lambda path: (waveform, 8_000)
+    calls = []
+    backend.torchaudio.functional.resample = (
+        lambda received, source, target: calls.append((source, target)) or received
+    )
+
+    worker.run_request(_request(snapshot, wav), backend)
+
+    assert calls == [(8_000, 16_000)]
+
+
+def test_worker_rejects_nonmono_audio(monkeypatch, tmp_path) -> None:
+    snapshot = tmp_path / "snapshot"
+    snapshot.mkdir()
+    wav = tmp_path / "sample.wav"
+    wav.write_bytes(b"fixture")
+    monkeypatch.setattr(
+        worker,
+        "load_remote_code_audit",
+        lambda model_id: SimpleNamespace(revision="a" * 40),
+    )
+    monkeypatch.setattr(worker, "verify_audited_files", lambda audit, root: None)
+    backend, _ = _backend()
+    backend.torchaudio.load = lambda path: (
+        SimpleNamespace(ndim=2, shape=(2, 16_000)),
+        16_000,
+    )
+
+    with pytest.raises(ValueError, match="requires mono audio"):
+        worker.run_request(_request(snapshot, wav), backend)
+
+
+def test_worker_rejects_invalid_transcription(monkeypatch, tmp_path) -> None:
+    snapshot = tmp_path / "snapshot"
+    snapshot.mkdir()
+    wav = tmp_path / "sample.wav"
+    wav.write_bytes(b"fixture")
+    monkeypatch.setattr(
+        worker,
+        "load_remote_code_audit",
+        lambda model_id: SimpleNamespace(revision="a" * 40),
+    )
+    monkeypatch.setattr(worker, "verify_audited_files", lambda audit, root: None)
+    backend, _ = _backend()
+
+    class InvalidProcessor:
+        def __call__(self, *args, **kwargs):
+            return {"input_features": "features"}
+
+        def batch_decode(self, predictions):
+            return []
+
+    backend.AutoProcessor.from_pretrained = lambda *args, **kwargs: InvalidProcessor()
+
+    with pytest.raises(ValueError, match="invalid transcription"):
+        worker.run_request(_request(snapshot, wav), backend)
+
+
+def test_main_emits_marked_json(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(
+        worker,
+        "json",
+        SimpleNamespace(load=lambda stream: {}, dumps=json.dumps),
+    )
+    monkeypatch.setattr(worker, "run_request", lambda payload: {"ok": True})
+
+    assert worker.main() == 0
+    assert capsys.readouterr().out == worker.RESULT_MARKER + '{"ok":true}' + "\n"
+
+
+def test_main_rejects_nonobject_request(monkeypatch) -> None:
+    monkeypatch.setattr(
+        worker,
+        "json",
+        SimpleNamespace(load=lambda stream: [], dumps=json.dumps),
+    )
+
+    with pytest.raises(ValueError, match="must be an object"):
+        worker.main()
