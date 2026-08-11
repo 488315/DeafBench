@@ -16,6 +16,7 @@ MODEL_NAMES = (
     "distil-whisper",
     "qwen3-asr-0.6b",
     "qwen3-asr-1.7b",
+    "parakeet-tdt-0.6b-v2",
 )
 
 
