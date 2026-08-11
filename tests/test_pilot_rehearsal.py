@@ -1,26 +1,28 @@
-from datetime import datetime, timezone
+import json
 from pathlib import Path
 
+from deafbench.pilot.export_scan import assert_export_safe
+from deafbench.pilot.manifest import EXECUTION_NOTICE, verify_signed_manifest
 from deafbench.pilot.rehearsal import run_synthetic_rehearsal
-from deafbench.pilot.storage import ProtectionState
 
 
-def test_synthetic_rehearsal_completes_three_model_lifecycle(tmp_path: Path) -> None:
+def test_synthetic_rehearsal_completes_zero_custody_export(tmp_path: Path) -> None:
     repo = Path(__file__).parents[1]
+    output = tmp_path / "customer-export"
+
     result = run_synthetic_rehearsal(
         repo_root=repo,
-        case_base=tmp_path / "cases",
-        records_root=tmp_path / "records",
-        operator="test-operator",
-        protection_probe=lambda _: ProtectionState(True, "test-only encrypted volume"),
-        acl_restrictor=lambda _: True,
-        delivered_at=datetime(2026, 8, 10, tzinfo=timezone.utc),
+        output_dir=output,
+        signing_key=tmp_path / "private" / "signing-key.pem",
     )
 
+    manifest = json.loads((output / "manifest.json").read_text(encoding="utf-8"))
     assert result.model_count == 3
-    assert result.deletion_verified is True
-    assert result.ledger_verified is True
-    assert len(result.certificate_sha256) == 64
-    case_root = tmp_path / "cases" / result.case_id
-    assert not (case_root / "input").exists()
-    assert not (case_root / "output" / "reports").exists()
+    assert result.dataset_count == 25
+    assert result.export_safe is True
+    assert result.signature_verified is True
+    assert len(result.manifest_sha256) == 64
+    assert manifest["execution_notice"] == EXECUTION_NOTICE
+    assert_export_safe(output)
+    assert verify_signed_manifest(output / "manifest.json") is True
+    assert {path.name for path in output.iterdir()} == {"manifest.json", "report.md"}
