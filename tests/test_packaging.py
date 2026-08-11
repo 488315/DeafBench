@@ -11,9 +11,10 @@ def test_benchmark_extra_installs_whisperspeech_runtime_dependencies() -> None:
     pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
     metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))
 
-    assert "webdataset>=1.0.2,<2.0.0" in metadata["project"][
-        "optional-dependencies"
-    ]["benchmark"]
+    assert (
+        "webdataset>=1.0.2,<2.0.0"
+        in metadata["project"]["optional-dependencies"]["benchmark"]
+    )
 
 
 def test_qwen_asr_extra_is_isolated_from_base_installation() -> None:
@@ -35,9 +36,7 @@ def test_parakeet_asr_extra_is_isolated_from_base_installation() -> None:
     metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))
 
     dependencies = metadata["project"]["dependencies"]
-    parakeet_dependencies = metadata["project"]["optional-dependencies"][
-        "parakeet-asr"
-    ]
+    parakeet_dependencies = metadata["project"]["optional-dependencies"]["parakeet-asr"]
 
     assert parakeet_dependencies == [
         "nemo_toolkit[asr]>=2.4,<3",
@@ -51,9 +50,7 @@ def test_granite_asr_extra_is_isolated_from_base_installation() -> None:
     metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))
 
     dependencies = metadata["project"]["dependencies"]
-    granite_dependencies = metadata["project"]["optional-dependencies"][
-        "granite-asr"
-    ]
+    granite_dependencies = metadata["project"]["optional-dependencies"]["granite-asr"]
 
     assert granite_dependencies == [
         "scipy>=1.15,<2.0",
