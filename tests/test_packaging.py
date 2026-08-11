@@ -39,7 +39,10 @@ def test_parakeet_asr_extra_is_isolated_from_base_installation() -> None:
         "parakeet-asr"
     ]
 
-    assert parakeet_dependencies == ["nemo_toolkit[asr]>=2.4,<3"]
+    assert parakeet_dependencies == [
+        "nemo_toolkit[asr]>=2.4,<3",
+        "numba>=0.61,<0.62",
+    ]
     assert all("nemo_toolkit" not in dependency for dependency in dependencies)
 
 
