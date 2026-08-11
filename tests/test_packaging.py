@@ -7,6 +7,21 @@ import tomllib
 import pytest
 
 
+def test_wheel_discovery_excludes_nonruntime_trees() -> None:
+    pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+    metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+
+    excluded = set(metadata["tool"]["setuptools"]["packages"]["find"]["exclude"])
+    assert {
+        "build",
+        "build.*",
+        "experiments",
+        "experiments.*",
+        "tests",
+        "tests.*",
+    } <= excluded
+
+
 def test_benchmark_extra_installs_whisperspeech_runtime_dependencies() -> None:
     pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
     metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))
