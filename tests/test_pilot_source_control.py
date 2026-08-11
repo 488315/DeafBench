@@ -50,6 +50,14 @@ def test_scanner_rejects_likely_secrets(tmp_path: Path) -> None:
     assert scan_staged(repo)[0].reason == "possible secret"
 
 
+def test_scanner_rejects_private_signing_key_files(tmp_path: Path) -> None:
+    repo = _repo(tmp_path / "repo")
+    (repo / "pilot-signing-key.pem").write_text("private material", encoding="utf-8")
+    _git(repo, "add", "pilot-signing-key.pem")
+
+    assert scan_staged(repo)[0].reason == "private key artifact"
+
+
 def test_scanner_uses_nested_repository_index(tmp_path: Path) -> None:
     outer = _repo(tmp_path / "outer")
     nested = _repo(outer / "nested")

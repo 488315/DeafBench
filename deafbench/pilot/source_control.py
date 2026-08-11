@@ -9,6 +9,7 @@ from pathlib import Path
 
 
 _BLOCKED_SUFFIXES = {".wav", ".mp3", ".flac", ".m4a", ".ogg"}
+_PRIVATE_KEY_SUFFIXES = {".key", ".pem", ".pfx", ".p12"}
 _BLOCKED_NAMES = ("transcript", "prediction", "customer-report", "case-artifact")
 _CASE_ID = re.compile(rb"case-[0-9a-f]{32}")
 _SECRET = re.compile(rb"(?i)(api[_-]?key|password|auth[_-]?token)\s*[:=]\s*\S+")
@@ -39,6 +40,9 @@ def scan_staged(repo: Path) -> tuple[StagedFinding, ...]:
     findings: list[StagedFinding] = []
     for name in filter(None, names.splitlines()):
         lowered = name.lower()
+        if Path(lowered).suffix in _PRIVATE_KEY_SUFFIXES:
+            findings.append(StagedFinding(name, "private key artifact"))
+            continue
         if Path(lowered).suffix in _BLOCKED_SUFFIXES or any(
             marker in lowered for marker in _BLOCKED_NAMES
         ):
