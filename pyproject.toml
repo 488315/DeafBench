@@ -66,6 +66,7 @@ deafbench = "deafbench.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
+namespaces = false
 exclude = [
     "build",
     "build.*",

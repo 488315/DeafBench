@@ -11,7 +11,9 @@ def test_wheel_discovery_excludes_nonruntime_trees() -> None:
     pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
     metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))
 
-    excluded = set(metadata["tool"]["setuptools"]["packages"]["find"]["exclude"])
+    discovery = metadata["tool"]["setuptools"]["packages"]["find"]
+    assert discovery["namespaces"] is False
+    excluded = set(discovery["exclude"])
     assert {
         "build",
         "build.*",
