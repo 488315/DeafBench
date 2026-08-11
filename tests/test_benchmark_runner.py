@@ -363,6 +363,7 @@ def test_failed_run_promotion_restores_previous_bundle(
         ("parakeet-tdt-0.6b-v2", "run_parakeet"),
         ("granite-speech-4.1-2b", "run_granite_speech"),
         ("granite-speech-4.1-2b-nar", "run_granite_nar"),
+        ("ark-asr-0.6b", "run_ark_asr"),
     ],
 )
 def test_default_model_runner_is_selected_lazily(
@@ -384,6 +385,7 @@ def test_default_model_runner_is_selected_lazily(
         "parakeet-tdt-0.6b-v2",
         "granite-speech-4.1-2b",
         "granite-speech-4.1-2b-nar",
+        "ark-asr-0.6b",
     ],
 )
 def test_main_accepts_additional_local_models(

@@ -19,6 +19,7 @@ MODEL_NAMES = (
     "parakeet-tdt-0.6b-v2",
     "granite-speech-4.1-2b",
     "granite-speech-4.1-2b-nar",
+    "ark-asr-0.6b",
 )
 
 

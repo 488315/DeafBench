@@ -45,6 +45,7 @@ ModelName = Literal[
     "parakeet-tdt-0.6b-v2",
     "granite-speech-4.1-2b",
     "granite-speech-4.1-2b-nar",
+    "ark-asr-0.6b",
 ]
 SyntheticFactory = Callable[[], tuple["SpeechGenerator", "TTSInfo"]]
 SyntheticGenerator = Callable[..., Path]
@@ -226,6 +227,10 @@ def _default_model_runner(model: ModelName) -> ModelRunner:
         from deafbench.benchmark.models.granite_nar import run_granite_nar
 
         return run_granite_nar
+    if model == "ark-asr-0.6b":
+        from deafbench.benchmark.models.ark_asr import run_ark_asr
+
+        return run_ark_asr
     from deafbench.benchmark.models.distil_whisper import run_distil_whisper
 
     return run_distil_whisper
