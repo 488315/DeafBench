@@ -77,6 +77,7 @@ def test_granite_nar_extra_is_isolated_from_base_installation() -> None:
         "flash-attn==2.8.3; platform_system == 'Linux'",
         "soundfile>=0.13,<1.0",
         "torch==2.9.1",
+        "torchcodec==0.9.0",
         "torchaudio==2.9.1",
         "transformers>=5.5.3,<6.0.0",
     ]
