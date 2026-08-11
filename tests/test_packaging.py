@@ -99,6 +99,21 @@ def test_granite_nar_extra_is_isolated_from_base_installation() -> None:
     assert all("transformers" not in dependency for dependency in dependencies)
 
 
+def test_ark_asr_extra_is_isolated_from_base_installation() -> None:
+    pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+    metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+
+    dependencies = metadata["project"]["dependencies"]
+    ark_dependencies = metadata["project"]["optional-dependencies"]["ark-asr"]
+
+    assert ark_dependencies == [
+        "librosa>=0.11,<1.0",
+        "soundfile>=0.13,<1.0",
+        "transformers[torch]>=4.57.6,<6.0.0",
+    ]
+    assert all("transformers" not in dependency for dependency in dependencies)
+
+
 @pytest.mark.integration
 @pytest.mark.skipif(
     os.environ.get("DEAFBENCH_RUN_PACKAGING_INTEGRATION") != "1",
