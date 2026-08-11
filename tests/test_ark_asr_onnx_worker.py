@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+import json
 
 import pytest
 
@@ -138,3 +139,136 @@ def test_official_runtime_forces_cpu_provider(monkeypatch, tmp_path) -> None:
     assert session_providers == [["CPUExecutionProvider"]]
     assert (runtime_root / "model" / "infer_ark_audio_onnx.py").exists()
     assert (runtime_root / "build" / "llm_kv_fp32_qwen_native.json").exists()
+
+
+@pytest.mark.parametrize(
+    ("payload", "message"),
+    [
+        ({}, "requires model_id"),
+        ({"model_id": "wrong/model", "revision": "a"}, "unexpected"),
+        (
+            {
+                "model_id": worker.MODEL_ID,
+                "revision": "a" * 40,
+                "snapshot_root": "relative",
+            },
+            "snapshot must be absolute",
+        ),
+    ],
+)
+def test_worker_rejects_invalid_request_fields(
+    monkeypatch,
+    payload,
+    message,
+) -> None:
+    monkeypatch.setattr(
+        worker,
+        "load_remote_code_audit",
+        lambda model_id: SimpleNamespace(revision="a" * 40),
+    )
+
+    with pytest.raises(ValueError, match=message):
+        worker.run_request(payload)
+
+
+@pytest.mark.parametrize(
+    ("values", "message"),
+    [
+        ("sample.wav", "requires WAV paths"),
+        ([1], "invalid WAV path"),
+        (["relative.wav"], "unsafe WAV path"),
+        ([], "unique WAV paths"),
+    ],
+)
+def test_wav_path_validation_fails_closed(values, message) -> None:
+    with pytest.raises(ValueError, match=message):
+        worker._validated_wav_paths({"wav_paths": values})
+
+
+def test_wav_path_validation_rejects_duplicates(tmp_path) -> None:
+    wav = tmp_path / "sample.wav"
+    wav.write_bytes(b"fixture")
+
+    with pytest.raises(ValueError, match="unique WAV paths"):
+        worker._validated_wav_paths({"wav_paths": [str(wav), str(wav)]})
+
+
+def test_layout_requires_runtime_files_and_metadata(tmp_path) -> None:
+    snapshot = tmp_path / "snapshot"
+    snapshot.mkdir()
+    runtime = tmp_path / "runtime"
+    runtime.mkdir()
+
+    with pytest.raises(ValueError, match="no runtime files"):
+        worker._stage_official_layout(snapshot, runtime)
+
+    (snapshot / "model.onnx").write_bytes(b"model")
+    second_runtime = tmp_path / "second-runtime"
+    second_runtime.mkdir()
+    with pytest.raises(ValueError, match="omits model metadata"):
+        worker._stage_official_layout(snapshot, second_runtime)
+
+
+def test_official_module_loader_executes_pinned_script(tmp_path) -> None:
+    script = tmp_path / "official.py"
+    script.write_text("value = 42\n", encoding="utf-8")
+
+    module = worker._import_official_module(script)
+
+    assert module.value == 42
+
+
+def test_worker_rejects_nonpositive_timing(monkeypatch, tmp_path) -> None:
+    snapshot = tmp_path / "snapshot"
+    snapshot.mkdir()
+    wav = tmp_path / "sample.wav"
+    wav.write_bytes(b"fixture")
+    audit = SimpleNamespace(revision="a" * 40)
+    monkeypatch.setattr(worker, "load_remote_code_audit", lambda model_id: audit)
+    monkeypatch.setattr(worker, "verify_audited_files", lambda audit, root: None)
+    runtime = _Runtime()
+    backend = _backend(runtime, [])
+    backend = worker._Backend(
+        clock=iter([10.0, 10.0]).__next__,
+        load_runtime=backend.load_runtime,
+        soundfile=backend.soundfile,
+    )
+
+    with pytest.raises(ValueError, match="timing must be positive"):
+        worker.run_request(
+            {
+                "model_id": worker.MODEL_ID,
+                "revision": "a" * 40,
+                "snapshot_root": str(snapshot.resolve()),
+                "wav_paths": [str(wav.resolve())],
+            },
+            backend,
+        )
+
+
+def test_main_emits_marked_json(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(
+        worker,
+        "json",
+        SimpleNamespace(
+            load=lambda stream: {"request": True},
+            dumps=json.dumps,
+        ),
+    )
+    monkeypatch.setattr(worker, "run_request", lambda payload: {"ok": True})
+
+    assert worker.main() == 0
+    assert capsys.readouterr().out == (
+        worker.RESULT_MARKER + '{"ok":true}' + "\n"
+    )
+
+
+def test_main_rejects_nonobject_request(monkeypatch) -> None:
+    monkeypatch.setattr(
+        worker,
+        "json",
+        SimpleNamespace(load=lambda stream: [], dumps=json.dumps),
+    )
+
+    with pytest.raises(ValueError, match="must be an object"):
+        worker.main()
