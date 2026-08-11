@@ -148,6 +148,35 @@
       "intended_lane": "commercial_candidate",
       "license_files": ["licenses/Apache-2.0.txt"],
       "notice_files": []
+    },
+    {
+      "model_id": "AutoArk-AI/ark-asr-0.6b-int8-onnx",
+      "revision": "ced3e6c0cc45eda7f718b885e9fd9562ed3ec94d",
+      "upstream_url": "https://huggingface.co/AutoArk-AI/ark-asr-0.6b-int8-onnx",
+      "spdx_license": "Apache-2.0",
+      "commercial_use": "commercial_permitted",
+      "attribution_requirements": [
+        "Retain the Apache-2.0 license text and applicable copyright notices in redistributions."
+      ],
+      "redistribution_restrictions": [
+        "Meet the Apache-2.0 Section 4 redistribution conditions and preserve NOTICE content if upstream later supplies one."
+      ],
+      "remote_code_required": true,
+      "supported_languages": [
+        "zh", "en", "de", "ja", "fr", "ko", "es", "pl", "it", "ro",
+        "hu", "cs", "nl", "fi", "hr", "sk", "sl", "et", "lt"
+      ],
+      "parameter_count": 1299463168,
+      "expected_weight_size_bytes": 1769362146,
+      "tested_peak_vram_bytes": null,
+      "supported_runtimes": [
+        "onnxruntime>=1.23,<2",
+        "transformers>=4.57.6,<6",
+        "torch"
+      ],
+      "intended_lane": "commercial_candidate",
+      "license_files": ["licenses/Apache-2.0.txt"],
+      "notice_files": []
     }
   ]
 }
