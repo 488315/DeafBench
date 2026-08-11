@@ -97,8 +97,26 @@ class _FakeModel:
         return _FakeOutput()
 
 
+@pytest.mark.parametrize(
+    ("model_id", "revision", "adapter_name"),
+    [
+        (
+            "Qwen/Qwen3-ASR-0.6B-hf",
+            "7f1569a48a89f3e3f4dc3a5c9d28bddd903bc76c",
+            "qwen3-asr-0.6b",
+        ),
+        (
+            "Qwen/Qwen3-ASR-1.7B-hf",
+            "bcd2b5b7f32b480ab5790554cfa8347f246a14f3",
+            "qwen3-asr-1.7b",
+        ),
+    ],
+)
 def test_qwen_adapter_pins_safe_runtime_and_writes_sorted_predictions(
     tmp_path: Path,
+    model_id: str,
+    revision: str,
+    adapter_name: str,
 ) -> None:
     references, audio_dir = _dataset(tmp_path)
     output = tmp_path / "predictions.jsonl"
@@ -142,12 +160,12 @@ def test_qwen_adapter_pins_safe_runtime_and_writes_sorted_predictions(
         audio_dir,
         references,
         output,
+        model_id=model_id,
         backend=backend,
     )
 
-    revision = "7f1569a48a89f3e3f4dc3a5c9d28bddd903bc76c"
     expected_load = (
-        "Qwen/Qwen3-ASR-0.6B-hf",
+        model_id,
         {"revision": revision, "trust_remote_code": False},
     )
     assert processor_options == [expected_load]
@@ -164,7 +182,8 @@ def test_qwen_adapter_pins_safe_runtime_and_writes_sorted_predictions(
         {"id": "sample-001", "latency_ms": 100.0, "text": "transcript 1"},
         {"id": "sample-002", "latency_ms": 200.0, "text": "transcript 2"},
     ]
-    assert info.model_id == "Qwen/Qwen3-ASR-0.6B-hf"
+    assert info.name == adapter_name
+    assert info.model_id == model_id
     assert info.revision == revision
     assert info.decoding == {
         "device": "cuda",

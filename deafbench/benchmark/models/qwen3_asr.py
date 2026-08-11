@@ -16,6 +16,10 @@ from deafbench.model_registry import ModelRegistryError, get_model_license
 
 
 DEFAULT_MODEL = "Qwen/Qwen3-ASR-0.6B-hf"
+MODEL_NAMES_BY_ID = {
+    DEFAULT_MODEL: "qwen3-asr-0.6b",
+    "Qwen/Qwen3-ASR-1.7B-hf": "qwen3-asr-1.7b",
+}
 MAX_NEW_TOKENS = 256
 
 
@@ -118,6 +122,12 @@ def run_qwen3_asr(
 ) -> ModelRunInfo:
     """Transcribe a complete WAV set with a pinned native Qwen3-ASR model."""
     revision = _licensed_revision(model_id)
+    try:
+        model_name = MODEL_NAMES_BY_ID[model_id]
+    except KeyError as exc:
+        raise ModelRegistryError(
+            f"Qwen adapter does not support registered model: {model_id}"
+        ) from exc
     wav_paths = _validated_wavs(audio_dir, references)
     runtime = _load_backend() if backend is None else backend
     use_cuda = runtime.torch.cuda.is_available()
@@ -173,7 +183,7 @@ def run_qwen3_asr(
     atomic_write_jsonl(output, records)
     total_latency_seconds = sum(latencies_ms) / 1_000.0
     return ModelRunInfo(
-        name="qwen3-asr-0.6b",
+        name=model_name,
         model_id=model_id,
         revision=revision,
         decoding={
