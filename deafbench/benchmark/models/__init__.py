@@ -18,6 +18,7 @@ MODEL_NAMES = (
     "qwen3-asr-1.7b",
     "parakeet-tdt-0.6b-v2",
     "granite-speech-4.1-2b",
+    "granite-speech-4.1-2b-nar",
 )
 
 
