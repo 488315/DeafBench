@@ -58,6 +58,16 @@ def test_packaged_apache_license_matches_canonical_bytes() -> None:
     )
 
 
+def test_packaged_cc_by_license_matches_canonical_bytes() -> None:
+    license_bytes = files("deafbench").joinpath(
+        "licenses", "CC-BY-4.0.txt"
+    ).read_bytes()
+
+    assert hashlib.sha256(license_bytes).hexdigest() == (
+        "9e5f1b3c610b9c2da5c313bf81d577a7d1acec686bdb0384edefa6df0f90cd94"
+    )
+
+
 def test_registry_rejects_missing_license_metadata() -> None:
     model = deepcopy(_MODEL)
     del model["spdx_license"]
