@@ -96,6 +96,7 @@ exclude = [
 "deafbench" = [
     "model-registry.json",
     "licenses/*.txt",
+    "licenses/**/*.txt",
     "remote-code-audits/*.json",
 ]
 "deafbench.recorder.data" = ["*.jsonl"]
