@@ -30,15 +30,24 @@ def test_scanner_rejects_customer_artifact_categories(tmp_path: Path) -> None:
     assert reasons == {"customer artifact path"}
 
 
-def test_scanner_rejects_case_ids_and_secrets(tmp_path: Path) -> None:
+def test_scanner_rejects_case_identifiers(tmp_path: Path) -> None:
     repo = _repo(tmp_path / "repo")
     marker = "case-" + "1" * 32
-    (repo / "notes.txt").write_text(f"{marker}\napi_key=do-not-store", encoding="utf-8")
+    (repo / "notes.txt").write_text(marker, encoding="utf-8")
     _git(repo, "add", "notes.txt")
 
     findings = scan_staged(repo)
 
     assert findings[0].reason == "opaque customer case identifier"
+
+
+def test_scanner_rejects_likely_secrets(tmp_path: Path) -> None:
+    repo = _repo(tmp_path / "repo")
+    secret_assignment = "api" + "_key=do-not-store"
+    (repo / "notes.txt").write_text(secret_assignment, encoding="utf-8")
+    _git(repo, "add", "notes.txt")
+
+    assert scan_staged(repo)[0].reason == "possible secret"
 
 
 def test_scanner_uses_nested_repository_index(tmp_path: Path) -> None:
