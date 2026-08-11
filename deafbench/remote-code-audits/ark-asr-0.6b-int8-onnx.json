@@ -10,7 +10,9 @@
     "trust_remote_code": true
   },
   "review_findings": {
-    "dynamic_code_execution": [],
+    "dynamic_code_execution": [
+      "Transformers loads the hash-verified configuration_arkasr.py and processing_arkasr.py modules because the official script enables trust_remote_code."
+    ],
     "filesystem_access": [
       "infer_ark_audio_onnx.py reads pinned runtime assets and caller-provided audio paths and configures Hugging Face caches under the process temporary directory.",
       "processing_arkasr.py reads processor_config.json and caller-provided audio paths."
