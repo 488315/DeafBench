@@ -1,5 +1,6 @@
 from contextlib import nullcontext
 from dataclasses import replace
+import json
 from types import SimpleNamespace
 
 import pytest
@@ -235,3 +236,140 @@ def test_worker_chunks_audio_longer_than_official_limit(
     assert result["decoding"]["long_audio_strategy"] == (
         "contiguous_30_second_chunks_without_overlap"
     )
+
+
+@pytest.mark.parametrize(
+    ("payload", "message"),
+    [
+        ({}, "requires model_id"),
+        ({"model_id": "wrong/model", "revision": "a"}, "unexpected"),
+        (
+            {
+                "model_id": worker.MODEL_ID,
+                "revision": "a" * 40,
+                "snapshot_root": "relative",
+            },
+            "snapshot must be absolute",
+        ),
+    ],
+)
+def test_worker_rejects_invalid_request_fields(
+    monkeypatch,
+    payload,
+    message,
+) -> None:
+    monkeypatch.setattr(
+        worker,
+        "load_remote_code_audit",
+        lambda model_id: SimpleNamespace(revision="a" * 40),
+    )
+
+    with pytest.raises(ValueError, match=message):
+        worker.run_request(payload)
+
+
+@pytest.mark.parametrize(
+    ("values", "message"),
+    [
+        ("sample.wav", "requires WAV paths"),
+        ([1], "invalid WAV path"),
+        (["relative.wav"], "unsafe WAV path"),
+        ([], "unique WAV paths"),
+    ],
+)
+def test_wav_path_validation_fails_closed(values, message) -> None:
+    with pytest.raises(ValueError, match=message):
+        worker._validated_wav_paths({"wav_paths": values})
+
+
+def test_wav_path_validation_rejects_duplicates(tmp_path) -> None:
+    wav = tmp_path / "sample.wav"
+    wav.write_bytes(b"fixture")
+
+    with pytest.raises(ValueError, match="unique WAV paths"):
+        worker._validated_wav_paths({"wav_paths": [str(wav), str(wav)]})
+
+
+def test_bad_words_preserve_integer_eos_token() -> None:
+    tokenizer = SimpleNamespace(
+        eos_token_id=9,
+        all_special_ids=[7, 8, 9],
+        get_added_vocab=lambda: {"<audio>": 10, "ordinary": 11},
+    )
+
+    assert worker._bad_words_ids(tokenizer) == [[7], [8], [10]]
+
+
+def test_worker_rejects_invalid_transcription(monkeypatch, tmp_path) -> None:
+    snapshot = tmp_path / "snapshot"
+    snapshot.mkdir()
+    wav = tmp_path / "sample.wav"
+    wav.write_bytes(b"fixture")
+    audit = SimpleNamespace(revision="a" * 40)
+    monkeypatch.setattr(worker, "load_remote_code_audit", lambda model_id: audit)
+    monkeypatch.setattr(worker, "verify_audited_files", lambda audit, root: None)
+    backend, _ = _backend()
+    backend.AutoTokenizer.from_pretrained = lambda *args, **kwargs: SimpleNamespace(
+        eos_token_id=9,
+        pad_token_id=8,
+        all_special_ids=[7, 8, 9],
+        get_added_vocab=lambda: {"<audio>": 10},
+        batch_decode=lambda *args, **kwargs: [],
+    )
+
+    with pytest.raises(ValueError, match="invalid transcription"):
+        worker.run_request(
+            {
+                "model_id": worker.MODEL_ID,
+                "revision": "a" * 40,
+                "snapshot_root": str(snapshot.resolve()),
+                "wav_paths": [str(wav.resolve())],
+            },
+            backend,
+        )
+
+
+def test_worker_rejects_nonpositive_timing(monkeypatch, tmp_path) -> None:
+    snapshot = tmp_path / "snapshot"
+    snapshot.mkdir()
+    wav = tmp_path / "sample.wav"
+    wav.write_bytes(b"fixture")
+    audit = SimpleNamespace(revision="a" * 40)
+    monkeypatch.setattr(worker, "load_remote_code_audit", lambda model_id: audit)
+    monkeypatch.setattr(worker, "verify_audited_files", lambda audit, root: None)
+    backend, _ = _backend()
+    backend = replace(backend, clock=iter([10.0, 10.0]).__next__)
+
+    with pytest.raises(ValueError, match="timing must be positive"):
+        worker.run_request(
+            {
+                "model_id": worker.MODEL_ID,
+                "revision": "a" * 40,
+                "snapshot_root": str(snapshot.resolve()),
+                "wav_paths": [str(wav.resolve())],
+            },
+            backend,
+        )
+
+
+def test_main_emits_marked_json(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(
+        worker,
+        "json",
+        SimpleNamespace(load=lambda stream: {}, dumps=json.dumps),
+    )
+    monkeypatch.setattr(worker, "run_request", lambda payload: {"ok": True})
+
+    assert worker.main() == 0
+    assert capsys.readouterr().out == worker.RESULT_MARKER + '{"ok":true}' + "\n"
+
+
+def test_main_rejects_nonobject_request(monkeypatch) -> None:
+    monkeypatch.setattr(
+        worker,
+        "json",
+        SimpleNamespace(load=lambda stream: [], dumps=json.dumps),
+    )
+
+    with pytest.raises(ValueError, match="must be an object"):
+        worker.main()
