@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "model_id": "AutoArk-AI/ARK-ASR-0.6B",
+  "revision": "45776b56d58cdfb2e2eb632f7e110f38684633e0",
+  "reviewed_utc": "2026-08-10",
+  "execution_policy": {
+    "allow_network_during_inference": false,
+    "isolate_from_main_process": true,
+    "require_exact_file_hashes": true,
+    "trust_remote_code": true
+  },
+  "review_findings": {
+    "dynamic_code_execution": [],
+    "filesystem_access": [
+      "processing_arkasr.py reads processor_config.json and caller-provided audio paths."
+    ],
+    "network_access": [],
+    "process_execution": [],
+    "unsafe_deserialization": []
+  },
+  "files": [
+    {
+      "path": "config.json",
+      "sha256": "24d383b963ac31e807e7dc49d515c50a97aa35ecff434995eb64202f1d22f1e8"
+    },
+    {
+      "path": "configuration_arkasr.py",
+      "sha256": "f7dc852c604f985b675c866e352ce81dfbc69f3a6c69646d0863adf9dd6e3aed"
+    },
+    {
+      "path": "modeling_arkasr.py",
+      "sha256": "b15aa7f98fc3de644ad68df2ebee3b16229763a0988a273cca92a1bf0ec33333"
+    },
+    {
+      "path": "modeling_audio.py",
+      "sha256": "645093b34975a9556503384bb10ad9cf23d8b137bbe0cad1cc50715cf0d21fd3"
+    },
+    {
+      "path": "preprocessor_config.json",
+      "sha256": "1e180caf7382179f67c7ffe0ac585d1d639ee9032dadae6868968ffb2e65dd77"
+    },
+    {
+      "path": "processing_arkasr.py",
+      "sha256": "1db5338f55e714f97eb5d8ed076568897dda7339cb585e3b13fc7d8782c1a94e"
+    },
+    {
+      "path": "processor_config.json",
+      "sha256": "d637206d91054c242bea3f2ab25210582161f0c135cc1aa97c3b068d5e0fbd57"
+    }
+  ]
+}
