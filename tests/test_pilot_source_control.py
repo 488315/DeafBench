@@ -1,7 +1,7 @@
 import subprocess
 from pathlib import Path
 
-from deafbench.pilot.source_control import scan_staged
+from deafbench.pilot.source_control import scan_staged, scan_tracked
 
 
 def _git(repo: Path, *args: str) -> None:
@@ -90,3 +90,19 @@ def test_scanner_uses_alternate_worktree_index(tmp_path: Path) -> None:
 
     assert scan_staged(repo) == ()
     assert scan_staged(worktree)[0].path == "sample.flac"
+
+
+def test_tracked_scanner_rejects_committed_customer_artifacts(tmp_path: Path) -> None:
+    repo = _repo(tmp_path / "repo")
+    base = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    (repo / "recording.wav").write_bytes(b"customer content")
+    _git(repo, "add", "recording.wav")
+    _git(repo, "commit", "-qm", "unsafe fixture")
+
+    assert scan_staged(repo) == ()
+    assert scan_tracked(repo, base=base)[0].reason == "customer artifact path"

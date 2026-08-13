@@ -33,15 +33,9 @@ def _git(repo: Path, *args: str) -> bytes:
     return completed.stdout
 
 
-def scan_staged(repo: Path) -> tuple[StagedFinding, ...]:
-    """Inspect the selected repository's index without reading working files."""
-
-    root = Path(repo).resolve()
-    names = _git(root, "diff", "--cached", "--name-only", "--diff-filter=ACMR").decode(
-        "utf-8"
-    )
+def _inspect(root: Path, names: list[str], *, source: str) -> tuple[StagedFinding, ...]:
     findings: list[StagedFinding] = []
-    for name in filter(None, names.splitlines()):
+    for name in names:
         lowered = name.lower()
         if Path(lowered).suffix in _PRIVATE_KEY_SUFFIXES:
             findings.append(StagedFinding(name, "private key artifact"))
@@ -52,9 +46,9 @@ def scan_staged(repo: Path) -> tuple[StagedFinding, ...]:
             findings.append(StagedFinding(name, "customer artifact path"))
             continue
         try:
-            content = _git(root, "show", f":{name}")
+            content = _git(root, "show", f"{source}:{name}")
         except subprocess.CalledProcessError:
-            findings.append(StagedFinding(name, "index content could not be inspected"))
+            findings.append(StagedFinding(name, "content could not be inspected"))
             continue
         if _PRIVATE_KEY.search(content):
             findings.append(StagedFinding(name, "private key artifact"))
@@ -63,3 +57,26 @@ def scan_staged(repo: Path) -> tuple[StagedFinding, ...]:
         elif _SECRET.search(content):
             findings.append(StagedFinding(name, "possible secret"))
     return tuple(findings)
+
+
+def scan_staged(repo: Path) -> tuple[StagedFinding, ...]:
+    """Inspect the selected repository's index without reading working files."""
+
+    root = Path(repo).resolve()
+    names = _git(root, "diff", "--cached", "--name-only", "--diff-filter=ACMR").decode(
+        "utf-8"
+    )
+    return _inspect(root, list(filter(None, names.splitlines())), source="")
+
+
+def scan_tracked(repo: Path, *, base: str | None = None) -> tuple[StagedFinding, ...]:
+    """Inspect tracked paths introduced or changed since an optional CI base."""
+
+    root = Path(repo).resolve()
+    if base is None:
+        names = _git(root, "ls-tree", "-r", "--name-only", "HEAD").decode("utf-8")
+    else:
+        names = _git(
+            root, "diff", "--name-only", "--diff-filter=ACMR", f"{base}...HEAD"
+        ).decode("utf-8")
+    return _inspect(root, list(filter(None, names.splitlines())), source="HEAD")

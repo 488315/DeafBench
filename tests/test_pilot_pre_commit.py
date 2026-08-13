@@ -64,3 +64,13 @@ def test_installed_hook_reports_findings(
 
     assert hook.main() == 1
     assert "BLOCKED sample.wav" in capsys.readouterr().out
+
+
+def test_ci_runs_tracked_customer_artifact_scan() -> None:
+    workflow = (Path(__file__).parents[1] / ".github/workflows/ci.yml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "python tools/check_customer_artifacts.py" in workflow
+    assert "--tracked" in workflow
+    assert "github.event.pull_request.base.sha" in workflow

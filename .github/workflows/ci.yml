@@ -46,6 +46,13 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e ".[test]"
 
+      - name: Reject tracked customer artifacts
+        if: github.event_name == 'pull_request'
+        run: >-
+          python tools/check_customer_artifacts.py
+          --tracked
+          --base ${{ github.event.pull_request.base.sha }}
+
       - name: Run low-level unit tests
         run: python -m pytest -m unit
 
