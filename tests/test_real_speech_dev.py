@@ -14,6 +14,7 @@ from deafbench.leaderboard.dev_corpus import (
     load_dev_contract,
     materialize_dev_corpus,
 )
+from deafbench.leaderboard.official import OPEN_ASR_EVALUATOR_REVISION
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -28,6 +29,43 @@ def test_versioned_real_speech_dev_contract_is_valid():
 
     assert len(contract.samples) == 100
     assert contract.population_count == 2_703
+
+
+def test_versioned_real_speech_dev_baseline_is_self_consistent():
+    result = json.loads(
+        (
+            REPO_ROOT
+            / "experiments"
+            / "real-speech-dev-v1"
+            / "faster-whisper-small-en.json"
+        ).read_text(encoding="utf-8")
+    )
+    corpus = REPO_ROOT / "benchmarks" / "real-speech-dev-v1"
+
+    assert result["lane"] == "real-speech-dev-v1"
+    assert result["result_kind"] == "local_development_baseline"
+    assert (
+        result["evaluator"]["upstream_revision"]
+        == OPEN_ASR_EVALUATOR_REVISION
+    )
+    assert result["corpus"]["manifest_sha256"] == hashlib.sha256(
+        (corpus / "manifest.json").read_bytes()
+    ).hexdigest()
+    assert result["corpus"]["references_sha256"] == hashlib.sha256(
+        (corpus / "references.jsonl").read_bytes()
+    ).hexdigest()
+    metrics = result["metrics"]
+    error_count = (
+        metrics["substitutions"]
+        + metrics["insertions"]
+        + metrics["deletions"]
+    )
+    assert metrics["wer_percent"] == pytest.approx(
+        100 * error_count / metrics["reference_words"]
+    )
+    assert metrics["strict_critical_recall_percent"] is None
+    assert metrics["canonical_critical_recall_percent"] is None
+    assert metrics["local_rtfx"] is None
 
 
 def _write_contract(tmp_path, *, split="validation", count=2):
