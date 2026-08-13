@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -59,6 +60,7 @@ def verify_evidence_manifest(
 
     result_rows = 0
     seen: set[Path] = set()
+    verified_payloads: dict[Path, bytes] = {}
     for entry in artifacts:
         if not isinstance(entry, dict):
             raise EvidenceIntegrityError("artifact entry must be an object")
@@ -75,6 +77,7 @@ def verify_evidence_manifest(
             raise EvidenceIntegrityError(f"artifact hash mismatch: {relative}")
         if entry.get("bytes") != len(payload):
             raise EvidenceIntegrityError(f"artifact size mismatch: {relative}")
+        verified_payloads[path] = payload
         if "rows" in entry:
             actual_rows = len(payload.splitlines())
             if entry["rows"] != actual_rows:
@@ -86,9 +89,27 @@ def verify_evidence_manifest(
     if not isinstance(metrics, dict) or not isinstance(hardware, dict):
         raise EvidenceIntegrityError("evidence summary metadata is incomplete")
     composite_wer = metrics.get("public_seven_set_macro_wer")
+    score_relative = metrics.get("score_artifact")
+    model_id = metrics.get("model_id")
     hardware_label = hardware.get("label")
     if not isinstance(composite_wer, (int, float)):
         raise EvidenceIntegrityError("missing public seven-set macro WER")
+    if isinstance(composite_wer, bool) or not math.isfinite(composite_wer):
+        raise EvidenceIntegrityError("public seven-set macro WER must be finite")
+    score_path = _artifact_path(root, score_relative)
+    try:
+        score = json.loads(verified_payloads[score_path])
+        score_wer = score["composite_wer"][model_id]
+    except (KeyError, TypeError, json.JSONDecodeError) as exc:
+        raise EvidenceIntegrityError("cannot read score artifact summary") from exc
+    if (
+        isinstance(score_wer, bool)
+        or not isinstance(score_wer, (int, float))
+        or not math.isfinite(score_wer)
+    ):
+        raise EvidenceIntegrityError("score artifact macro WER must be finite")
+    if float(score_wer) != float(composite_wer):
+        raise EvidenceIntegrityError("declared WER does not match score artifact")
     if not isinstance(hardware_label, str) or not hardware_label.startswith("local "):
         raise EvidenceIntegrityError("hardware result must be labeled local")
     if manifest.get("result_rows") != result_rows:

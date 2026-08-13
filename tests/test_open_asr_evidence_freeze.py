@@ -1,5 +1,6 @@
 import hashlib
 import json
+import math
 from pathlib import Path
 
 import pytest
@@ -50,11 +51,25 @@ def _write_evidence(tmp_path, *, artifact=b"one\ntwo\n"):
                 "rows": 2,
             }
         ],
-        "metrics": {"public_seven_set_macro_wer": 5.23},
+        "metrics": {
+            "public_seven_set_macro_wer": 5.23,
+            "score_artifact": "score.json",
+            "model_id": "owner/model",
+        },
         "hardware": {"label": "local test hardware"},
         "result_rows": 2,
     }
     manifest_path = tmp_path / "manifest.json"
+    score = {"composite_wer": {"owner/model": 5.23}}
+    score_payload = json.dumps(score).encode()
+    (tmp_path / "score.json").write_bytes(score_payload)
+    manifest["artifacts"].append(
+        {
+            "path": "score.json",
+            "sha256": hashlib.sha256(score_payload).hexdigest(),
+            "bytes": len(score_payload),
+        }
+    )
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
     return manifest, manifest_path
 
@@ -92,6 +107,24 @@ def _write_evidence(tmp_path, *, artifact=b"one\ntwo\n"):
                 public_seven_set_macro_wer="5.23"
             ),
             "missing public seven-set",
+        ),
+        (
+            lambda manifest: manifest["metrics"].update(
+                public_seven_set_macro_wer=math.nan
+            ),
+            "public seven-set macro WER must be finite",
+        ),
+        (
+            lambda manifest: manifest["metrics"].update(
+                public_seven_set_macro_wer=4.99
+            ),
+            "does not match score artifact",
+        ),
+        (
+            lambda manifest: manifest["metrics"].update(
+                score_artifact="results.jsonl"
+            ),
+            "cannot read score artifact",
         ),
         (
             lambda manifest: manifest["hardware"].update(label="RTX 4070"),

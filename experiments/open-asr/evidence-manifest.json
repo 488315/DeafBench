@@ -19,6 +19,8 @@
   "metrics": {
     "family": "official_open_asr_wer",
     "public_seven_set_macro_wer": 5.23,
+    "score_artifact": "experiments/open-asr/results/zipformer-public-7set-score.json",
+    "model_id": "soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M",
     "aggregation": "unweighted mean of seven rounded dataset WER values"
   },
   "hardware": {
