@@ -158,3 +158,42 @@ def test_audit_cli_evaluates_then_exports_local_case(
     assert calls[1][1]["result_paths"] == list(result_paths)
     assert len(calls[1][1]["execution_attestation"].sha256) == 64
     assert json.loads(capsys.readouterr().out)["sample_count"] == 4
+
+
+def test_audit_cli_fails_before_audit_when_attestation_is_unsafe(
+    tmp_path: Path,
+) -> None:
+    attestation_path = _attestation(tmp_path / "attestation.json")
+    attestation = json.loads(attestation_path.read_text(encoding="utf-8"))
+    attestation["credentials_shared"] = True
+    attestation_path.write_text(json.dumps(attestation), encoding="utf-8")
+    calls: list[str] = []
+
+    def audit_runner(**_: object) -> CustomerAuditResult:
+        calls.append("audit")
+        return CustomerAuditResult((), 0)
+
+    def exporter(**_: object) -> CustomerExportResult:
+        calls.append("export")
+        return CustomerExportResult("d" * 64, 3, 0)
+
+    with pytest.raises(ValueError, match="zero-custody"):
+        main(
+            [
+                "audit",
+                "--repo-root",
+                str(tmp_path / "repo"),
+                "--case-root",
+                str(tmp_path / "case"),
+                "--attestation",
+                str(attestation_path),
+                "--output-dir",
+                str(tmp_path / "export"),
+                "--signing-key",
+                str(tmp_path / "signing-key.pem"),
+            ],
+            audit_runner=audit_runner,
+            exporter=exporter,
+        )
+
+    assert calls == []
