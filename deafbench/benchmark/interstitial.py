@@ -175,6 +175,13 @@ def _remove_known_event_annotation(match: re.Match[str]) -> str:
     return " " if label in _KNOWN_EVENT_LABELS else match.group(0)
 
 
+def _normalize_sound_label(value: str) -> str:
+    label = value.strip()
+    if label.startswith("[") and label.endswith("]"):
+        label = label[1:-1]
+    return " ".join(label.lower().replace("-", " ").split())
+
+
 def evaluate_interstitial_prediction(
     prediction: Mapping[str, object],
 ) -> InterstitialResponse:
@@ -191,6 +198,9 @@ def evaluate_interstitial_prediction(
 
     unannotated = _BRACKETED_EVENT.sub(_remove_known_event_annotation, text)
     hallucinated_words = _LEXICAL_TOKEN.findall(unannotated)
+    for sound in sounds:
+        if _normalize_sound_label(sound) not in _KNOWN_EVENT_LABELS:
+            hallucinated_words.extend(_LEXICAL_TOKEN.findall(sound))
     emitted_output = bool(text.strip() or sounds)
     return InterstitialResponse(
         ignored=not emitted_output,

@@ -143,6 +143,7 @@ def test_interstitial_scene_requires_two_non_silent_speech_anchors(
         ({"text": "   "}, True, False, 0),
         ({"text": "[keyboard clicks]"}, False, False, 0),
         ({"text": "", "sounds": ["[rustling]"]}, False, False, 0),
+        ({"text": "", "sounds": ["[applause]"]}, False, True, 1),
         ({"text": "keyboard clicks"}, False, True, 2),
         ({"text": "Thanks for watching."}, False, True, 3),
         ({"text": "[thanks for watching]"}, False, True, 3),
