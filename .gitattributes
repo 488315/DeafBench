@@ -2,6 +2,7 @@
 benchmarks/core-v1/*.jsonl -text whitespace=cr-at-eol
 benchmarks/synthetic-v2/*.json -text
 benchmarks/synthetic-v2/*.jsonl -text whitespace=cr-at-eol
+deafbench/recorder/data/*.jsonl -text whitespace=cr-at-eol
 
 # Official-track evidence hashes Git blob bytes and must remain byte-stable.
 experiments/open-asr/evidence-manifest.json -text
