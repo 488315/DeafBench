@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import wave
 from dataclasses import dataclass
 from pathlib import Path
@@ -120,8 +121,8 @@ def run_parakeet(
             )
 
     total_latency_seconds = sum(latencies_ms) / 1_000.0
-    if total_latency_seconds <= 0:
-        raise ValueError("Parakeet timing must be positive")
+    if not math.isfinite(total_latency_seconds) or total_latency_seconds <= 0:
+        raise ValueError("Parakeet timing must be positive and finite")
     atomic_write_jsonl(output, records)
     return ModelRunInfo(
         name=MODEL_NAME,

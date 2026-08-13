@@ -37,6 +37,9 @@ def _dataset(tmp_path: Path) -> tuple[Path, Path]:
     [
         ((1.0, 1.1, 2.0, 2.2), None),
         ((1.0, 1.0, 2.0, 2.0), "timing must be positive"),
+        ((1.0, float("nan"), 2.0, 2.2), "finite"),
+        ((1.0, float("inf"), 2.0, 2.2), "finite"),
+        ((1.0, float("-inf"), 2.0, 2.2), "finite"),
     ],
 )
 def test_parakeet_adapter_pins_archive_and_reports_performance(
