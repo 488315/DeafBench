@@ -335,7 +335,10 @@ def test_worker_rejects_invalid_transcription(monkeypatch, tmp_path) -> None:
         )
 
 
-def test_worker_rejects_nonpositive_timing(monkeypatch, tmp_path) -> None:
+@pytest.mark.parametrize("finished", [10.0, float("nan"), float("inf")])
+def test_worker_rejects_nonpositive_or_nonfinite_timing(
+    monkeypatch, tmp_path, finished
+) -> None:
     snapshot = tmp_path / "snapshot"
     snapshot.mkdir()
     wav = tmp_path / "sample.wav"
@@ -344,7 +347,7 @@ def test_worker_rejects_nonpositive_timing(monkeypatch, tmp_path) -> None:
     monkeypatch.setattr(worker, "load_remote_code_audit", lambda model_id: audit)
     monkeypatch.setattr(worker, "verify_audited_files", lambda audit, root: None)
     backend, _ = _backend()
-    backend = replace(backend, clock=iter([10.0, 10.0]).__next__)
+    backend = replace(backend, clock=iter([10.0, finished]).__next__)
 
     with pytest.raises(ValueError, match="timing must be positive"):
         worker.run_request(

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass
 from pathlib import Path
 from statistics import median
@@ -203,7 +204,7 @@ def run_request(
             )
 
     total_latency_seconds = sum(latencies_ms) / 1_000.0
-    if total_latency_seconds <= 0:
+    if not math.isfinite(total_latency_seconds) or total_latency_seconds <= 0:
         raise ValueError("ARK-ASR timing must be positive")
     return {
         "decoding": {
