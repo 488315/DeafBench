@@ -15,12 +15,12 @@ def _escape_markdown_table_cell(value: Any) -> str:
 
 def generate_markdown_report(metrics: Dict[str, Any], ref_file: str, pred_file: str) -> str:
     """Generate Markdown report from metrics output."""
-    canonical_recall = metrics.get(
-        "canonical_critical_recall", metrics["critical_recall"]
-    )
-    canonical_matched = metrics.get(
-        "canonical_matched_critical", metrics["matched_critical"]
-    )
+    canonical_recall = metrics.get("canonical_critical_recall")
+    if canonical_recall is None:
+        canonical_recall = metrics["critical_recall"]
+    canonical_matched = metrics.get("canonical_matched_critical")
+    if canonical_matched is None:
+        canonical_matched = metrics["matched_critical"]
     strict_recall = metrics.get("strict_critical_recall", canonical_recall)
     strict_matched = metrics.get("strict_matched_critical", canonical_matched)
     lines = [
