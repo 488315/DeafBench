@@ -73,6 +73,18 @@ def test_zipformer_contract_rejects_nonofficial_dataset_splits(dataset, split):
         contract.load_dataset(lambda *args, **kwargs: None, arguments)
 
 
+def test_zipformer_contract_rejects_snapshot_source_overrides():
+    contract = PinnedZipformerContract()
+
+    with pytest.raises(ValueError, match="ignored source files"):
+        contract.snapshot_model(
+            lambda *args, **kwargs: None,
+            contract.model_id,
+            allow_patterns=("*.pt", "*.model", "*.yaml"),
+            ignore_patterns=("*.py",),
+        )
+
+
 def test_zipformer_runner_translates_pinned_nonstreaming_arguments():
     contract = PinnedZipformerContract()
     arguments = SimpleNamespace(
@@ -136,6 +148,7 @@ def test_zipformer_runner_accepts_clean_pinned_source(tmp_path, monkeypatch):
         (
             subprocess.CompletedProcess([], 0, stdout="abc123\n", stderr=""),
             subprocess.CompletedProcess([], 0, stdout="", stderr=""),
+            subprocess.CompletedProcess([], 0, stdout="", stderr=""),
         )
     )
     monkeypatch.setattr(
@@ -170,6 +183,33 @@ def test_zipformer_runner_rejects_modified_source(tmp_path, monkeypatch):
     )
 
     with pytest.raises(RuntimeError, match="source is modified"):
+        zipformer_runner._require_source(
+            checkout,
+            "abc123",
+            "runner.py",
+            "runner",
+        )
+
+
+def test_zipformer_runner_rejects_ignored_python_source(tmp_path, monkeypatch):
+    checkout = tmp_path / "source"
+    required = checkout / "runner.py"
+    checkout.mkdir()
+    required.write_text("", encoding="utf-8")
+    responses = iter(
+        (
+            subprocess.CompletedProcess([], 0, stdout="abc123\n", stderr=""),
+            subprocess.CompletedProcess([], 0, stdout="", stderr=""),
+            subprocess.CompletedProcess([], 0, stdout="shadow.py\n", stderr=""),
+        )
+    )
+    monkeypatch.setattr(
+        zipformer_runner.subprocess,
+        "run",
+        lambda *args, **kwargs: next(responses),
+    )
+
+    with pytest.raises(RuntimeError, match="ignored Python source files"):
         zipformer_runner._require_source(
             checkout,
             "abc123",

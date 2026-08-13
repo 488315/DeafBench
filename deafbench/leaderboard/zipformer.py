@@ -17,6 +17,7 @@ _OFFICIAL_DATASET_SPLITS = frozenset(
         ("voxpopuli_cleaned_aa", "test"),
     }
 )
+_MODEL_ALLOW_PATTERNS = ("*.pt", "*.model", "*.yaml")
 @dataclass(frozen=True)
 class PinnedZipformerContract:
     """Resolve the public baseline without mutable Hugging Face revisions."""
@@ -56,4 +57,8 @@ class PinnedZipformerContract:
         """Download only the reviewed baseline checkpoint revision."""
         if model_id != self.model_id:
             raise ValueError(f"unsupported Zipformer model: {model_id}")
+        if tuple(kwargs.get("allow_patterns", ())) != _MODEL_ALLOW_PATTERNS:
+            raise ValueError("Zipformer snapshot must use the reviewed file allowlist")
+        if "ignore_patterns" in kwargs:
+            raise ValueError("Zipformer snapshot must not use ignored source files")
         return downloader(model_id, revision=self.model_revision, **kwargs)
