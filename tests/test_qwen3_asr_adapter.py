@@ -3,6 +3,7 @@ import wave
 from contextlib import nullcontext
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import Mock
 
 import pytest
 import numpy
@@ -263,14 +264,16 @@ def test_qwen_adapter_rejects_malformed_transcription(decoded: object) -> None:
 def test_qwen_audio_reader_preserves_matching_sample_rate(tmp_path: Path) -> None:
     audio = tmp_path / "matching-rate.wav"
     _write_wav(audio)
+    unexpected_resample = Mock(side_effect=AssertionError("resampler called"))
 
     samples, duration = qwen3_asr._read_pcm16_mono(
         audio,
         48_000,
         numpy,
-        resample_poly,
+        unexpected_resample,
     )
 
+    unexpected_resample.assert_not_called()
     assert samples.shape == (16,)
     assert samples.dtype == numpy.float32
     assert duration == pytest.approx(16 / 48_000)
