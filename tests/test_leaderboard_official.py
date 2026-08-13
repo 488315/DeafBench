@@ -225,6 +225,42 @@ def test_evaluator_rejects_worker_output_without_result_marker(tmp_path, monkeyp
         evaluator.score(results_dir, "owner/model")
 
 
+def test_evaluator_times_out_at_the_configured_deadline(tmp_path, monkeypatch):
+    checkout, revision = _commit_fake_evaluator(tmp_path)
+    evaluator = OfficialEvaluator(
+        checkout,
+        expected_revision=revision,
+        timeout_seconds=0.25,
+    )
+    results_dir = tmp_path / "results"
+    results_dir.mkdir()
+    monkeypatch.setattr(evaluator, "validate", lambda: None)
+
+    def timeout(*args, **kwargs):
+        assert kwargs["timeout"] == 0.25
+        raise subprocess.TimeoutExpired(args[0], kwargs["timeout"])
+
+    monkeypatch.setattr(subprocess, "run", timeout)
+
+    with pytest.raises(OfficialEvaluatorError, match="timed out"):
+        evaluator.score(results_dir, "owner/model")
+
+
+@pytest.mark.parametrize("timeout_seconds", (0, -1, float("inf"), True))
+def test_evaluator_rejects_nonfinite_or_nonpositive_timeout(
+    tmp_path,
+    timeout_seconds,
+):
+    checkout, revision = _commit_fake_evaluator(tmp_path)
+
+    with pytest.raises(OfficialEvaluatorError, match="positive finite"):
+        OfficialEvaluator(
+            checkout,
+            expected_revision=revision,
+            timeout_seconds=timeout_seconds,
+        )
+
+
 def test_worker_returns_the_mean_that_upstream_only_prints():
     datasets = {
         "owner/model | first": {"wer": 1.31},

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 from pathlib import Path
 import subprocess
@@ -12,6 +13,7 @@ from typing import Any, Iterable
 
 OPEN_ASR_EVALUATOR_REVISION = "9585fc39bff55697a2ec1c5f13921b18812bfde8"
 _RESULT_MARKER = "DEAFBENCH_OFFICIAL_RESULT="
+_DEFAULT_WORKER_TIMEOUT_SECONDS = 300.0
 _REQUIRED_FILES = (
     "normalizer/__init__.py",
     "normalizer/data_utils.py",
@@ -27,9 +29,25 @@ class OfficialEvaluatorError(RuntimeError):
 class OfficialEvaluator:
     """Run normalization and scoring from one exact external Git revision."""
 
-    def __init__(self, checkout: Path | str, *, expected_revision: str):
+    def __init__(
+        self,
+        checkout: Path | str,
+        *,
+        expected_revision: str,
+        timeout_seconds: float = _DEFAULT_WORKER_TIMEOUT_SECONDS,
+    ):
+        if (
+            isinstance(timeout_seconds, bool)
+            or not isinstance(timeout_seconds, (int, float))
+            or not math.isfinite(timeout_seconds)
+            or timeout_seconds <= 0
+        ):
+            raise OfficialEvaluatorError(
+                "official evaluator timeout must be a positive finite number"
+            )
         self.checkout = Path(checkout).resolve()
         self.expected_revision = expected_revision
+        self.timeout_seconds = float(timeout_seconds)
 
     def validate(self) -> None:
         """Reject missing, incomplete, or differently pinned checkouts."""
@@ -160,9 +178,12 @@ class OfficialEvaluator:
                 check=True,
                 capture_output=True,
                 text=True,
+                timeout=self.timeout_seconds,
             )
         except OSError as exc:
             raise OfficialEvaluatorError("could not launch official evaluator") from exc
+        except subprocess.TimeoutExpired as exc:
+            raise OfficialEvaluatorError("official evaluator timed out") from exc
         except subprocess.CalledProcessError as exc:
             detail = exc.stderr.strip() or exc.stdout.strip() or "unknown error"
             raise OfficialEvaluatorError(
