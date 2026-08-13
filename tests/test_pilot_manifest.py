@@ -160,24 +160,51 @@ def test_manifest_rejects_private_key_inside_export(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize(
-    "mutation",
+    ("mutation", "message"),
     [
-        lambda value: value.update(sample_count=0),
-        lambda value: value.update(execution_notice="vendor executed"),
-        lambda value: value["models"][0].update(sample_id="private-001"),
-        lambda value: value["models"][0].update(license_classification="research_only"),
-        lambda value: value["models"][0]["configuration"].update(audio_path="private.wav"),
-        lambda value: value["models"][0]["aggregate_metrics"].update(wer_percent="21"),
-        lambda value: value["artifact_hashes"][0].update(sha256="bad"),
+        (
+            lambda value: value.update(sample_count=0),
+            "dataset count must be positive",
+        ),
+        (
+            lambda value: value.update(execution_notice="vendor executed"),
+            "identity or execution notice is invalid",
+        ),
+        (
+            lambda value: value["models"][0].update(sample_id="private-001"),
+            "model fields are unsupported",
+        ),
+        (
+            lambda value: value["models"][0].update(
+                license_classification="research_only"
+            ),
+            "model is not a commercial candidate",
+        ),
+        (
+            lambda value: value["models"][0]["configuration"].update(
+                audio_path="private.wav"
+            ),
+            "configuration is not aggregate-safe",
+        ),
+        (
+            lambda value: value["models"][0]["aggregate_metrics"].update(
+                wer_percent="21"
+            ),
+            "aggregate metric values are invalid",
+        ),
+        (
+            lambda value: value["artifact_hashes"][0].update(sha256="bad"),
+            "artifact hash is invalid",
+        ),
     ],
 )
-def test_manifest_contract_fails_closed(mutation, tmp_path: Path) -> None:
+def test_manifest_contract_fails_closed(mutation, message: str, tmp_path: Path) -> None:
     payload = _payload()
     mutation(payload)
     export = tmp_path / "export"
     export.mkdir()
 
-    with pytest.raises(ValueError, match="manifest"):
+    with pytest.raises(ValueError, match=message):
         write_signed_manifest(
             export / "manifest.json",
             payload=payload,
@@ -186,25 +213,50 @@ def test_manifest_contract_fails_closed(mutation, tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize(
-    "mutation",
+    ("mutation", "message"),
     [
-        lambda value: value.update(evaluator_version="unpinned"),
-        lambda value: value.update(models=[]),
-        lambda value: value["models"][0].update(revision="unpinned"),
-        lambda value: value["models"].append(dict(value["models"][0])),
-        lambda value: value["models"][0].update(aggregate_metrics={}),
-        lambda value: value.update(artifact_hashes=[]),
-        lambda value: value["artifact_hashes"][0].update(artifact_type="audio"),
-        lambda value: value["artifact_hashes"][0].update(
-            model_id="unregistered/model"
+        (
+            lambda value: value.update(evaluator_version="unpinned"),
+            "evaluator version is invalid",
+        ),
+        (lambda value: value.update(models=[]), "requires model aggregates"),
+        (
+            lambda value: value["models"][0].update(revision="unpinned"),
+            "model revision is invalid",
+        ),
+        (
+            lambda value: value["models"].append(dict(value["models"][0])),
+            "model identifier is invalid or duplicated",
+        ),
+        (
+            lambda value: value["models"][0].update(aggregate_metrics={}),
+            "aggregate metric fields are incomplete",
+        ),
+        (
+            lambda value: value.update(artifact_hashes=[]),
+            "requires artifact hashes",
+        ),
+        (
+            lambda value: value["artifact_hashes"][0].update(artifact_type="audio"),
+            "artifact hash is invalid",
+        ),
+        (
+            lambda value: value["artifact_hashes"][0].update(
+                model_id="unregistered/model"
+            ),
+            "artifact model is unknown",
         ),
     ],
 )
-def test_manifest_rejects_unverifiable_boundaries(mutation, tmp_path: Path) -> None:
+def test_manifest_rejects_unverifiable_boundaries(
+    mutation,
+    message: str,
+    tmp_path: Path,
+) -> None:
     payload = _payload()
     mutation(payload)
 
-    with pytest.raises(ValueError, match="manifest"):
+    with pytest.raises(ValueError, match=message):
         write_signed_manifest(
             tmp_path / "export" / "manifest.json",
             payload=payload,
