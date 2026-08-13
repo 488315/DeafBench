@@ -21,6 +21,7 @@ DELETION_TARGETS = (
     "output/reports",
     "output/sensitive-drafts",
 )
+_SCAN_BLOCK_BYTES = 1024 * 1024
 
 
 @dataclass(frozen=True)
@@ -46,8 +47,13 @@ def _contains_case_marker(root: Path, marker: bytes) -> bool:
             return True
         if path.is_file():
             try:
-                if marker in path.read_bytes():
-                    return True
+                overlap = b""
+                with path.open("rb") as stream:
+                    for block in iter(lambda: stream.read(_SCAN_BLOCK_BYTES), b""):
+                        combined = overlap + block
+                        if marker in combined:
+                            return True
+                        overlap = combined[-(len(marker) - 1) :]
             except OSError:
                 return True
     return False

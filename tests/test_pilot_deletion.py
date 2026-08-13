@@ -45,6 +45,17 @@ def test_deletion_fails_if_repository_or_backup_contains_case_marker(
         logical_delete(root, case_id=CASE_ID, backup_roots=[backup])
 
 
+def test_deletion_detects_marker_across_scan_blocks(tmp_path: Path) -> None:
+    root = _case(tmp_path)
+    backup = tmp_path / "backup"
+    backup.mkdir()
+    prefix = b"x" * (1024 * 1024 - 4)
+    (backup / "record.bin").write_bytes(prefix + CASE_ID.encode("ascii"))
+
+    with pytest.raises(RuntimeError, match="failed"):
+        logical_delete(root, case_id=CASE_ID, backup_roots=[backup])
+
+
 def test_deletion_failure_blocks_success_result(tmp_path: Path) -> None:
     root = _case(tmp_path)
 
