@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from deafbench.pilot.cli import main
+from deafbench.pilot.audit import CustomerAuditResult
 from deafbench.pilot.export import CustomerExportResult
 from deafbench.pilot.rehearsal import RehearsalResult
 
@@ -118,3 +119,40 @@ def test_export_cli_fails_before_export_when_attestation_is_unsafe(
             exporter=exporter,
         )
     assert called is False
+
+
+def test_audit_cli_evaluates_then_exports_local_case(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    calls = []
+    result_paths = tuple(tmp_path / f"result-{index}.json" for index in range(3))
+
+    def audit_runner(**kwargs: object) -> CustomerAuditResult:
+        calls.append(("audit", kwargs))
+        return CustomerAuditResult(result_paths, 4)
+
+    def exporter(**kwargs: object) -> CustomerExportResult:
+        calls.append(("export", kwargs))
+        return CustomerExportResult("c" * 64, 3, 4)
+
+    assert main(
+        [
+            "audit",
+            "--repo-root",
+            str(tmp_path / "repo"),
+            "--case-root",
+            str(tmp_path / "case"),
+            "--attestation",
+            str(_attestation(tmp_path / "attestation.json")),
+            "--output-dir",
+            str(tmp_path / "export"),
+            "--signing-key",
+            str(tmp_path / "signing-key.pem"),
+        ],
+        audit_runner=audit_runner,
+        exporter=exporter,
+    ) == 0
+
+    assert [name for name, _ in calls] == ["audit", "export"]
+    assert calls[1][1]["result_paths"] == list(result_paths)
+    assert json.loads(capsys.readouterr().out)["dataset_count"] == 4

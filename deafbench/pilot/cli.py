@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 from typing import Callable, Sequence
 
+from deafbench.pilot.audit import CustomerAuditResult, run_customer_audit
 from deafbench.pilot.export import CustomerExportResult, create_customer_export
 from deafbench.pilot.rehearsal import RehearsalResult, run_synthetic_rehearsal
 from deafbench.pilot.zero_custody import load_execution_attestation
@@ -20,6 +21,7 @@ def main(
     argv: Sequence[str] | None = None,
     *,
     rehearsal_runner: Callable[..., RehearsalResult] = run_synthetic_rehearsal,
+    audit_runner: Callable[..., CustomerAuditResult] = run_customer_audit,
     exporter: Callable[..., CustomerExportResult] = create_customer_export,
 ) -> int:
     parser = argparse.ArgumentParser(prog="python -m deafbench.pilot.cli")
@@ -37,6 +39,13 @@ def main(
     export.add_argument("--output-dir", type=Path, required=True)
     export.add_argument("--signing-key", type=Path, required=True)
 
+    audit = actions.add_parser("audit")
+    audit.add_argument("--repo-root", type=Path, required=True)
+    audit.add_argument("--case-root", type=Path, required=True)
+    audit.add_argument("--attestation", type=Path, required=True)
+    audit.add_argument("--output-dir", type=Path, required=True)
+    audit.add_argument("--signing-key", type=Path, required=True)
+
     args = parser.parse_args(argv)
     if args.action == "rehearse":
         result = rehearsal_runner(
@@ -44,11 +53,23 @@ def main(
             output_dir=args.output_dir,
             signing_key=args.signing_key,
         )
-    else:
+    elif args.action == "export":
         load_execution_attestation(args.attestation)
         result = exporter(
             repo_root=args.repo_root,
             result_paths=args.result,
+            output_dir=args.output_dir,
+            signing_key=args.signing_key,
+        )
+    else:
+        load_execution_attestation(args.attestation)
+        audit_result = audit_runner(
+            repo_root=args.repo_root,
+            case_root=args.case_root,
+        )
+        result = exporter(
+            repo_root=args.repo_root,
+            result_paths=list(audit_result.result_paths),
             output_dir=args.output_dir,
             signing_key=args.signing_key,
         )
