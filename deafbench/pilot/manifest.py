@@ -233,6 +233,8 @@ def verify_signed_manifest(
 
     try:
         document = json.loads(Path(path).read_text(encoding="utf-8"))
+        if not isinstance(document, dict):
+            return False
         signature = document.pop("signature")
         payload = _validate_payload(document)
         if set(signature) != {

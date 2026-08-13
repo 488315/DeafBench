@@ -137,6 +137,16 @@ def test_manifest_signature_rejects_tampering(tmp_path: Path) -> None:
     assert verify_signed_manifest(manifest) is False
 
 
+@pytest.mark.parametrize("document", [[], "manifest", 1, None])
+def test_manifest_verification_rejects_nonobject_json(
+    tmp_path: Path, document: object
+) -> None:
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(json.dumps(document), encoding="utf-8")
+
+    assert verify_signed_manifest(manifest) is False
+
+
 def test_manifest_rejects_private_key_inside_export(tmp_path: Path) -> None:
     export = tmp_path / "export"
     export.mkdir()
