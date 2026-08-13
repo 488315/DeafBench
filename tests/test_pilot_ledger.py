@@ -88,7 +88,9 @@ def test_ledger_lock_blocks_another_writer_until_history_is_complete(
     )
 
     with _locked_ledger(path):
-        worker = subprocess.Popen([sys.executable, "-c", command, str(path)])
+        worker = subprocess.Popen(
+            [sys.executable, "-S", "-c", command, str(path)]
+        )
         with pytest.raises(subprocess.TimeoutExpired):
             worker.wait(timeout=0.1)
     assert worker.wait(timeout=3) == 0
