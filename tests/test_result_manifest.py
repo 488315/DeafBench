@@ -132,6 +132,7 @@ def test_result_manifest_is_byte_stable() -> None:
     [
         (lambda payload: payload.pop("claim_boundary"), "result manifest missing"),
         (lambda payload: payload.update(schema_version=2), "unsupported"),
+        (lambda payload: payload.update(schema_version=True), "unsupported"),
         (lambda payload: payload.update(status="draft"), "unsupported"),
         (lambda payload: payload.update(claim_boundary=""), "claim_boundary"),
         (lambda payload: payload.update(evaluator_revision="main"), "evaluator revision"),
@@ -153,6 +154,10 @@ def test_result_manifest_is_byte_stable() -> None:
         ),
         (
             lambda payload: payload["evaluations"][0].update(sample_count=0),
+            "invalid sample count",
+        ),
+        (
+            lambda payload: payload["evaluations"][0].update(sample_count=True),
             "invalid sample count",
         ),
         (
@@ -218,6 +223,14 @@ def test_result_manifest_rejects_invalid_metric_values(
     payload["evaluations"][0]["metrics"][field] = value
 
     with pytest.raises(ResultManifestError, match=message):
+        validate_result_manifest(payload)
+
+
+def test_result_manifest_rejects_oversized_integer_metric() -> None:
+    payload = deepcopy(_PAYLOAD)
+    payload["evaluations"][0]["metrics"]["substitutions"] = 10**1000
+
+    with pytest.raises(ResultManifestError, match="substitutions"):
         validate_result_manifest(payload)
 
 

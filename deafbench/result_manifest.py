@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import math
 import re
+import sys
 from numbers import Real
 from typing import Any, Mapping, Sequence
 
@@ -78,7 +79,9 @@ def _validate_metrics(lane: str, metrics: Mapping[str, Any]) -> None:
     for field, value in metrics.items():
         if isinstance(value, bool) or not isinstance(value, Real):
             raise ResultManifestError(f"invalid {field} metric")
-        if not math.isfinite(float(value)) or value < 0:
+        if value < 0 or (
+            isinstance(value, int) and value > sys.float_info.max
+        ) or (isinstance(value, float) and not math.isfinite(value)):
             raise ResultManifestError(f"invalid {field} metric")
         if field in count_fields and not isinstance(value, int):
             raise ResultManifestError(f"invalid {field} metric")
@@ -121,7 +124,12 @@ def validate_result_manifest(payload: object) -> Mapping[str, Any]:
         },
         "result manifest",
     )
-    if manifest["schema_version"] != 1 or manifest["status"] not in _STATUS_LANES:
+    if (
+        isinstance(manifest["schema_version"], bool)
+        or not isinstance(manifest["schema_version"], int)
+        or manifest["schema_version"] != 1
+        or manifest["status"] not in _STATUS_LANES
+    ):
         raise ResultManifestError("unsupported result manifest state")
     if not isinstance(manifest["claim_boundary"], str) or not manifest[
         "claim_boundary"
@@ -174,7 +182,11 @@ def validate_result_manifest(payload: object) -> Mapping[str, Any]:
         )
         if record["scope"] != expected_scope:
             raise ResultManifestError(f"invalid scope for evaluation lane: {lane}")
-        if not isinstance(record["sample_count"], int) or record["sample_count"] <= 0:
+        if (
+            isinstance(record["sample_count"], bool)
+            or not isinstance(record["sample_count"], int)
+            or record["sample_count"] <= 0
+        ):
             raise ResultManifestError(f"invalid sample count for evaluation lane: {lane}")
         metrics = _mapping(record["metrics"], "metrics")
         _validate_metrics(lane, metrics)
