@@ -111,6 +111,53 @@ def test_load_authorization_rejects_unsafe_permission_envelopes(
         load_authorization(path, expected_case_id=case_id)
 
 
+@pytest.mark.parametrize(
+    ("payload", "message"),
+    (
+        ("not-json", "unreadable"),
+        ("[]", "must be an object"),
+    ),
+)
+def test_load_authorization_rejects_unreadable_or_non_object_records(
+    tmp_path: Path,
+    payload: str,
+    message: str,
+) -> None:
+    path = tmp_path / "authorization.json"
+    path.write_text(payload, encoding="utf-8")
+
+    with pytest.raises(ValueError, match=message):
+        load_authorization(path, expected_case_id="case-" + "f" * 32)
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    (
+        ("schema_version", 2, "schema version"),
+        ("case_id", "customer-name", "case ID"),
+        ("authorization_reference", " ", "nonempty text"),
+        ("authorization_date", "August 10", "ISO date"),
+        ("planned_delivery_date", "tomorrow", "ISO date"),
+        ("permitted_models", "Qwen/Qwen3-ASR-1.7B-hf", "nonempty unique"),
+        ("permitted_models", [""], "nonempty unique"),
+    ),
+)
+def test_load_authorization_rejects_malformed_field_values(
+    tmp_path: Path,
+    field: str,
+    value: object,
+    message: str,
+) -> None:
+    case_id = "case-" + "f" * 32
+    record = _record(case_id)
+    record[field] = value
+    path = tmp_path / "authorization.json"
+    _write(path, record)
+
+    with pytest.raises(ValueError, match=message):
+        load_authorization(path, expected_case_id=case_id)
+
+
 def test_intake_rejects_unsafe_sensitivity_or_exclusion_declarations() -> None:
     safe_exclusions = {category: False for category in PROHIBITED_CATEGORIES}
 
