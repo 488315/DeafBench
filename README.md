@@ -1,26 +1,71 @@
 # DeafBench
 
-Evaluate what ASR metrics miss.
+I wrote DeafBench because I am Deaf, I use cochlear implants, and the normal
+ASR score does not always describe whether captions are useful to me. A system
+can have a low word error rate and still get the time, medication amount,
+username, Wi-Fi name, confirmation code, speaker, or sound event wrong. Those
+are not small mistakes when the caption is the information I have to act on.
 
-DeafBench is an open-source benchmark for measuring AI caption failures that matter to Deaf and hard-of-hearing users.
+My background is in IT, so I built this like an audit instead of a demo.
+DeafBench keeps the references, model revisions, decoding settings, evaluator
+revision, and artifact hashes with the result. It reports WER, but it also
+reports strict lexical and typed canonical recall for critical information,
+non-speech information, speaker attribution, latency, and the actual
+substitution, insertion, and deletion counts. The typed evaluator only accepts
+the harmless representation changes allowed for that entity type; it does not
+turn a different username, code, time, or Wi-Fi name into a pass.
 
-## Why DeafBench?
+The project now has two separate jobs. The synthetic track measures whether an
+ASR system preserves accessibility-critical information. The Hugging Face
+compatibility track uses the pinned Open ASR Leaderboard datasets, normalizer,
+preprocessing, WER calculation, and seven-dataset macro-average. I do not mix
+those scores because they answer different questions.
 
-I'm Deaf, I use cochlear implants, and I have an IT background, so I look at captioning the same way I'd troubleshoot a system: if it drops the part that matters, a good-looking metric does not mean much.
+## The goal
 
-The captioning systems I personally struggle with most are Google Chrome Live Caption and Android Live Caption through Android System Intelligence. Google Gemini can also have a hard time understanding me when I speak. My speech isn't always clear, but I still try my best to speak, and I want speech systems to be tested for that real-world accessibility gap instead of only clean audio.
+My goal is to build an ASR system that beats the Hugging Face Open ASR
+Leaderboard while still doing better on the information that matters to Deaf
+and hard-of-hearing users. The current reproduced Zipformer baseline scored
+**5.23% public seven-set macro WER** with the pinned official-compatible local
+workflow. That result is useful evidence that the runner matches the public
+contract, but it is not a verified leaderboard win, it does not include the
+private sets, and the Zipformer checkpoint is CC-BY-NC-4.0, so it cannot be the
+commercial foundation without separate permission.
 
-DeafBench is an **ASR benchmark for Deaf and hard-of-hearing captions** built for **caption evaluation beyond word error rate (WER)**. It checks what speech-to-text and automatic speech recognition systems preserve, including critical information, environmental sound captions, speaker attribution, and latency.
+I will only say DeafBench beat the leaderboard after a separate candidate is
+evaluated at a declared milestone and Hugging Face verifies the result. Until
+then, 5.23% is the local public compatibility baseline to beat, not a product
+claim. The exact upstream revisions, commands, and evidence are in
+[`experiments/open-asr/README.md`](experiments/open-asr/README.md).
 
-The goal is simple: compare ASR and audio-captioning systems based on what a Deaf or hard-of-hearing user actually gets, not just how close the transcript is word for word.
+## Models that work with DeafBench
 
-DeafBench also includes a pinned, fail-closed Open ASR Leaderboard research
-workflow. Its first complete public-set baseline is Zipformer at **1.31%
-official WER on LibriSpeech test-clean** (2,620 utterances). That is one of
-seven public sets, not a leaderboard composite or private-test result. The
-baseline checkpoint is CC-BY-NC-4.0 and therefore is not a commercial product
-foundation without separate permission. Reproduction commands and exact
-revisions are in `experiments/open-asr/README.md`.
+The models below have working adapters in this repository. The seven newer
+adapters have completed a 25-sample synthetic-v2 run and a two-row public
+real-speech smoke run, with byte-stable local result manifests under
+`experiments/model-results`. A smoke run proves that the pinned adapter executes
+and produces a valid result; it does not prove model quality or a leaderboard
+score.
+
+| DeafBench model name | Pinned model | Current evidence | License lane |
+| --- | --- | --- | --- |
+| `whisper` | OpenAI Whisper `turbo` | Core v1 and non-speech v1 reports | Runtime model; review upstream terms |
+| `whisper-at` | Whisper-AT `medium.en` | Adapter and benchmark workflow | Research integration; review upstream terms |
+| `faster-whisper` | `Systran/faster-whisper-small.en` | Frozen Core v1 baseline | Runtime model; review upstream terms |
+| `distil-whisper` | `distil-whisper/distil-large-v3` | Adapter and local runner | Runtime model; review upstream terms |
+| `qwen3-asr-0.6b` | `Qwen/Qwen3-ASR-0.6B-hf` | Synthetic-v2 plus real-speech smoke | Commercial candidate, Apache-2.0 |
+| `qwen3-asr-1.7b` | `Qwen/Qwen3-ASR-1.7B-hf` | Synthetic-v2 plus real-speech smoke | Commercial candidate, Apache-2.0 |
+| `parakeet-tdt-0.6b-v2` | `nvidia/parakeet-tdt-0.6b-v2` | Synthetic-v2 plus real-speech smoke | Commercial candidate, CC-BY-4.0 attribution required |
+| `granite-speech-4.1-2b` | `ibm-granite/granite-speech-4.1-2b` | Synthetic-v2 plus real-speech smoke | Commercial candidate, Apache-2.0 |
+| `granite-speech-4.1-2b-nar` | `ibm-granite/granite-speech-4.1-2b-nar` | Synthetic-v2 plus real-speech smoke | Commercial candidate, Apache-2.0; audited remote code |
+| `ark-asr-0.6b` | `AutoArk-AI/ARK-ASR-0.6B` | Synthetic-v2 plus real-speech smoke | Commercial candidate, Apache-2.0; audited isolated remote code |
+| `ark-asr-0.6b-int8-onnx` | `AutoArk-AI/ark-asr-0.6b-int8-onnx` | Synthetic-v2 plus real-speech smoke | Commercial candidate, Apache-2.0; audited isolated remote code |
+
+The machine-readable registry at
+[`deafbench/model-registry.json`](deafbench/model-registry.json) pins revisions,
+runtimes, license classifications, attribution requirements, expected download
+sizes, and measured peak VRAM. That registry is operational metadata, not legal
+advice. Model weights are third-party software and are not owned by DeafBench.
 
 ## OpenAI Whisper turbo results
 
