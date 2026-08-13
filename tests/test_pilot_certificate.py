@@ -25,9 +25,22 @@ def test_certificate_records_verified_content_free_deletion(tmp_path: Path) -> N
     )
 
     document = json.loads(path.read_text(encoding="utf-8"))
-    assert document["certificate_sha256"] == digest
-    assert document["verification_result"] == "passed"
-    assert "customer" not in path.read_text(encoding="utf-8").lower()
+    assert document == {
+        "schema_version": 1,
+        "case_id": "case-test",
+        "artifact_categories": ["input", "work"],
+        "paths_checked": ["X:/cases/case-id/input", "X:/backups"],
+        "deleted_at": "2026-08-10T00:00:00+00:00",
+        "method": "verified logical deletion",
+        "operator": "operator-account",
+        "verification_result": "passed",
+        "retained_non_sensitive_records": [
+            "aggregate metrics",
+            "contract",
+            "deletion evidence",
+        ],
+        "certificate_sha256": digest,
+    }
 
 
 def test_certificate_is_byte_stable(tmp_path: Path) -> None:
