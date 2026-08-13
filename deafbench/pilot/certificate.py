@@ -20,7 +20,12 @@ def issue_deletion_certificate(
     deleted_at: datetime,
     retained_records: Iterable[str],
 ) -> str:
-    """Write a byte-stable certificate and return its SHA-256 digest."""
+    """Write a byte-stable certificate and return its SHA-256 digest.
+
+    Verifiers remove ``certificate_sha256``, serialize the remaining payload
+    with sorted keys and compact separators, and hash its UTF-8 bytes. The
+    pretty-printed certificate file bytes are not the digest input.
+    """
 
     if not result.verified:
         raise ValueError("certificate requires verified deletion")
