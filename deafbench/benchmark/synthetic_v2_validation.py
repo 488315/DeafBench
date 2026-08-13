@@ -38,8 +38,10 @@ def _jsonl_by_id(path: Path) -> dict[str, Mapping[str, Any]]:
         if not line.strip():
             continue
         value = json.loads(line)
+        if not isinstance(value, dict):
+            raise ValueError(f"invalid validation input record: {path}")
         sample_id = value.get("id")
-        if not isinstance(value, dict) or not isinstance(sample_id, str):
+        if not isinstance(sample_id, str):
             raise ValueError(f"invalid validation input record: {path}")
         if sample_id in records:
             raise ValueError(f"duplicate validation input ID: {sample_id}")

@@ -5,9 +5,13 @@ import wave
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from deafbench.benchmark.quality import AlignmentEvidence
-from deafbench.benchmark.synthetic_v2_validation import validate_replacement_candidates
+from deafbench.benchmark.synthetic_v2_validation import (
+    _jsonl_by_id,
+    validate_replacement_candidates,
+)
 
 
 class _Aligner:
@@ -50,6 +54,15 @@ def _write_wav(path: Path) -> None:
         handle.setsampwidth(2)
         handle.setframerate(rate)
         handle.writeframes(pcm.tobytes())
+
+
+@pytest.mark.parametrize("record", [[], "sample-1", 1, None])
+def test_validation_rejects_nonobject_json_records(tmp_path: Path, record) -> None:
+    manifest = tmp_path / "manifest.jsonl"
+    manifest.write_text(json.dumps(record) + "\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="invalid validation input record"):
+        _jsonl_by_id(manifest)
 
 
 def test_validation_records_all_gate_and_validator_evidence(tmp_path: Path):
