@@ -1,10 +1,12 @@
 import json
+import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
 
-from deafbench.pilot.ledger import append_event, verify_ledger
+from deafbench.pilot.ledger import _locked_ledger, append_event, verify_ledger
 
 
 def test_ledger_is_append_only_and_hash_chained(tmp_path: Path) -> None:
@@ -72,3 +74,23 @@ def test_ledger_rejects_invalid_allowed_metadata_value(tmp_path: Path) -> None:
             event="model_execution",
             metadata={"model_id": "customer name"},
         )
+
+
+def test_ledger_lock_blocks_another_writer_until_history_is_complete(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "ledger.jsonl"
+    command = (
+        "from pathlib import Path; "
+        "from deafbench.pilot.ledger import append_event; "
+        "append_event(Path(__import__('sys').argv[1]), "
+        "case_id='case-' + 'a' * 32, event='access')"
+    )
+
+    with _locked_ledger(path):
+        worker = subprocess.Popen([sys.executable, "-c", command, str(path)])
+        with pytest.raises(subprocess.TimeoutExpired):
+            worker.wait(timeout=0.1)
+    assert worker.wait(timeout=3) == 0
+
+    assert verify_ledger(path) is True
