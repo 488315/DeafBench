@@ -2,4 +2,12 @@
 set -eu
 
 repo_root="$(git rev-parse --show-toplevel)"
-exec python -m deafbench.pilot.hook --repo-root "$repo_root"
+if command -v python >/dev/null 2>&1; then
+    interpreter=python
+elif command -v python3 >/dev/null 2>&1; then
+    interpreter=python3
+else
+    echo "pre-commit: no Python interpreter found" >&2
+    exit 1
+fi
+exec "$interpreter" -m deafbench.pilot.hook --repo-root "$repo_root"

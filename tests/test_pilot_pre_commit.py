@@ -75,3 +75,12 @@ def test_ci_runs_tracked_customer_artifact_scan() -> None:
     assert "--tracked" in workflow
     assert "github.event.pull_request.base.sha" in workflow
     assert "fetch-depth: 0" in workflow
+
+
+def test_pre_commit_hook_falls_back_to_python3() -> None:
+    script = (Path(__file__).parents[1] / ".githooks/pre-commit").read_text(
+        encoding="utf-8"
+    )
+
+    assert "command -v python3" in script
+    assert 'exec "$interpreter" -m deafbench.pilot.hook' in script
