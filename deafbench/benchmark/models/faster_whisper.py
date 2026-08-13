@@ -65,22 +65,17 @@ def _run_local_whisper(
         records.append({"id": wav_path.stem, "text": "".join(text_parts)})
 
     atomic_write_jsonl(output, records)
+    decoding = None
+    if model_revision is not None:
+        decoding = {
+            key: value for key, value in model_options.items() if key != "revision"
+        }
+        decoding.update(transcribe_options)
     return ModelRunInfo(
         model_name,
         model_id,
         revision=model_revision,
-        decoding=(
-            {
-                **{
-                    key: value
-                    for key, value in model_options.items()
-                    if key != "revision"
-                },
-                **transcribe_options,
-            }
-            if model_revision is not None
-            else None
-        ),
+        decoding=decoding,
     )
 
 
