@@ -8,6 +8,7 @@ import pytest
 import numpy
 from scipy.signal import resample_poly
 
+from deafbench.benchmark.models import qwen3_asr
 from deafbench.benchmark.models.qwen3_asr import run_qwen3_asr
 from deafbench.model_registry import ModelRegistryError
 
@@ -213,3 +214,75 @@ def test_qwen_adapter_rejects_unregistered_model_before_backend_load(
             model_id="untrusted/model",
             backend=SimpleNamespace(),
         )
+
+
+@pytest.mark.parametrize(
+    ("license_metadata", "message"),
+    [
+        (
+            SimpleNamespace(
+                remote_code_required=True,
+                supported_runtimes=("transformers",),
+                revision="a" * 40,
+            ),
+            "rejects remote-code model",
+        ),
+        (
+            SimpleNamespace(
+                remote_code_required=False,
+                supported_runtimes=("onnxruntime",),
+                revision="b" * 40,
+            ),
+            "requires a registered Transformers runtime",
+        ),
+    ],
+)
+def test_qwen_adapter_rejects_unsafe_registered_runtime(
+    monkeypatch: pytest.MonkeyPatch,
+    license_metadata: SimpleNamespace,
+    message: str,
+) -> None:
+    monkeypatch.setattr(
+        qwen3_asr,
+        "get_model_license",
+        lambda _model_id: license_metadata,
+    )
+
+    with pytest.raises(ModelRegistryError, match=message):
+        qwen3_asr._licensed_revision("registered/model")
+
+
+@pytest.mark.parametrize("decoded", ["transcript", [], [1], ["one", "two"]])
+def test_qwen_adapter_rejects_malformed_transcription(decoded: object) -> None:
+    processor = SimpleNamespace(decode=lambda *_args, **_kwargs: decoded)
+
+    with pytest.raises(ValueError, match="Invalid Qwen3-ASR transcription output"):
+        qwen3_asr._decode_transcription(processor, "generated-ids")
+
+
+def test_qwen_audio_reader_preserves_matching_sample_rate(tmp_path: Path) -> None:
+    audio = tmp_path / "matching-rate.wav"
+    _write_wav(audio)
+
+    samples, duration = qwen3_asr._read_pcm16_mono(
+        audio,
+        48_000,
+        numpy,
+        resample_poly,
+    )
+
+    assert samples.shape == (16,)
+    assert samples.dtype == numpy.float32
+    assert duration == pytest.approx(16 / 48_000)
+
+
+def test_qwen_audio_reader_rejects_non_mono_pcm16(tmp_path: Path) -> None:
+    audio = tmp_path / "stereo.wav"
+    with wave.open(str(audio), "wb") as handle:
+        handle.setnchannels(2)
+        handle.setsampwidth(2)
+        handle.setframerate(48_000)
+        handle.writeframes(b"\x00\x00" * 32)
+
+    with pytest.raises(ValueError, match="requires mono PCM16 WAV"):
+        qwen3_asr._read_pcm16_mono(audio, 16_000, numpy, resample_poly)
