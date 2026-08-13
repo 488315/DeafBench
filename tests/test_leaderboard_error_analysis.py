@@ -9,6 +9,8 @@ def _distance(reference, prediction, *, merge_compounds):
     assert isinstance(prediction, tuple)
     if reference == prediction:
         return {"ins": 0, "del": 0, "sub": 0}
+    if reference[0] == "two":
+        return {"ins": 2, "del": 1, "sub": 1}
     return {"ins": 1, "del": 0, "sub": 1}
 
 
@@ -38,17 +40,17 @@ def test_analysis_ranks_error_mass_and_preserves_diagnostic_text():
     assert result == {
         "analyzed_rows": 2,
         "reference_words": 6,
-        "errors": {"del": 0, "ins": 2, "sub": 2},
+        "errors": {"del": 1, "ins": 3, "sub": 2},
         "top_errors": [
             {
-                "row": 0,
-                "audio_filepath": "sample_0",
-                "duration": 1.5,
-                "reference": "dr ada speaks",
-                "prediction": "physician ada speaks",
+                "row": 1,
+                "audio_filepath": "sample_1",
+                "duration": 2.0,
+                "reference": "two rare names",
+                "prediction": "too names here",
                 "reference_words": 3,
-                "errors": {"del": 0, "ins": 1, "sub": 1},
-                "wer": 66.67,
+                "errors": {"del": 1, "ins": 2, "sub": 1},
+                "wer": 133.33,
             }
         ],
     }
