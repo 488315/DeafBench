@@ -6,6 +6,7 @@ import wave
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from deafbench.benchmark.synthetic_v2_corpus import (
     REPLACEMENT_REASONS,
@@ -121,12 +122,8 @@ def test_builder_refuses_to_overwrite_a_candidate_corpus(tmp_path: Path):
     destination = tmp_path / "synthetic-v2"
     destination.mkdir()
 
-    try:
+    with pytest.raises(FileExistsError, match="synthetic-v2"):
         build_synthetic_v2_candidates(tmp_path / "core", destination, _FakeGenerator())
-    except FileExistsError as error:
-        assert "synthetic-v2" in str(error)
-    else:
-        raise AssertionError("existing corpus was overwritten")
 
 
 def test_builder_makes_only_promoted_corpus_readable(
