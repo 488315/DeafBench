@@ -1,11 +1,8 @@
-from contextlib import nullcontext
 import hashlib
 from io import BytesIO
-import sys
 from types import SimpleNamespace
 
 import pytest
-
 from deafbench.benchmark.forced_alignment import (
     MMSForcedAligner,
     coverage_from_word_scores,
@@ -50,22 +47,6 @@ def test_alignment_coverage_rejects_invalid_score_floor():
         coverage_from_word_scores((), (), {}, score_threshold=1.1)
 
 
-class _Waveform:
-    def unsqueeze(self, dimension):
-        assert dimension == 0
-        return self
-
-    def to(self, device):
-        assert device == "cpu"
-        return self
-
-
-class _Samples:
-    def mean(self, *, axis):
-        assert axis == 1
-        return "mono"
-
-
 class _Model:
     def to(self, device):
         assert device == "cpu"
@@ -75,7 +56,7 @@ class _Model:
         return self
 
     def __call__(self, waveform):
-        assert isinstance(waveform, _Waveform)
+        assert waveform.to("cpu") is waveform
         return (["emission"], None)
 
     def state_dict(self):
@@ -90,7 +71,9 @@ class _Model:
         return {"weight": tensor}
 
 
-def _install_fake_alignment_runtime(monkeypatch, tmp_path, *, decoded_bytes=None):
+def _install_fake_alignment_runtime(
+    install_fake_torchaudio_runtime, *, decoded_bytes=None
+):
     bundle = SimpleNamespace(
         _path="https://download.example/mms.pt",
         sample_rate=16_000,
@@ -100,37 +83,26 @@ def _install_fake_alignment_runtime(monkeypatch, tmp_path, *, decoded_bytes=None
             [SimpleNamespace(score=0.9) for _ in word] for word in tokens
         ],
     )
-    torch = SimpleNamespace(
-        device=lambda value: value,
-        from_numpy=lambda mono: _Waveform(),
-        hub=SimpleNamespace(get_dir=lambda: str(tmp_path)),
-        inference_mode=nullcontext,
-    )
-    torchaudio = SimpleNamespace(
-        __version__="2.9.1",
-        functional=SimpleNamespace(resample=lambda waveform, source, target: waveform),
-    )
-    def read(source, **kwargs):
+    def inspect_decoded_audio(source):
         assert isinstance(source, BytesIO)
         if decoded_bytes is not None:
             decoded_bytes.append(source.read())
-        return _Samples(), 48_000
 
-    soundfile = SimpleNamespace(read=read)
-    monkeypatch.setitem(sys.modules, "torch", torch)
-    monkeypatch.setitem(sys.modules, "torchaudio", torchaudio)
-    monkeypatch.setitem(
-        sys.modules,
-        "torchaudio.pipelines",
-        SimpleNamespace(MMS_FA=bundle),
+    install_fake_torchaudio_runtime(
+        bundle=bundle,
+        pipeline_name="MMS_FA",
+        on_soundfile_read=inspect_decoded_audio,
     )
-    monkeypatch.setitem(sys.modules, "soundfile", soundfile)
     return bundle
 
 
-def test_mms_aligner_records_artifact_and_aligns_reference(monkeypatch, tmp_path):
+def test_mms_aligner_records_artifact_and_aligns_reference(
+    install_fake_torchaudio_runtime, tmp_path
+):
     decoded_bytes = []
-    _install_fake_alignment_runtime(monkeypatch, tmp_path, decoded_bytes=decoded_bytes)
+    _install_fake_alignment_runtime(
+        install_fake_torchaudio_runtime, decoded_bytes=decoded_bytes
+    )
     aligner = MMSForcedAligner()
     prepared = prepare_spoken_reference(
         "Meet at eight thirty",
@@ -149,8 +121,8 @@ def test_mms_aligner_records_artifact_and_aligns_reference(monkeypatch, tmp_path
     assert evidence.audio_sha256 == hashlib.sha256(decoded_bytes[0]).hexdigest()
 
 
-def test_mms_aligner_rejects_empty_model_state(monkeypatch, tmp_path):
-    bundle = _install_fake_alignment_runtime(monkeypatch, tmp_path)
+def test_mms_aligner_rejects_empty_model_state(install_fake_torchaudio_runtime):
+    bundle = _install_fake_alignment_runtime(install_fake_torchaudio_runtime)
     bundle.get_model = lambda **kwargs: SimpleNamespace(
         to=lambda device: SimpleNamespace(
             eval=lambda: SimpleNamespace(state_dict=lambda: {})
