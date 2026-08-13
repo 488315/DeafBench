@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from deafbench.pilot.authorization import load_authorization
+from deafbench.pilot.intake import PROHIBITED_CATEGORIES, evaluate_intake
 
 
 def _record(case_id: str) -> dict[str, object]:
@@ -78,3 +79,51 @@ def test_load_authorization_rejects_case_or_date_mismatch(tmp_path: Path) -> Non
     _write(path, value)
     with pytest.raises(ValueError, match="case ID"):
         load_authorization(path, expected_case_id="case-" + "d" * 32)
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    (
+        ("ownership_confirmed", False, "ownership"),
+        ("deletion_agreement", False, "deletion agreement"),
+        ("planned_deletion_date", "2026-08-27", "exceeds the 14-day"),
+        ("permitted_models", [], "nonempty unique"),
+        (
+            "permitted_models",
+            ["Qwen/Qwen3-ASR-1.7B-hf", "Qwen/Qwen3-ASR-1.7B-hf"],
+            "nonempty unique",
+        ),
+    ),
+)
+def test_load_authorization_rejects_unsafe_permission_envelopes(
+    tmp_path: Path,
+    field: str,
+    value: object,
+    message: str,
+) -> None:
+    case_id = "case-" + "e" * 32
+    record = _record(case_id)
+    record[field] = value
+    path = tmp_path / "authorization.json"
+    _write(path, record)
+
+    with pytest.raises(ValueError, match=message):
+        load_authorization(path, expected_case_id=case_id)
+
+
+def test_intake_rejects_unsafe_sensitivity_or_exclusion_declarations() -> None:
+    safe_exclusions = {category: False for category in PROHIBITED_CATEGORIES}
+
+    with pytest.raises(ValueError, match="classification"):
+        evaluate_intake(
+            sensitivity_classification="confidential",
+            prohibited_categories=safe_exclusions,
+        )
+
+    decision = evaluate_intake(
+        sensitivity_classification="synthetic",
+        prohibited_categories={**safe_exclusions, "medical_records": True},
+    )
+
+    assert decision.accepted is False
+    assert decision.reason_codes == ("medical_records",)
