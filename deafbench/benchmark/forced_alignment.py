@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Mapping, Sequence
+from io import BytesIO
 from pathlib import Path
 from typing import Any
 
@@ -81,10 +82,18 @@ class MMSForcedAligner:
             f"model_sha256={_model_sha256(self._model)}"
         )
 
-    def _word_scores(self, audio_path: Path, words: tuple[str, ...]) -> tuple[tuple[float, ...], ...]:
+    def _word_scores(
+        self,
+        audio_bytes: bytes,
+        words: tuple[str, ...],
+    ) -> tuple[tuple[float, ...], ...]:
         import soundfile as sf
 
-        samples, sample_rate = sf.read(audio_path, dtype="float32", always_2d=True)
+        samples, sample_rate = sf.read(
+            BytesIO(audio_bytes),
+            dtype="float32",
+            always_2d=True,
+        )
         mono = samples.mean(axis=1)
         waveform = self._torch.from_numpy(mono).unsqueeze(0)
         if sample_rate != self._bundle.sample_rate:
@@ -112,7 +121,8 @@ class MMSForcedAligner:
         score_threshold: float,
     ) -> AlignmentEvidence:
         """Align one exact prepared reference and summarize coverage."""
-        word_scores = self._word_scores(Path(audio_path), prepared.words)
+        audio_bytes = Path(audio_path).read_bytes()
+        word_scores = self._word_scores(audio_bytes, prepared.words)
         token_coverage, entity_coverage = coverage_from_word_scores(
             prepared.words,
             word_scores,
@@ -121,7 +131,7 @@ class MMSForcedAligner:
         )
         return AlignmentEvidence(
             reference_sha256=prepared.reference_sha256,
-            audio_sha256=hashlib.sha256(Path(audio_path).read_bytes()).hexdigest(),
+            audio_sha256=hashlib.sha256(audio_bytes).hexdigest(),
             token_coverage=token_coverage,
             critical_entity_coverage=entity_coverage,
             coverage_score_threshold=score_threshold,

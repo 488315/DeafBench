@@ -1,4 +1,6 @@
 from contextlib import nullcontext
+import hashlib
+from io import BytesIO
 import sys
 from types import SimpleNamespace
 
@@ -88,7 +90,7 @@ class _Model:
         return {"weight": tensor}
 
 
-def _install_fake_alignment_runtime(monkeypatch, tmp_path):
+def _install_fake_alignment_runtime(monkeypatch, tmp_path, *, decoded_bytes=None):
     bundle = SimpleNamespace(
         _path="https://download.example/mms.pt",
         sample_rate=16_000,
@@ -108,7 +110,13 @@ def _install_fake_alignment_runtime(monkeypatch, tmp_path):
         __version__="2.9.1",
         functional=SimpleNamespace(resample=lambda waveform, source, target: waveform),
     )
-    soundfile = SimpleNamespace(read=lambda *args, **kwargs: (_Samples(), 48_000))
+    def read(source, **kwargs):
+        assert isinstance(source, BytesIO)
+        if decoded_bytes is not None:
+            decoded_bytes.append(source.read())
+        return _Samples(), 48_000
+
+    soundfile = SimpleNamespace(read=read)
     monkeypatch.setitem(sys.modules, "torch", torch)
     monkeypatch.setitem(sys.modules, "torchaudio", torchaudio)
     monkeypatch.setitem(
@@ -121,7 +129,8 @@ def _install_fake_alignment_runtime(monkeypatch, tmp_path):
 
 
 def test_mms_aligner_records_artifact_and_aligns_reference(monkeypatch, tmp_path):
-    _install_fake_alignment_runtime(monkeypatch, tmp_path)
+    decoded_bytes = []
+    _install_fake_alignment_runtime(monkeypatch, tmp_path, decoded_bytes=decoded_bytes)
     aligner = MMSForcedAligner()
     prepared = prepare_spoken_reference(
         "Meet at eight thirty",
@@ -136,6 +145,8 @@ def test_mms_aligner_records_artifact_and_aligns_reference(monkeypatch, tmp_path
     assert evidence.critical_entity_coverage == {"eight thirty": 1.0}
     assert evidence.adapter == "torchaudio-MMS_FA"
     assert evidence.adapter_revision.startswith("torchaudio=2.9.1;model_sha256=")
+    assert decoded_bytes == [b"fixture"]
+    assert evidence.audio_sha256 == hashlib.sha256(decoded_bytes[0]).hexdigest()
 
 
 def test_mms_aligner_rejects_empty_model_state(monkeypatch, tmp_path):
