@@ -198,13 +198,18 @@ def evaluate_interstitial_prediction(
 
     unannotated = _BRACKETED_EVENT.sub(_remove_known_event_annotation, text)
     hallucinated_words = _LEXICAL_TOKEN.findall(unannotated)
+    unsupported_label = any(
+        _normalize_sound_label(match.group(1)) not in _KNOWN_EVENT_LABELS
+        for match in _BRACKETED_EVENT.finditer(text)
+    )
     for sound in sounds:
         if _normalize_sound_label(sound) not in _KNOWN_EVENT_LABELS:
+            unsupported_label = True
             hallucinated_words.extend(_LEXICAL_TOKEN.findall(sound))
     emitted_output = bool(text.strip() or sounds)
     return InterstitialResponse(
         ignored=not emitted_output,
-        lexical_hallucination=bool(hallucinated_words),
+        lexical_hallucination=unsupported_label or bool(hallucinated_words),
         hallucinated_word_count=len(hallucinated_words),
         non_speech_labels=tuple(str(sound) for sound in sounds),
     )
