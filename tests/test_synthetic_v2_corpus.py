@@ -1,6 +1,7 @@
 import hashlib
 import json
 import math
+import os
 import wave
 from pathlib import Path
 
@@ -126,3 +127,58 @@ def test_builder_refuses_to_overwrite_a_candidate_corpus(tmp_path: Path):
         assert "synthetic-v2" in str(error)
     else:
         raise AssertionError("existing corpus was overwritten")
+
+
+def test_builder_makes_only_promoted_corpus_readable(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    core = tmp_path / "core-v1"
+    core_audio = core / "audio-synthetic"
+    core_audio.mkdir(parents=True)
+    records = [
+        {
+            "id": sample_id,
+            "text": f"Say {index}.",
+            "critical": [str(index)],
+            "critical_types": {str(index): "DIGIT_SEQUENCE"},
+            "sounds": [],
+        }
+        for index, sample_id in enumerate(REPLACEMENT_REASONS, start=1)
+    ]
+    (core / "references.jsonl").write_text(
+        "".join(json.dumps(record) + "\n" for record in records),
+        encoding="utf-8",
+    )
+    for index, record in enumerate(records, start=1):
+        _wav(core_audio / f"{record['id']}.wav", 180 + index)
+
+    destination = tmp_path / "synthetic-v2"
+    events: list[tuple[str, Path, Path | int]] = []
+    real_replace = os.replace
+
+    def record_replace(source, target) -> None:
+        events.append(("replace", Path(source), Path(target)))
+        real_replace(source, target)
+
+    def record_chmod(path: Path, mode: int) -> None:
+        events.append(("chmod", path, mode))
+
+    monkeypatch.setattr("deafbench.benchmark.synthetic_v2_corpus.os.replace", record_replace)
+    monkeypatch.setattr(Path, "chmod", record_chmod)
+
+    build_synthetic_v2_candidates(core, destination, _FakeGenerator())
+
+    promotion = next(
+        index
+        for index, event in enumerate(events)
+        if event[0] == "replace" and event[2] == destination
+    )
+    chmod_events = [event for event in events if event[0] == "chmod"]
+    assert chmod_events
+    assert all(events.index(event) > promotion for event in chmod_events)
+    assert all(
+        path == destination or destination in path.parents
+        for _, path, _ in chmod_events
+    )
+    assert {mode for _, _, mode in chmod_events} == {0o644, 0o755}

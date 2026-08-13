@@ -95,6 +95,12 @@ def _compact_scene_edges(plan: Any) -> Any:
     )
 
 
+def _make_published_corpus_readable(destination: Path) -> None:
+    """Expose the promoted corpus without granting group or world write access."""
+    for path in (destination, *destination.rglob("*")):
+        path.chmod(0o755 if path.is_dir() else 0o644)
+
+
 def build_synthetic_v2_candidates(
     core_v1_dir: Path,
     destination: Path,
@@ -186,6 +192,7 @@ def build_synthetic_v2_candidates(
         manifest_path = staging / "generation-manifest.jsonl"
         atomic_write_jsonl(manifest_path, manifest)
         os.replace(staging, destination)
+        _make_published_corpus_readable(destination)
     except Exception:
         shutil.rmtree(staging, ignore_errors=True)
         raise
