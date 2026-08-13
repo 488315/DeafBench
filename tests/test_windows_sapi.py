@@ -9,6 +9,6 @@ def test_sapi_rejects_rate_outside_platform_contract(rate: int):
         WindowsSapiGenerator(rate=rate)
 
 
-def test_sapi_rejects_sample_rate_outside_platform_contract():
-    with pytest.raises(ValueError, match="sample rates"):
-        WindowsSapiGenerator(sample_rates={"core-011": 11})
+def test_sapi_rejects_sample_speech_rate_outside_platform_contract():
+    with pytest.raises(ValueError, match="sample speech rates"):
+        WindowsSapiGenerator(sample_speech_rates={"core-011": 11})
