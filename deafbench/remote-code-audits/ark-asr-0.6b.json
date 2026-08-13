@@ -10,7 +10,9 @@
     "trust_remote_code": true
   },
   "review_findings": {
-    "dynamic_code_execution": [],
+    "dynamic_code_execution": [
+      "Transformers imports the hash-verified configuration_arkasr.py, modeling_arkasr.py, modeling_audio.py, and processing_arkasr.py modules because the isolated worker enables trust_remote_code."
+    ],
     "filesystem_access": [
       "processing_arkasr.py reads processor_config.json and caller-provided audio paths."
     ],

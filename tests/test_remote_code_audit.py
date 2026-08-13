@@ -1,5 +1,7 @@
 import hashlib
+import json
 from copy import deepcopy
+from pathlib import Path
 
 import pytest
 
@@ -43,6 +45,24 @@ def test_packaged_granite_nar_audit_matches_registry() -> None:
         "modeling_granite_speech_nar.py",
         "processing_granite_speech_nar.py",
     }
+
+
+@pytest.mark.parametrize(
+    "model_id",
+    [
+        "AutoArk-AI/ARK-ASR-0.6B",
+        "AutoArk-AI/ark-asr-0.6b-int8-onnx",
+    ],
+)
+def test_packaged_ark_audits_disclose_dynamic_code_execution(model_id: str) -> None:
+    audit_root = Path(__file__).parents[1] / "deafbench" / "remote-code-audits"
+    payloads = [
+        json.loads(path.read_text(encoding="utf-8"))
+        for path in audit_root.glob("ark-asr*.json")
+    ]
+    payload = next(item for item in payloads if item["model_id"] == model_id)
+
+    assert payload["review_findings"]["dynamic_code_execution"]
 
 
 def test_audit_rejects_network_access() -> None:
