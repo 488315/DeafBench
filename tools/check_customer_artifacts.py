@@ -14,6 +14,8 @@ def main() -> int:
     parser.add_argument("--tracked", action="store_true")
     parser.add_argument("--base")
     args = parser.parse_args()
+    if args.base and not args.tracked:
+        parser.error("--base requires --tracked")
     findings = (
         scan_tracked(args.repo_root, base=args.base)
         if args.tracked
