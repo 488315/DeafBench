@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import math
+import re
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -34,6 +37,16 @@ class InterstitialScene:
     samples: np.ndarray
     interval: InterstitialInterval
     sample_rate: int
+
+
+@dataclass(frozen=True)
+class InterstitialResponse:
+    """Whether a model emitted speech or annotations for a noise-only clip."""
+
+    ignored: bool
+    lexical_hallucination: bool
+    hallucinated_word_count: int
+    non_speech_labels: tuple[str, ...]
 
 
 def _mono_float(samples: np.ndarray) -> np.ndarray:
@@ -143,3 +156,65 @@ def build_interstitial_scene(
         ),
         sample_rate=sample_rate,
     )
+
+
+_BRACKETED_EVENT = re.compile(r"\[[^\]\r\n]+\]")
+_LEXICAL_TOKEN = re.compile(r"[A-Za-z0-9]+(?:['_-][A-Za-z0-9]+)*")
+
+
+def evaluate_interstitial_prediction(
+    prediction: Mapping[str, object],
+) -> InterstitialResponse:
+    """Separate hallucinated speech from explicit non-speech annotations."""
+    text = prediction.get("text", "")
+    if not isinstance(text, str):
+        raise ValueError("Interstitial prediction text must be a string")
+    raw_sounds = prediction.get("sounds", ())
+    if isinstance(raw_sounds, (str, bytes)) or not isinstance(raw_sounds, Sequence):
+        raise ValueError("Interstitial prediction sounds must be a sequence of strings")
+    sounds = tuple(raw_sounds)
+    if not all(isinstance(sound, str) and sound.strip() for sound in sounds):
+        raise ValueError("Interstitial prediction sounds must contain non-empty strings")
+
+    unannotated = _BRACKETED_EVENT.sub(" ", text)
+    hallucinated_words = _LEXICAL_TOKEN.findall(unannotated)
+    emitted_output = bool(text.strip() or sounds)
+    return InterstitialResponse(
+        ignored=not emitted_output,
+        lexical_hallucination=bool(hallucinated_words),
+        hallucinated_word_count=len(hallucinated_words),
+        non_speech_labels=tuple(str(sound) for sound in sounds),
+    )
+
+
+def summarize_interstitial_robustness(
+    cases: Sequence[tuple[InterstitialInterval, Mapping[str, object]]],
+) -> dict[str, Any]:
+    """Aggregate ignore and hallucination rates overall and at each SNR."""
+    grouped: dict[float, list[InterstitialResponse]] = {}
+    responses: list[InterstitialResponse] = []
+    for interval, prediction in cases:
+        response = evaluate_interstitial_prediction(prediction)
+        responses.append(response)
+        grouped.setdefault(interval.snr_db, []).append(response)
+
+    def metrics(values: Sequence[InterstitialResponse]) -> dict[str, int | float]:
+        total = len(values)
+        ignored = sum(response.ignored for response in values)
+        hallucinations = sum(response.lexical_hallucination for response in values)
+        return {
+            "samples": total,
+            "ignored_intervals": ignored,
+            "lexical_hallucinations": hallucinations,
+            "ignore_rate_percent": 100.0 * ignored / total if total else 100.0,
+            "lexical_hallucination_rate_percent": (
+                100.0 * hallucinations / total if total else 0.0
+            ),
+        }
+
+    summary: dict[str, Any] = metrics(responses)
+    summary["by_snr_db"] = [
+        {"snr_db": snr_db, **metrics(grouped[snr_db])}
+        for snr_db in sorted(grouped, reverse=True)
+    ]
+    return summary

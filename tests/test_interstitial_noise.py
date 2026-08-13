@@ -3,7 +3,10 @@ import pytest
 
 from deafbench.benchmark.interstitial import (
     INTERSTITIAL_NOISE_PROFILES,
+    InterstitialInterval,
     build_interstitial_scene,
+    evaluate_interstitial_prediction,
+    summarize_interstitial_robustness,
 )
 
 
@@ -108,3 +111,108 @@ def test_interstitial_scene_rejects_silent_speech_anchor() -> None:
             profile="breathing",
             snr_db=10.0,
         )
+
+
+@pytest.mark.parametrize(
+    ("prediction", "ignored", "hallucinated", "word_count"),
+    [
+        ({"text": ""}, True, False, 0),
+        ({"text": "   "}, True, False, 0),
+        ({"text": "[keyboard clicks]"}, False, False, 0),
+        ({"text": "", "sounds": ["[rustling]"]}, False, False, 0),
+        ({"text": "keyboard clicks"}, False, True, 2),
+        ({"text": "Thanks for watching."}, False, True, 3),
+        ({"text": "[street noise] hello"}, False, True, 1),
+    ],
+)
+def test_interstitial_prediction_distinguishes_annotations_from_speech(
+    prediction: dict[str, object],
+    ignored: bool,
+    hallucinated: bool,
+    word_count: int,
+) -> None:
+    result = evaluate_interstitial_prediction(prediction)
+
+    assert result.ignored is ignored
+    assert result.lexical_hallucination is hallucinated
+    assert result.hallucinated_word_count == word_count
+
+
+def test_interstitial_robustness_reports_hallucinations_by_snr() -> None:
+    cases = [
+        (
+            InterstitialInterval(100, 200, "street-noise", 20.0),
+            {"text": ""},
+        ),
+        (
+            InterstitialInterval(100, 200, "office-chatter", 10.0),
+            {"text": "[office chatter]"},
+        ),
+        (
+            InterstitialInterval(100, 200, "breathing", 0.0),
+            {"text": "Thank you."},
+        ),
+        (
+            InterstitialInterval(100, 200, "rustling", -5.0),
+            {"text": "I can hear you."},
+        ),
+    ]
+
+    summary = summarize_interstitial_robustness(cases)
+
+    assert summary == {
+        "samples": 4,
+        "ignored_intervals": 1,
+        "lexical_hallucinations": 2,
+        "ignore_rate_percent": 25.0,
+        "lexical_hallucination_rate_percent": 50.0,
+        "by_snr_db": [
+            {
+                "snr_db": 20.0,
+                "samples": 1,
+                "ignored_intervals": 1,
+                "lexical_hallucinations": 0,
+                "ignore_rate_percent": 100.0,
+                "lexical_hallucination_rate_percent": 0.0,
+            },
+            {
+                "snr_db": 10.0,
+                "samples": 1,
+                "ignored_intervals": 0,
+                "lexical_hallucinations": 0,
+                "ignore_rate_percent": 0.0,
+                "lexical_hallucination_rate_percent": 0.0,
+            },
+            {
+                "snr_db": 0.0,
+                "samples": 1,
+                "ignored_intervals": 0,
+                "lexical_hallucinations": 1,
+                "ignore_rate_percent": 0.0,
+                "lexical_hallucination_rate_percent": 100.0,
+            },
+            {
+                "snr_db": -5.0,
+                "samples": 1,
+                "ignored_intervals": 0,
+                "lexical_hallucinations": 1,
+                "ignore_rate_percent": 0.0,
+                "lexical_hallucination_rate_percent": 100.0,
+            },
+        ],
+    }
+
+
+@pytest.mark.parametrize(
+    "prediction",
+    [
+        {"text": None},
+        {"text": "", "sounds": "[rustling]"},
+        {"text": "", "sounds": [""]},
+    ],
+)
+def test_interstitial_prediction_rejects_malformed_output(
+    prediction: dict[str, object],
+) -> None:
+    with pytest.raises(ValueError, match="Interstitial prediction"):
+        evaluate_interstitial_prediction(prediction)
