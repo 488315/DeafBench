@@ -125,6 +125,22 @@ reports, so I do not label it as strict or canonical scoring.
 WER does not tell the full accessibility story. DeafBench also measures
 critical information loss and non-speech events that WER misses.
 
+## Accessibility stress testing
+
+[`accessibility-stress-v1`](benchmarks/accessibility-stress-v1/README.md) adds a
+byte-frozen 24-utterance reference set for paired clean and degraded runs. It
+covers fixed-SNR street, office, wind, breathing, keyboard, and rustling noise;
+noise-only interstitials; 8 kHz telephony; reverberation; long pauses; rate
+variation; overlap; and codec degradation. The evaluator keeps WER edits,
+deletion share, typed critical failures, interstitial hallucinations, caption
+timing drift, and observed local load metrics separate instead of reducing the
+stress run to one number.
+
+This is synthetic stress coverage, not a Deaf or dysarthric speech dataset. I
+will not use rate changes, pauses, or noise to claim demographic performance.
+That evidence requires a separate authorized and consented human-speech lane
+with subgroup reporting and a corpus that is appropriate for that purpose.
+
 ---
 
 ## Quickstart
