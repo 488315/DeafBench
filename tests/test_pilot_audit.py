@@ -20,6 +20,24 @@ def _case(tmp_path: Path) -> Path:
     audio = root / "input" / "audio"
     audio.mkdir(parents=True)
     (root / "work").mkdir()
+    (root / "authorization.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "case_id": root.name,
+                "authorization_reference": "agreement-sha256:" + "a" * 64,
+                "authorization_date": "2026-08-01",
+                "ownership_confirmed": True,
+                "scope": "authorized non-sensitive ASR audit",
+                "permitted_models": list(PILOT_MODEL_RUNNERS),
+                "planned_delivery_date": "2026-08-02",
+                "planned_deletion_date": "2026-08-16",
+                "sensitivity_classification": "non-sensitive",
+                "deletion_agreement": True,
+            }
+        ),
+        encoding="utf-8",
+    )
     (root / "input" / "references.jsonl").write_text(
         json.dumps(
             {
@@ -120,6 +138,30 @@ def test_customer_audit_rejects_input_changed_during_execution(tmp_path: Path) -
             case_root=case_root,
             runners=_runners(mutate_input=True),
         )
+
+
+def test_customer_audit_rejects_unpermitted_pilot_model(tmp_path: Path) -> None:
+    case_root = _case(tmp_path)
+    authorization_path = case_root / "authorization.json"
+    authorization = json.loads(authorization_path.read_text(encoding="utf-8"))
+    authorization["permitted_models"] = list(PILOT_MODEL_RUNNERS[:-1])
+    authorization_path.write_text(json.dumps(authorization), encoding="utf-8")
+
+    called = False
+
+    def runner(*args: object, **kwargs: object) -> ModelRunInfo:
+        nonlocal called
+        called = True
+        raise AssertionError("unauthorized model must not run")
+
+    with pytest.raises(ValueError, match="does not permit"):
+        run_customer_audit(
+            repo_root=REPO_ROOT,
+            case_root=case_root,
+            runners={model_id: runner for model_id in PILOT_MODEL_RUNNERS},
+        )
+    assert called is False
+    assert not (case_root / "work" / "results").exists()
 
 
 def test_customer_audit_rejects_case_inside_repository(tmp_path: Path) -> None:

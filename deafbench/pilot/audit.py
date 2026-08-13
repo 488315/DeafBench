@@ -17,6 +17,7 @@ from deafbench.benchmark.workspace import (
 from deafbench.metrics import evaluate_dataset
 from deafbench.model_registry import get_model_license
 from deafbench.parser import align_records, parse_jsonl
+from deafbench.pilot.authorization import load_authorization
 from deafbench.pilot.workspace import discover_git_worktrees, validate_case_root
 from deafbench.result_manifest import canonical_result_bytes
 
@@ -173,6 +174,11 @@ def run_customer_audit(
         case_root,
         worktrees=discover_git_worktrees(repo_root),
     )
+    authorization = load_authorization(
+        root / "authorization.json", expected_case_id=root.name
+    )
+    if not set(PILOT_MODEL_RUNNERS).issubset(authorization.permitted_models):
+        raise ValueError("authorization does not permit every pilot model")
     references_path = root / "input" / "references.jsonl"
     audio_dir = root / "input" / "audio"
     status = inspect_audio_set(references_path, audio_dir)
