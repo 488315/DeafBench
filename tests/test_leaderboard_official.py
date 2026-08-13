@@ -3,6 +3,7 @@ import subprocess
 
 import pytest
 
+from _official_checkout import commit_fake_official_evaluator
 from deafbench.leaderboard._official_worker import (
     _PUBLIC_EXPECTED_ROWS,
     _evaluation_status,
@@ -16,46 +17,22 @@ from deafbench.leaderboard.official import (
 )
 
 
+_OFFICIAL_NORMALIZER_STUB = (
+    "normalizer = lambda text: text.lower().replace('doctor', 'dr')\n"
+)
+_OFFICIAL_SCORE_STUB = (
+    "def score_results(directory, model_id=None, **kwargs):\n"
+    "    return {model_id: 12.5}, "
+    "{f'{model_id} | fake_test': {'wer': 12.5, 'rtfx': 3.0}}\n"
+)
+
+
 def _commit_fake_evaluator(tmp_path):
-    checkout = tmp_path / "official"
-    normalizer = checkout / "normalizer"
-    normalizer.mkdir(parents=True)
-    (normalizer / "__init__.py").write_text("", encoding="utf-8")
-    (normalizer / "normalizer.py").write_text("", encoding="utf-8")
-    (normalizer / "data_utils.py").write_text(
-        "normalizer = lambda text: text.lower().replace('doctor', 'dr')\n",
-        encoding="utf-8",
+    return commit_fake_official_evaluator(
+        tmp_path,
+        score_stub=_OFFICIAL_SCORE_STUB,
+        normalizer_stub=_OFFICIAL_NORMALIZER_STUB,
     )
-    (normalizer / "eval_utils.py").write_text(
-        "def score_results(directory, model_id=None, **kwargs):\n"
-        "    return {model_id: 12.5}, "
-        "{f'{model_id} | fake_test': {'wer': 12.5, 'rtfx': 3.0}}\n",
-        encoding="utf-8",
-    )
-    subprocess.run(["git", "init", "-q", str(checkout)], check=True)
-    subprocess.run(["git", "-C", str(checkout), "add", "."], check=True)
-    subprocess.run(
-        [
-            "git",
-            "-C",
-            str(checkout),
-            "-c",
-            "user.name=DeafBench Tests",
-            "-c",
-            "user.email=tests@deafbench.invalid",
-            "commit",
-            "-qm",
-            "test evaluator",
-        ],
-        check=True,
-    )
-    revision = subprocess.run(
-        ["git", "-C", str(checkout), "rev-parse", "HEAD"],
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-    return checkout, revision
 
 
 def test_evaluator_rejects_a_checkout_at_the_wrong_revision(tmp_path):
