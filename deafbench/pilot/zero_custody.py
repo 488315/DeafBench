@@ -42,7 +42,7 @@ def load_execution_attestation(path: Path) -> ExecutionAttestation:
     if value["schema_version"] != 1:
         raise ValueError("zero-custody attestation schema is unsupported")
     boolean_fields = REQUIRED_FIELDS - {"schema_version", "execution_mode"}
-    if any(type(value[field]) is not bool for field in boolean_fields):
+    if any(not isinstance(value[field], bool) for field in boolean_fields):
         raise ValueError("zero-custody attestation requires explicit Boolean values")
 
     safe = (

@@ -49,7 +49,7 @@ def evaluate_intake(
     if sensitivity_classification not in ALLOWED_CLASSIFICATIONS:
         raise ValueError("unsupported founding-pilot sensitivity classification")
     if set(prohibited_categories) != set(PROHIBITED_CATEGORIES) or any(
-        type(value) is not bool for value in prohibited_categories.values()
+        not isinstance(value, bool) for value in prohibited_categories.values()
     ):
         raise ValueError("intake must exactly declare every prohibited category")
 

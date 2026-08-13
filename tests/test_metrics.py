@@ -1,7 +1,6 @@
 import pytest
 from deafbench.parser import normalize_text, align_records
 from deafbench.metrics import (
-    calculate_wer,
     evaluate_critical_info,
     evaluate_non_speech_info,
     evaluate_speaker_attribution,
