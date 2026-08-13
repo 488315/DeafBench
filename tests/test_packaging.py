@@ -35,6 +35,16 @@ def test_benchmark_extra_installs_whisperspeech_runtime_dependencies() -> None:
     )
 
 
+def test_test_extra_installs_collection_dependencies() -> None:
+    pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+    metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+
+    test_dependencies = metadata["project"]["optional-dependencies"]["test"]
+    assert "cryptography>=48.0,<49.0" in test_dependencies
+    assert "scipy>=1.15,<2.0" in test_dependencies
+    assert "soundfile>=0.13,<1.0" in test_dependencies
+
+
 def test_qwen_asr_extra_is_isolated_from_base_installation() -> None:
     pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
     metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))
