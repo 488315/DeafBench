@@ -58,15 +58,15 @@ def verify_evidence_manifest(
         raise EvidenceIntegrityError("evidence manifest has no artifacts")
 
     result_rows = 0
-    seen: set[str] = set()
+    seen: set[Path] = set()
     for entry in artifacts:
         if not isinstance(entry, dict):
             raise EvidenceIntegrityError("artifact entry must be an object")
         relative = entry.get("path")
         path = _artifact_path(root, relative)
-        if str(relative) in seen:
+        if path in seen:
             raise EvidenceIntegrityError(f"duplicate artifact: {relative}")
-        seen.add(str(relative))
+        seen.add(path)
         try:
             payload = path.read_bytes()
         except OSError as exc:

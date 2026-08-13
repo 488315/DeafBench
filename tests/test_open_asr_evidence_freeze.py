@@ -120,6 +120,17 @@ def test_evidence_manifest_rejects_missing_artifact(tmp_path):
         verify_evidence_manifest(manifest_path, repo_root=tmp_path)
 
 
+def test_evidence_manifest_rejects_aliases_of_the_same_artifact(tmp_path):
+    manifest, manifest_path = _write_evidence(tmp_path)
+    alias = dict(manifest["artifacts"][0])
+    alias["path"] = "./results.jsonl"
+    manifest["artifacts"].append(alias)
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(EvidenceIntegrityError, match="duplicate artifact"):
+        verify_evidence_manifest(manifest_path, repo_root=tmp_path)
+
+
 @pytest.mark.parametrize("content", ["not json", "[]"])
 def test_evidence_manifest_rejects_invalid_document(tmp_path, content):
     manifest_path = tmp_path / "manifest.json"
