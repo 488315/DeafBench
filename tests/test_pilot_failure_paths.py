@@ -44,6 +44,12 @@ def test_retention_rejects_ambiguous_or_non_extensions() -> None:
             deletion_deadline=schedule.deletion_deadline - timedelta(days=1),
             written_approval_reference="approval",
         )
+    with pytest.raises(ValueError, match="later"):
+        extend_retention(
+            schedule,
+            deletion_deadline=schedule.deletion_deadline,
+            written_approval_reference="approval",
+        )
 
 
 def test_ledger_fails_closed_on_unknown_contracts(tmp_path: Path) -> None:
