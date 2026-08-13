@@ -104,6 +104,23 @@ def _load_validated_v2_tts(paths: RunPaths) -> TTSInfo | None:
         return None
     if not generation_path.is_file() or not quality_path.is_file():
         raise ValueError("Synthetic-v2 admission evidence is incomplete")
+    freeze_path = paths.dataset_dir / "freeze-manifest.json"
+    try:
+        freeze = json.loads(freeze_path.read_text(encoding="utf-8"))
+        required = freeze["artifacts"]["required"]
+        reference_digests = [
+            digest
+            for name, digest in required.items()
+            if Path(name).name == "references.jsonl"
+        ]
+    except (OSError, json.JSONDecodeError, KeyError, AttributeError) as exc:
+        raise ValueError("Synthetic-v2 freeze manifest is invalid") from exc
+    if (
+        len(reference_digests) != 1
+        or hashlib.sha256(paths.references.read_bytes()).hexdigest()
+        != reference_digests[0]
+    ):
+        raise ValueError("Synthetic-v2 reference hash mismatch")
 
     records = [
         json.loads(line)

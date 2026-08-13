@@ -275,6 +275,20 @@ def test_validated_v2_set_does_not_regenerate_synthetic_audio(tmp_path: Path) ->
         )
         accepted.append({"id": sample_id, "status": "accepted"})
     atomic_write_jsonl(references.parent / "generation-manifest.jsonl", generation)
+    (references.parent / "freeze-manifest.json").write_text(
+        json.dumps(
+            {
+                "artifacts": {
+                    "required": {
+                        "benchmarks/synthetic-v2/references.jsonl": hashlib.sha256(
+                            references.read_bytes()
+                        ).hexdigest()
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
     (references.parent / "quality-report.json").write_text(
         json.dumps({"samples": accepted}),
         encoding="utf-8",
@@ -291,6 +305,38 @@ def test_validated_v2_set_does_not_regenerate_synthetic_audio(tmp_path: Path) ->
 
     metadata = json.loads(result.metadata.read_text(encoding="utf-8"))
     assert metadata["tts"]["engine"] == "validated-synthetic-v2"
+
+
+def test_validated_v2_rejects_changed_references_before_inference(tmp_path: Path) -> None:
+    references = _write_dataset(tmp_path, human_complete=False, dataset="synthetic-v2")
+    dataset = references.parent
+    (dataset / "generation-manifest.jsonl").write_text("{}\n", encoding="utf-8")
+    (dataset / "quality-report.json").write_text('{"samples": []}', encoding="utf-8")
+    (dataset / "freeze-manifest.json").write_text(
+        json.dumps(
+            {
+                "artifacts": {
+                    "required": {
+                        "benchmarks/synthetic-v2/references.jsonl": "0" * 64
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    called = False
+
+    def runner(*args: object, **kwargs: object) -> ModelRunInfo:
+        nonlocal called
+        called = True
+        return _fake_model_runner(*args, **kwargs)
+
+    with pytest.raises(ValueError, match="reference hash mismatch"):
+        run_benchmark(
+            BenchmarkConfig(tmp_path, "synthetic-v2", "whisper"),
+            whisper_runner=runner,
+        )
+    assert called is False
 
 
 def test_failed_rerun_preserves_every_previous_run_byte(tmp_path: Path) -> None:
