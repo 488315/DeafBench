@@ -44,21 +44,24 @@ def test_worker_rejects_external_module() -> None:
 
 
 @pytest.mark.parametrize(
-    "stdout",
+    ("stdout", "message"),
     [
-        "",
-        "DEAFBENCH_MODEL_RESULT={}\nDEAFBENCH_MODEL_RESULT={}\n",
-        "DEAFBENCH_MODEL_RESULT=not-json\n",
+        ("", "did not return exactly one result marker"),
+        (
+            "DEAFBENCH_MODEL_RESULT={}\nDEAFBENCH_MODEL_RESULT={}\n",
+            "did not return exactly one result marker",
+        ),
+        ("DEAFBENCH_MODEL_RESULT=not-json\n", "returned malformed JSON"),
     ],
 )
-def test_worker_rejects_invalid_result(monkeypatch, stdout) -> None:
+def test_worker_rejects_invalid_result(monkeypatch, stdout, message) -> None:
     monkeypatch.setattr(
         _isolated.subprocess,
         "run",
         lambda *args, **kwargs: subprocess.CompletedProcess(args, 0, stdout, ""),
     )
 
-    with pytest.raises(_isolated.IsolatedModelError, match="worker"):
+    with pytest.raises(_isolated.IsolatedModelError, match=message):
         _isolated.invoke_isolated_worker(
             "deafbench.benchmark.models._example_worker",
             {},
