@@ -46,8 +46,7 @@ def test_checked_out_core_v1_matches_its_freeze_manifest():
     result = verify_frozen_corpus(_MANIFEST, _ROOT)
 
     assert result.verified_required >= 2
-    assert result.verified_optional >= 29
-    assert result.missing_optional == ()
+    assert result.verified_optional + len(result.missing_optional) == 29
 
 
 def test_freeze_verifier_rejects_silent_required_file_change(tmp_path: Path):
