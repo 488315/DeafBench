@@ -55,7 +55,9 @@ jobs:
   publish:
     name: Publish to PyPI
     needs: build
-    if: github.event_name == 'release' && github.event.action == 'published'
+    if: >-
+      github.event_name == 'release' && github.event.action == 'published'
+      && vars.DEAFBENCH_PYPI_PUBLISH == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
