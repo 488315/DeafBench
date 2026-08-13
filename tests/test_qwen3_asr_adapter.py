@@ -279,13 +279,18 @@ def test_qwen_audio_reader_preserves_matching_sample_rate(tmp_path: Path) -> Non
     assert duration == pytest.approx(16 / 48_000)
 
 
-def test_qwen_audio_reader_rejects_non_mono_pcm16(tmp_path: Path) -> None:
-    audio = tmp_path / "stereo.wav"
+@pytest.mark.parametrize(("channels", "sample_width"), [(2, 2), (1, 1)])
+def test_qwen_audio_reader_rejects_unsupported_pcm_format(
+    tmp_path: Path,
+    channels: int,
+    sample_width: int,
+) -> None:
+    audio = tmp_path / "unsupported.wav"
     with wave.open(str(audio), "wb") as handle:
-        handle.setnchannels(2)
-        handle.setsampwidth(2)
+        handle.setnchannels(channels)
+        handle.setsampwidth(sample_width)
         handle.setframerate(48_000)
-        handle.writeframes(b"\x00\x00" * 32)
+        handle.writeframes(b"\x00" * channels * sample_width * 16)
 
     with pytest.raises(ValueError, match="requires mono PCM16 WAV"):
         qwen3_asr._read_pcm16_mono(audio, 16_000, numpy, resample_poly)
