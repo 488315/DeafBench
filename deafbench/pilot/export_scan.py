@@ -38,7 +38,7 @@ _SECRET = re.compile(
     r"(?i)(?:api[_-]?key|password|auth[_-]?token|secret)\s*[:=]\s*\S+"
 )
 _LOCAL_ARTIFACT = re.compile(
-    r"(?i)(?:[a-z]:[\\/]|\\\\|(?:^|\s)/(?:home|users|mnt|tmp)/|"
+    r"(?i)(?:(?<![a-z0-9+.-])[a-z]:[\\/]|\\\\|(?:^|\s)/(?:home|users|mnt|tmp)/|"
     r"(?:^|[\\/])\.\.(?:[\\/])|[^\s]+\.(?:wav|mp3|flac|m4a|ogg)(?:\s|$))"
 )
 _IDENTIFIER = re.compile(r"(?i)\b(?:case-[0-9a-f]{32}|core-\d{3,})\b")
