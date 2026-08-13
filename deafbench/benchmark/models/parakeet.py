@@ -119,8 +119,10 @@ def run_parakeet(
                 }
             )
 
-    atomic_write_jsonl(output, records)
     total_latency_seconds = sum(latencies_ms) / 1_000.0
+    if total_latency_seconds <= 0:
+        raise ValueError("Parakeet timing must be positive")
+    atomic_write_jsonl(output, records)
     return ModelRunInfo(
         name=MODEL_NAME,
         model_id=MODEL_ID,

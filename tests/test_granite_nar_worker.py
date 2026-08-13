@@ -270,6 +270,30 @@ def test_worker_rejects_nonmono_audio(monkeypatch, tmp_path) -> None:
         worker.run_request(_request(snapshot, wav), backend)
 
 
+def test_worker_rejects_nonpositive_timing(monkeypatch, tmp_path) -> None:
+    snapshot = tmp_path / "snapshot"
+    snapshot.mkdir()
+    wav = tmp_path / "sample.wav"
+    wav.write_bytes(b"fixture")
+    monkeypatch.setattr(
+        worker,
+        "load_remote_code_audit",
+        lambda model_id: SimpleNamespace(revision="a" * 40),
+    )
+    monkeypatch.setattr(worker, "verify_audited_files", lambda audit, root: None)
+    backend, _ = _backend()
+    backend = worker._Backend(
+        backend.AutoModel,
+        backend.AutoProcessor,
+        iter([10.0, 10.0]).__next__,
+        backend.torch,
+        backend.torchaudio,
+    )
+
+    with pytest.raises(ValueError, match="timing must be positive"):
+        worker.run_request(_request(snapshot, wav), backend)
+
+
 def test_worker_rejects_invalid_transcription(monkeypatch, tmp_path) -> None:
     snapshot = tmp_path / "snapshot"
     snapshot.mkdir()

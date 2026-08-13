@@ -141,6 +141,8 @@ def run_request(
             )
 
     total_latency_seconds = sum(latencies_ms) / 1_000.0
+    if total_latency_seconds <= 0:
+        raise ValueError("Granite NAR timing must be positive")
     return {
         "decoding": {
             "attn_implementation": "flash_attention_2",

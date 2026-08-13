@@ -32,8 +32,17 @@ def _dataset(tmp_path: Path) -> tuple[Path, Path]:
     return references, audio_dir
 
 
+@pytest.mark.parametrize(
+    ("clock_values", "timing_error"),
+    [
+        ((1.0, 1.1, 2.0, 2.2), None),
+        ((1.0, 1.0, 2.0, 2.0), "timing must be positive"),
+    ],
+)
 def test_parakeet_adapter_pins_archive_and_reports_performance(
     tmp_path: Path,
+    clock_values: tuple[float, ...],
+    timing_error: str | None,
 ) -> None:
     references, audio_dir = _dataset(tmp_path)
     output = tmp_path / "predictions.jsonl"
@@ -71,7 +80,7 @@ def test_parakeet_adapter_pins_archive_and_reports_performance(
             restores.append(options)
             return model
 
-    clock_values = iter((1.0, 1.1, 2.0, 2.2))
+    clock_values = iter(clock_values)
     backend = SimpleNamespace(
         ASRModel=ModelFactory,
         clock=lambda: next(clock_values),
@@ -89,6 +98,12 @@ def test_parakeet_adapter_pins_archive_and_reports_performance(
         ),
     )
 
+    if timing_error is not None:
+        output.write_text("previous predictions\n", encoding="utf-8")
+        with pytest.raises(ValueError, match=timing_error):
+            run_parakeet(audio_dir, references, output, backend=backend)
+        assert output.read_text(encoding="utf-8") == "previous predictions\n"
+        return
     info = run_parakeet(audio_dir, references, output, backend=backend)
 
     assert downloads == [

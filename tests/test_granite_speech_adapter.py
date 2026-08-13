@@ -116,8 +116,17 @@ class _FakeModel:
         return _FakeOutput()
 
 
+@pytest.mark.parametrize(
+    ("clock_values", "timing_error"),
+    [
+        ((1.0, 1.1, 2.0, 2.2), None),
+        ((1.0, 1.0, 2.0, 2.0), "timing must be positive"),
+    ],
+)
 def test_granite_adapter_pins_runtime_and_applies_keyword_prompt(
     tmp_path: Path,
+    clock_values: tuple[float, ...],
+    timing_error: str | None,
 ) -> None:
     references, audio_dir = _dataset(tmp_path)
     output = tmp_path / "predictions.jsonl"
@@ -145,7 +154,7 @@ def test_granite_adapter_pins_runtime_and_applies_keyword_prompt(
         waveforms.append(waveform)
         return waveform
 
-    clock_values = iter((1.0, 1.1, 2.0, 2.2))
+    clock_values = iter(clock_values)
     backend = SimpleNamespace(
         AutoModelForSpeechSeq2Seq=ModelFactory,
         AutoProcessor=ProcessorFactory,
@@ -166,6 +175,18 @@ def test_granite_adapter_pins_runtime_and_applies_keyword_prompt(
         ),
     )
 
+    if timing_error is not None:
+        output.write_text("previous predictions\n", encoding="utf-8")
+        with pytest.raises(ValueError, match=timing_error):
+            run_granite_speech(
+                audio_dir,
+                references,
+                output,
+                keywords=("Dr. Martinez", "8:30 PM"),
+                backend=backend,
+            )
+        assert output.read_text(encoding="utf-8") == "previous predictions\n"
+        return
     info = run_granite_speech(
         audio_dir,
         references,

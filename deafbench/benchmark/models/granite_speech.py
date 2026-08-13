@@ -197,8 +197,10 @@ def run_granite_speech(
                 {"id": wav_path.stem, "latency_ms": latency_ms, "text": text}
             )
 
-    atomic_write_jsonl(output, records)
     total_latency_seconds = sum(latencies_ms) / 1_000.0
+    if total_latency_seconds <= 0:
+        raise ValueError("Granite Speech timing must be positive")
+    atomic_write_jsonl(output, records)
     return ModelRunInfo(
         name=MODEL_NAME,
         model_id=MODEL_ID,
