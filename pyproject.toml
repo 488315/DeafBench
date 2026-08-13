@@ -37,6 +37,12 @@ open-asr-evaluator = [
     "num2words==0.5.14",
     "regex==2026.7.19",
 ]
+real-speech-dev = [
+    "datasets==3.6.0; python_version < '3.14'",
+    "numpy>=1.26",
+    "scipy>=1.15,<2.0",
+    "soundfile>=0.13,<1.0",
+]
 qwen-asr = [
     "scipy>=1.15,<2.0",
     "transformers[torch]>=5.13.0,<6.0.0",
