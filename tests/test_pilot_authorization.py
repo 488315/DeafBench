@@ -118,7 +118,7 @@ def test_load_authorization_rejects_unsafe_permission_envelopes(
         ("[]", "must be an object"),
     ],
 )
-def test_load_authorization_rejects_unreadable_or_non_object_records(
+def test_load_authorization_rejects_invalid_json_or_non_object_records(
     tmp_path: Path,
     payload: str,
     message: str,
@@ -127,6 +127,13 @@ def test_load_authorization_rejects_unreadable_or_non_object_records(
     path.write_text(payload, encoding="utf-8")
 
     with pytest.raises(ValueError, match=message):
+        load_authorization(path, expected_case_id="case-" + "f" * 32)
+
+
+def test_load_authorization_rejects_unreadable_record(tmp_path: Path) -> None:
+    path = tmp_path / "missing-authorization.json"
+
+    with pytest.raises(ValueError, match="unreadable"):
         load_authorization(path, expected_case_id="case-" + "f" * 32)
 
 
