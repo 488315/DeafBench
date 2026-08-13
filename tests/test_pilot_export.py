@@ -61,7 +61,7 @@ def test_customer_export_contains_only_three_model_aggregates(tmp_path: Path) ->
     manifest = json.loads((output / "manifest.json").read_text(encoding="utf-8"))
     report = (output / "report.md").read_text(encoding="utf-8")
     assert result.model_count == 3
-    assert result.dataset_count == 25
+    assert result.sample_count == 25
     assert [model["model_id"] for model in manifest["models"]] == list(
         PILOT_MODEL_IDS
     )
@@ -89,7 +89,7 @@ def test_customer_export_accepts_customer_audit_result_manifests(
     )
 
     assert result.model_count == 3
-    assert result.dataset_count == 25
+    assert result.sample_count == 25
 
 
 def test_customer_export_rejects_mixed_evaluation_tracks(tmp_path: Path) -> None:

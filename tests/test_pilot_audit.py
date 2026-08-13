@@ -149,7 +149,7 @@ def test_customer_audit_results_create_aggregate_only_export(tmp_path: Path) -> 
     exported_text = "\n".join(
         path.read_text(encoding="utf-8") for path in output.iterdir()
     )
-    assert exported.dataset_count == 1
+    assert exported.sample_count == 1
     assert "sample-001" not in exported_text
     assert "Aurora Guest" not in exported_text
     assert_export_safe(output)

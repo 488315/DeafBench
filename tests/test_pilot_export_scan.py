@@ -16,7 +16,7 @@ def test_export_scanner_accepts_aggregate_only_artifacts(tmp_path: Path) -> None
     _write_json(
         export,
         {
-            "dataset_count": 25,
+            "sample_count": 25,
             "model_id": "Qwen/Qwen3-ASR-1.7B-hf",
             "upstream_url": "https://huggingface.co/Qwen/Qwen3-ASR-1.7B-hf",
             "metrics": {"wer_percent": 21.0},

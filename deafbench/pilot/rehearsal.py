@@ -21,7 +21,7 @@ MODEL_RESULTS = (
 @dataclass(frozen=True)
 class RehearsalResult:
     model_count: int
-    dataset_count: int
+    sample_count: int
     export_safe: bool
     signature_verified: bool
     manifest_sha256: str
@@ -61,7 +61,7 @@ def run_synthetic_rehearsal(
         )
     return RehearsalResult(
         model_count=exported.model_count,
-        dataset_count=exported.dataset_count,
+        sample_count=exported.sample_count,
         export_safe=True,
         signature_verified=True,
         manifest_sha256=exported.manifest_sha256,

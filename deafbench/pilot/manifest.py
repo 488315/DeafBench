@@ -66,7 +66,7 @@ _MODEL_FIELDS = frozenset(
 _PAYLOAD_FIELDS = frozenset(
     {
         "artifact_hashes",
-        "dataset_count",
+        "sample_count",
         "evaluator_version",
         "execution_notice",
         "models",
@@ -93,7 +93,7 @@ def _validate_payload(payload: object) -> dict[str, object]:
         raise ValueError("manifest fields are incomplete or unsupported")
     if payload["schema_version"] != 1 or payload["execution_notice"] != EXECUTION_NOTICE:
         raise ValueError("manifest identity or execution notice is invalid")
-    if not isinstance(payload["dataset_count"], int) or payload["dataset_count"] <= 0:
+    if not isinstance(payload["sample_count"], int) or payload["sample_count"] <= 0:
         raise ValueError("manifest dataset count must be positive")
     if _EVALUATOR_REVISION.fullmatch(str(payload["evaluator_version"])) is None:
         raise ValueError("manifest evaluator version is invalid")

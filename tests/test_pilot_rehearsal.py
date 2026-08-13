@@ -18,7 +18,7 @@ def test_synthetic_rehearsal_completes_zero_custody_export(tmp_path: Path) -> No
 
     manifest = json.loads((output / "manifest.json").read_text(encoding="utf-8"))
     assert result.model_count == 3
-    assert result.dataset_count == 25
+    assert result.sample_count == 25
     assert result.export_safe is True
     assert result.signature_verified is True
     assert len(result.manifest_sha256) == 64

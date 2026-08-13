@@ -16,7 +16,7 @@ def _payload() -> dict[str, object]:
         "schema_version": 1,
         "execution_notice": EXECUTION_NOTICE,
         "evaluator_version": "a" * 64,
-        "dataset_count": 25,
+        "sample_count": 25,
         "models": [
             {
                 "model_id": "Qwen/Qwen3-ASR-1.7B-hf",
@@ -108,7 +108,7 @@ def test_manifest_signature_rejects_tampering(tmp_path: Path) -> None:
         manifest, payload=_payload(), key_path=tmp_path / "private-key.pem"
     )
     document = json.loads(manifest.read_text(encoding="utf-8"))
-    document["dataset_count"] = 26
+    document["sample_count"] = 26
     manifest.write_text(json.dumps(document), encoding="utf-8")
 
     assert verify_signed_manifest(manifest) is False
@@ -129,7 +129,7 @@ def test_manifest_rejects_private_key_inside_export(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     "mutation",
     [
-        lambda value: value.update(dataset_count=0),
+        lambda value: value.update(sample_count=0),
         lambda value: value.update(execution_notice="vendor executed"),
         lambda value: value["models"][0].update(sample_id="private-001"),
         lambda value: value["models"][0].update(license_classification="research_only"),

@@ -58,7 +58,7 @@ _SAFE_LANGUAGES = frozenset({"en", "English"})
 class CustomerExportResult:
     manifest_sha256: str
     model_count: int
-    dataset_count: int
+    sample_count: int
 
 
 def _sha256(path: Path) -> str:
@@ -207,14 +207,14 @@ def _aggregate_model(
             **{key: metrics[key] for key in sorted(required_metrics)},
             "critical_failures_by_entity_type": dict(sorted(failure_counts.items())),
         },
-        "dataset_count": evaluation.get("sample_count"),
+        "sample_count": evaluation.get("sample_count"),
         "evaluator_version": result.get("evaluator_revision"),
         "evaluation_track": lane,
         "corpus_manifest": _corpus_manifest(result, lane),
     }
 
 
-def _report(models: list[dict[str, object]], dataset_count: int) -> str:
+def _report(models: list[dict[str, object]], sample_count: int) -> str:
     lines = [
         "# Accessibility-Critical ASR Audit",
         "",
@@ -222,7 +222,7 @@ def _report(models: list[dict[str, object]], dataset_count: int) -> str:
         "",
         SELF_SIGNED_NOTICE,
         "",
-        f"Dataset count: {dataset_count}",
+        f"Audio sample count: {sample_count}",
         "",
         "| Model | WER | Strict recall | Canonical recall | Local RTFx |",
         "|---|---:|---:|---:|---:|",
@@ -273,7 +273,7 @@ def create_customer_export(
     if set(by_id) != set(PILOT_MODEL_IDS):
         raise ValueError("export requires the exact three-model pilot set")
     ordered = [by_id[model_id] for model_id in PILOT_MODEL_IDS]
-    counts = {model.pop("dataset_count") for model in ordered}
+    counts = {model.pop("sample_count") for model in ordered}
     evaluators = {model.pop("evaluator_version") for model in ordered}
     tracks = {model.pop("evaluation_track") for model in ordered}
     corpora = {model.pop("corpus_manifest") for model in ordered}
@@ -281,9 +281,9 @@ def create_customer_export(
         raise ValueError("model results do not share the same evaluation track")
     if len(counts) != 1 or len(evaluators) != 1 or len(corpora) != 1:
         raise ValueError("model results do not share one dataset and evaluator")
-    dataset_count = counts.pop()
+    sample_count = counts.pop()
     evaluator = evaluators.pop()
-    if not isinstance(dataset_count, int) or not isinstance(evaluator, str):
+    if not isinstance(sample_count, int) or not isinstance(evaluator, str):
         raise ValueError("model result identity is invalid")
 
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -294,7 +294,7 @@ def create_customer_export(
         staging.mkdir()
         report_path = staging / "report.md"
         report_path.write_text(
-            _report(ordered, dataset_count), encoding="utf-8", newline="\n"
+            _report(ordered, sample_count), encoding="utf-8", newline="\n"
         )
         artifact_hashes = [
             {
@@ -314,7 +314,7 @@ def create_customer_export(
                 "schema_version": 1,
                 "execution_notice": EXECUTION_NOTICE,
                 "evaluator_version": evaluator,
-                "dataset_count": dataset_count,
+                "sample_count": sample_count,
                 "models": ordered,
                 "artifact_hashes": artifact_hashes,
             },
@@ -324,4 +324,4 @@ def create_customer_export(
         if not verify_signed_manifest(staging / "manifest.json"):
             raise ValueError("export manifest signature verification failed")
         staging.replace(destination)
-    return CustomerExportResult(digest, len(ordered), dataset_count)
+    return CustomerExportResult(digest, len(ordered), sample_count)
