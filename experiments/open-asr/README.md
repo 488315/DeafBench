@@ -50,7 +50,8 @@ untracked source. The expected locations are under
 From Windows PowerShell:
 
 ```powershell
-wsl -d archlinux -- bash /mnt/c/Users/kjones/Documents/DeafBench/experiments/open-asr/run_zipformer_wsl.sh librispeech test.clean 2
+$repoWsl = wsl wslpath -a $PWD
+wsl -d archlinux -- bash "$repoWsl/experiments/open-asr/run_zipformer_wsl.sh" librispeech test.clean 2
 ```
 
 The command downloads or reuses the pinned checkpoint, materializes the pinned
@@ -87,7 +88,8 @@ diagnosis; its output is not an additional leaderboard metric.
 Use `full` as the third argument only at a defined public-test milestone:
 
 ```powershell
-wsl -d archlinux -- bash /mnt/c/Users/kjones/Documents/DeafBench/experiments/open-asr/run_zipformer_wsl.sh librispeech test.clean full
+$repoWsl = wsl wslpath -a $PWD
+wsl -d archlinux -- bash "$repoWsl/experiments/open-asr/run_zipformer_wsl.sh" librispeech test.clean full
 ```
 
 The seven public sets contain 74,842 raw rows and 161.316 hours. The official
