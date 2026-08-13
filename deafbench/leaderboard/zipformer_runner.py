@@ -119,43 +119,51 @@ def run(args: argparse.Namespace) -> dict[str, float]:
     _require_fresh_pinned_imports()
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    sys.dont_write_bytecode = True
-    sys.path[:0] = [
-        str(runner_repo),
-        str(evaluator_repo),
-        str(icefall_repo),
-        str(icefall_repo / "egs/librispeech/ASR/zipformer"),
-    ]
-    os.chdir(output_dir)
+    previous_cwd = os.getcwd()
+    previous_path = list(sys.path)
+    previous_dont_write_bytecode = sys.dont_write_bytecode
+    try:
+        sys.dont_write_bytecode = True
+        sys.path[:0] = [
+            str(runner_repo),
+            str(evaluator_repo),
+            str(icefall_repo),
+            str(icefall_repo / "egs/librispeech/ASR/zipformer"),
+        ]
+        os.chdir(output_dir)
 
-    from datasets import load_dataset
-    from huggingface_hub import snapshot_download
-    import torch
+        from datasets import load_dataset
+        from huggingface_hub import snapshot_download
+        import torch
 
-    official_runner = importlib.import_module("run_eval")
-    contract = PinnedZipformerContract()
-    official_runner.data_utils.load_data = (
-        lambda runner_args: contract.load_dataset(load_dataset, runner_args)
-    )
-    official_runner.snapshot_download = (
-        lambda model_id, **kwargs: contract.snapshot_model(
-            snapshot_download,
-            model_id,
-            **kwargs,
+        official_runner = importlib.import_module("run_eval")
+        contract = PinnedZipformerContract()
+        official_runner.data_utils.load_data = (
+            lambda runner_args: contract.load_dataset(load_dataset, runner_args)
         )
-    )
-    runner_argv = _runner_argv(args, contract)
+        official_runner.snapshot_download = (
+            lambda model_id, **kwargs: contract.snapshot_model(
+                snapshot_download,
+                model_id,
+                **kwargs,
+            )
+        )
+        runner_argv = _runner_argv(args, contract)
 
-    torch.cuda.set_device(args.device)
-    torch.cuda.reset_peak_memory_stats()
-    started = time.time()
-    official_runner.main(official_runner.get_parser().parse_args(runner_argv))
-    summary = {
-        "wall_seconds": round(time.time() - started, 3),
-        "peak_vram_bytes": torch.cuda.max_memory_allocated(),
-    }
-    print("DEAFBENCH_ZIPFORMER_RUN=" + json.dumps(summary, sort_keys=True))
-    return summary
+        torch.cuda.set_device(args.device)
+        torch.cuda.reset_peak_memory_stats()
+        started = time.time()
+        official_runner.main(official_runner.get_parser().parse_args(runner_argv))
+        summary = {
+            "wall_seconds": round(time.time() - started, 3),
+            "peak_vram_bytes": torch.cuda.max_memory_allocated(),
+        }
+        print("DEAFBENCH_ZIPFORMER_RUN=" + json.dumps(summary, sort_keys=True))
+        return summary
+    finally:
+        os.chdir(previous_cwd)
+        sys.path[:] = previous_path
+        sys.dont_write_bytecode = previous_dont_write_bytecode
 
 
 def main(argv: list[str] | None = None) -> int:

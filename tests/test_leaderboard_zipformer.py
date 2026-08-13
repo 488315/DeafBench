@@ -226,7 +226,6 @@ def test_zipformer_runner_executes_reviewed_upstream_contract(
         "import_module",
         lambda name: runner_module,
     )
-    monkeypatch.setattr(zipformer_runner.os, "chdir", lambda path: None)
     monkeypatch.setattr(
         zipformer_runner,
         "_require_fresh_pinned_imports",
@@ -254,14 +253,112 @@ def test_zipformer_runner_executes_reviewed_upstream_contract(
         streaming=False,
     )
 
-    summary = zipformer_runner.run(arguments)
+    previous_cwd = zipformer_runner.os.getcwd()
+    previous_path = list(sys.path)
+    previous_dont_write_bytecode = sys.dont_write_bytecode
+    try:
+        summary = zipformer_runner.run(arguments)
+        restored_state = (
+            zipformer_runner.os.getcwd(),
+            list(sys.path),
+            sys.dont_write_bytecode,
+        )
+    finally:
+        zipformer_runner.os.chdir(previous_cwd)
+        sys.path[:] = previous_path
+        sys.dont_write_bytecode = previous_dont_write_bytecode
 
     assert summary == {"wall_seconds": 2.346, "peak_vram_bytes": 1234}
+    assert restored_state == (
+        previous_cwd,
+        previous_path,
+        previous_dont_write_bytecode,
+    )
     assert captured["device"] == 0
     assert captured["policy"] == tmp_path / "evaluation-policy.json"
     assert captured["parsed"] == captured["argv"]
     assert runner_module.data_utils.load_data is not None
     assert runner_module.snapshot_download is not None
+
+
+def test_zipformer_runner_restores_process_state_after_failure(
+    tmp_path,
+    monkeypatch,
+):
+    runner_module = SimpleNamespace(
+        data_utils=SimpleNamespace(load_data=None),
+        snapshot_download=None,
+        get_parser=lambda: SimpleNamespace(parse_args=lambda argv: argv),
+        main=lambda parsed: (_ for _ in ()).throw(RuntimeError("runner failed")),
+    )
+    torch_module = ModuleType("torch")
+    torch_module.cuda = SimpleNamespace(
+        set_device=lambda device: None,
+        reset_peak_memory_stats=lambda: None,
+    )
+    datasets_module = ModuleType("datasets")
+    datasets_module.load_dataset = lambda *args, **kwargs: None
+    hub_module = ModuleType("huggingface_hub")
+    hub_module.snapshot_download = lambda *args, **kwargs: None
+    monkeypatch.setitem(sys.modules, "torch", torch_module)
+    monkeypatch.setitem(sys.modules, "datasets", datasets_module)
+    monkeypatch.setitem(sys.modules, "huggingface_hub", hub_module)
+    monkeypatch.setattr(zipformer_runner, "_require_source", lambda *args: None)
+    monkeypatch.setattr(
+        zipformer_runner,
+        "open_asr_evaluator",
+        lambda path: SimpleNamespace(validate=lambda: None),
+    )
+    monkeypatch.setattr(
+        zipformer_runner,
+        "_require_fresh_pinned_imports",
+        lambda: None,
+    )
+    monkeypatch.setattr(
+        zipformer_runner,
+        "verify_evaluation_policy",
+        lambda path: None,
+    )
+    monkeypatch.setattr(
+        zipformer_runner.importlib,
+        "import_module",
+        lambda name: runner_module,
+    )
+    arguments = SimpleNamespace(
+        runner_repo=tmp_path / "runner",
+        official_repo=tmp_path / "official",
+        icefall_repo=tmp_path / "icefall",
+        evaluation_policy=tmp_path / "evaluation-policy.json",
+        output_dir=tmp_path / "output",
+        dataset="librispeech",
+        split="test.clean",
+        device=0,
+        batch_size=32,
+        warmup_steps=1,
+        max_eval_samples=2,
+        streaming=False,
+    )
+    previous_cwd = zipformer_runner.os.getcwd()
+    previous_path = list(sys.path)
+    previous_dont_write_bytecode = sys.dont_write_bytecode
+    try:
+        with pytest.raises(RuntimeError, match="runner failed"):
+            zipformer_runner.run(arguments)
+        restored_state = (
+            zipformer_runner.os.getcwd(),
+            list(sys.path),
+            sys.dont_write_bytecode,
+        )
+    finally:
+        zipformer_runner.os.chdir(previous_cwd)
+        sys.path[:] = previous_path
+        sys.dont_write_bytecode = previous_dont_write_bytecode
+
+    assert restored_state == (
+        previous_cwd,
+        previous_path,
+        previous_dont_write_bytecode,
+    )
 
 
 def test_zipformer_runner_main_parses_cli_arguments(tmp_path, monkeypatch):
