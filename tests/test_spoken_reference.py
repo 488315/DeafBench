@@ -22,29 +22,43 @@ def _records():
 
 
 @pytest.mark.parametrize(
-    ("sample_id", "term", "expected_words"),
+    ("sample_id", "term", "expected_words", "expected_markup"),
     [
-        ("core-001", "2:15 PM", ("two", "fifteen", "p", "m")),
+        (
+            "core-001",
+            "2:15 PM",
+            ("two", "fifteen", "p", "m"),
+            '<sub alias="two fifteen p m">2:15 PM</sub>',
+        ),
         (
             "core-009",
             "83927",
             ("eight", "three", "nine", "two", "seven"),
+            '<say-as interpret-as="telephone">83927</say-as>',
         ),
-        ("core-009", "4:45 PM", ("four", "forty", "five", "p", "m")),
+        (
+            "core-009",
+            "4:45 PM",
+            ("four", "forty", "five", "p", "m"),
+            '<sub alias="four forty five p m">4:45 PM</sub>',
+        ),
         (
             "core-011",
             "dev_user twenty three",
             ("dev", "underscore", "user", "twenty", "three"),
+            '<sub alias="dev underscore user twenty three">dev_user twenty three</sub>',
         ),
         (
             "core-011",
             "481926",
             ("four", "eight", "one", "nine", "two", "six"),
+            '<say-as interpret-as="telephone">481926</say-as>',
         ),
         (
             "core-016",
             "seven four nine two six eight one",
             ("seven", "four", "nine", "two", "six", "eight", "one"),
+            '<sub alias="seven four nine two six eight one">seven four nine two six eight one</sub>',
         ),
     ],
 )
@@ -52,6 +66,7 @@ def test_replacement_entities_have_explicit_spoken_forms(
     sample_id: str,
     term: str,
     expected_words: tuple[str, ...],
+    expected_markup: str,
 ):
     record = _records()[sample_id]
 
@@ -60,12 +75,7 @@ def test_replacement_entities_have_explicit_spoken_forms(
 
     assert prepared.words[start:end] == expected_words
     assert prepared.spoken_aliases[term] == " ".join(expected_words)
-    if record["critical_types"][term] in {"DIGIT_SEQUENCE", "CODE", "PASSWORD"} and any(
-        character.isdigit() for character in term
-    ):
-        assert f'<say-as interpret-as="telephone">{term}</say-as>' in prepared.ssml
-    else:
-        assert f'alias="{" ".join(expected_words)}"' in prepared.ssml
+    assert expected_markup in prepared.ssml
     assert prepared.reference_sha256 == hashlib.sha256(
         record["text"].encode("utf-8")
     ).hexdigest()
