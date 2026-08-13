@@ -132,6 +132,21 @@ def test_audit_help_is_owned_by_audit_cli(monkeypatch):
     assert calls == [["--help"]]
 
 
+def test_dev_corpus_command_forwards_nested_action(monkeypatch):
+    calls = []
+    monkeypatch.setattr("deafbench.cli._run_dev_corpus", calls.append)
+
+    main(["dev-corpus", "materialize", "--repo-root", "."])
+
+    assert calls == [["materialize", "--repo-root", "."]]
+
+
+def test_dev_corpus_command_returns_launcher_status(monkeypatch):
+    monkeypatch.setattr("deafbench.cli._run_dev_corpus", lambda _args: 7)
+
+    assert main(["dev-corpus", "materialize"]) == 7
+
+
 def test_module_entrypoint_propagates_main_status(monkeypatch):
     monkeypatch.setattr("deafbench.cli.main", lambda _args=None: 7)
 

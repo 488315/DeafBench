@@ -85,6 +85,13 @@ def _run_audit(audit_args: list[str]) -> int:
     return audit_main(audit_args)
 
 
+def _run_dev_corpus(dev_corpus_args: list[str]) -> int:
+    """Lazy-load the public development corpus workflow."""
+    from .leaderboard.dev_cli import main as dev_corpus_main
+
+    return dev_corpus_main(dev_corpus_args)
+
+
 def _build_recorder_args(parsed: argparse.Namespace) -> list[str]:
     recorder_args = ["--dataset", parsed.dataset]
     for option, value in (
@@ -101,6 +108,8 @@ def main(args: Optional[List[str]] = None) -> int | None:
     arguments = list(args) if args is not None else sys.argv[1:]
     if arguments[:1] == ["audit"]:
         return _run_audit(arguments[1:])
+    if arguments[:1] == ["dev-corpus"]:
+        return _run_dev_corpus(arguments[1:])
 
     parser = argparse.ArgumentParser(
         prog="deafbench",
@@ -161,6 +170,11 @@ def main(args: Optional[List[str]] = None) -> int | None:
     subparsers.add_parser(
         "audit",
         help="Run or verify a customer-local zero-custody audit.",
+    )
+
+    subparsers.add_parser(
+        "dev-corpus",
+        help="Materialize the pinned public development cohort.",
     )
 
     add_leaderboard_parser(subparsers)
