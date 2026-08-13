@@ -2,6 +2,7 @@ import hashlib
 import json
 import math
 import wave
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
@@ -29,6 +30,7 @@ def _alignment(
 ) -> AlignmentEvidence:
     return AlignmentEvidence(
         reference_sha256=_reference_hash(),
+        audio_sha256="",
         token_coverage=coverage,
         critical_entity_coverage={"8:30 PM": entity_coverage},
         coverage_score_threshold=0.25,
@@ -71,6 +73,9 @@ def _evaluate(path: Path, **overrides):
         "independent_asr_text": "The meeting starts at 8 30 p.m.",
     }
     arguments.update(overrides)
+    arguments["alignment"] = replace(
+        arguments["alignment"], audio_sha256=hashlib.sha256(path.read_bytes()).hexdigest()
+    )
     return evaluate_synthetic_sample(path, **arguments)
 
 
@@ -184,6 +189,7 @@ def test_typed_entity_gate_is_not_applicable_when_reference_has_no_typed_labels(
     _write_wav(wav)
     alignment = AlignmentEvidence(
         reference_sha256=_reference_hash(),
+        audio_sha256="",
         token_coverage=1.0,
         critical_entity_coverage={},
         coverage_score_threshold=0.25,
@@ -221,6 +227,7 @@ def test_alignment_coverage_from_a_weaker_score_floor_is_quarantined(tmp_path: P
     _write_wav(wav)
     alignment = AlignmentEvidence(
         reference_sha256=_reference_hash(),
+        audio_sha256="",
         token_coverage=1.0,
         critical_entity_coverage={"8:30 PM": 1.0},
         coverage_score_threshold=0.10,
@@ -258,6 +265,7 @@ def test_faster_whisper_cannot_supply_forced_alignment_evidence():
     with pytest.raises(ValueError, match="not an accepted forced-alignment"):
         AlignmentEvidence(
             reference_sha256=_reference_hash(),
+            audio_sha256="",
             token_coverage=1.0,
             critical_entity_coverage={"8:30 PM": 1.0},
             coverage_score_threshold=0.25,

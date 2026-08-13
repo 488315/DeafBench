@@ -61,6 +61,7 @@ class AlignmentEvidence:
     """Evidence emitted by a reference-conditioned forced aligner."""
 
     reference_sha256: str
+    audio_sha256: str
     token_coverage: float
     critical_entity_coverage: Mapping[str, float]
     coverage_score_threshold: float
@@ -139,6 +140,7 @@ def evaluate_synthetic_sample(
         raise ValueError(f"unknown critical entity types: {sorted(unknown_types)}")
 
     audio = inspect_audio(audio_path, frame_ms=rules.analysis_frame_ms)
+    audio_sha256 = hashlib.sha256(audio_path.read_bytes()).hexdigest()
     expected_hash = _reference_sha256(reference_text)
     readable = audio.readable and audio.error is None
     correct_format = (
@@ -206,10 +208,11 @@ def evaluate_synthetic_sample(
         ),
         _gate(
             "forced_alignment_coverage",
-            alignment.token_coverage >= rules.min_alignment_coverage
+            alignment.audio_sha256 == audio_sha256
+            and alignment.token_coverage >= rules.min_alignment_coverage
             and alignment.coverage_score_threshold >= rules.min_alignment_token_score,
             (
-                f"coverage={alignment.token_coverage:.6f}, "
+                f"audio_sha256={audio_sha256}, coverage={alignment.token_coverage:.6f}, "
                 f"score_floor={alignment.coverage_score_threshold:.6f}"
             ),
         ),

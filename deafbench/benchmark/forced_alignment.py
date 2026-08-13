@@ -120,6 +120,7 @@ class MMSForcedAligner:
         )
         return AlignmentEvidence(
             reference_sha256=prepared.reference_sha256,
+            audio_sha256=hashlib.sha256(Path(audio_path).read_bytes()).hexdigest(),
             token_coverage=token_coverage,
             critical_entity_coverage=entity_coverage,
             coverage_score_threshold=score_threshold,

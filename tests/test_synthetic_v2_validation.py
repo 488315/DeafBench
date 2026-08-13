@@ -24,6 +24,7 @@ class _Aligner:
         self.paths.append(audio_path)
         return AlignmentEvidence(
             reference_sha256=prepared.reference_sha256,
+            audio_sha256=hashlib.sha256(Path(audio_path).read_bytes()).hexdigest(),
             token_coverage=1.0,
             critical_entity_coverage={term: 1.0 for term in prepared.entity_word_ranges},
             coverage_score_threshold=score_threshold,
@@ -106,5 +107,5 @@ def test_validation_records_all_gate_and_validator_evidence(tmp_path: Path):
         "forced_aligner_revision": "aligner-test-revision",
         "independent_asr_revision": "asr-test-revision",
     }
-    assert aligner.paths == [validation_speech / "sample-1.wav"]
-    assert independent_asr.paths == [validation_speech / "sample-1.wav"]
+    assert aligner.paths == [audio / "sample-1.wav"]
+    assert independent_asr.paths == [audio / "sample-1.wav"]

@@ -76,13 +76,12 @@ def validate_replacement_candidates(
             cast(Mapping[str, str], reference["critical_types"]),
         )
         audio_path = corpus_dir / "audio-synthetic" / f"{sample_id}.wav"
-        alignment_audio_path = corpus_dir / "validation-speech" / f"{sample_id}.wav"
         alignment = aligner.align(
-            alignment_audio_path,
+            audio_path,
             prepared,
             score_threshold=rules.min_alignment_token_score,
         )
-        asr_text = independent_asr.transcribe(alignment_audio_path)
+        asr_text = independent_asr.transcribe(audio_path)
         decision = evaluate_synthetic_sample(
             audio_path,
             reference_text=cast(str, reference["text"]),
@@ -108,9 +107,7 @@ def validate_replacement_candidates(
                 ],
                 "disagreements": list(decision.disagreements),
                 "forced_alignment": {
-                    "audio_sha256": hashlib.sha256(
-                        alignment_audio_path.read_bytes()
-                    ).hexdigest(),
+                    "audio_sha256": alignment.audio_sha256,
                     "adapter": alignment.adapter,
                     "adapter_revision": alignment.adapter_revision,
                     "coverage_score_threshold": alignment.coverage_score_threshold,
@@ -120,9 +117,7 @@ def validate_replacement_candidates(
                     ),
                 },
                 "independent_asr": {
-                    "audio_sha256": hashlib.sha256(
-                        alignment_audio_path.read_bytes()
-                    ).hexdigest(),
+                    "audio_sha256": alignment.audio_sha256,
                     "adapter": "torchaudio-WAV2VEC2_ASR_BASE_960H",
                     "adapter_revision": independent_asr.adapter_revision,
                     "text": asr_text,
