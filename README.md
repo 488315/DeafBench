@@ -67,23 +67,63 @@ runtimes, license classifications, attribution requirements, expected download
 sizes, and measured peak VRAM. That registry is operational metadata, not legal
 advice. Model weights are third-party software and are not owned by DeafBench.
 
-## OpenAI Whisper turbo results
+## Results for all integrated models
 
-`Model A` uses OpenAI Whisper `turbo` through `tools/transcribe_whisper.py`.
+These numbers do not belong in one leaderboard. Synthetic-v2 measures
+accessibility-critical information on 25 generated samples, while the public
+real-speech smoke set has only two rows and proves execution rather than model
+quality. Core v1 and Non-speech v1 are earlier, separately frozen benchmarks.
 
-| Benchmark | Samples | WER | Critical Information Recall | Non-Speech Information Recall |
-| --- | ---: | ---: | ---: | ---: |
-| **Core v1** | 25 | **23.4%** | **88.7% (55/62)** | **N/A** |
-| **Non-speech v1** | 12 | **2.0%** | **95.0% (19/20)** | **0.0% (0/19)** |
+### Synthetic-v2 accessibility results
 
-This is why DeafBench exists: on **Non-speech v1**, Whisper got **2.0% WER** and **95.0% critical information recall**, but captioned **0 of 19** environmental sound events.
+| Model | WER | Strict lexical recall | Canonical semantic recall | Local RTFx | Peak VRAM |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Qwen3-ASR 0.6B | 26.6% | 67.7% | 90.3% | 10.47 | 1.52 GiB |
+| Qwen3-ASR 1.7B | 21.0% | 67.7% | 91.9% | 9.89 | 3.86 GiB |
+| Parakeet TDT 0.6B v2 | 22.7% | 64.5% | 91.9% | 71.23 | 4.67 GiB |
+| Granite Speech 4.1 2B | 18.9% | 69.4% | 91.9% | 12.91 | 4.35 GiB |
+| Granite Speech 4.1 2B NAR | 40.6% | 64.5% | 87.1% | 45.07 | 4.26 GiB |
+| ARK-ASR 0.6B | 30.1% | 66.1% | 90.3% | 14.85 | 2.20 GiB |
+| ARK-ASR 0.6B INT8 ONNX | 26.6% | 66.1% | 90.3% | 2.40 | CPU |
 
-Full reports:
+### Two-row public real-speech smoke results
 
-- `benchmarks/core-v1/model-a-report.md`
-- `benchmarks/non-speech-v1/model-a-report.md`
+| Model | WER | Local RTFx | Peak VRAM |
+| --- | ---: | ---: | ---: |
+| Qwen3-ASR 0.6B | 2.31% | 12.27 | 1.72 GiB |
+| Qwen3-ASR 1.7B | 1.16% | 12.43 | 4.05 GiB |
+| Parakeet TDT 0.6B v2 | 2.31% | 91.85 | 4.67 GiB |
+| Granite Speech 4.1 2B | 3.47% | 7.43 | 4.42 GiB |
+| Granite Speech 4.1 2B NAR | 2.89% | 25.15 | 4.46 GiB |
+| ARK-ASR 0.6B | 2.89% | 7.49 | 2.29 GiB |
+| ARK-ASR 0.6B INT8 ONNX | 2.89% | 3.01 | CPU |
 
-WER does not tell the full accessibility story. DeafBench also measures critical information loss and non-speech events that WER misses.
+The byte-stable evidence for both tables is in
+[`experiments/model-results`](experiments/model-results). These are local RTX
+4070 measurements except for the CPU ONNX row. The two-row smoke results are
+not the seven-dataset macro-average and are not Hugging Face verified.
+
+### Earlier model evidence
+
+| Model | Benchmark evidence | Result |
+| --- | --- | --- |
+| OpenAI Whisper `turbo` | Core v1, 25 samples | 23.4% WER; 88.7% legacy critical-information recall |
+| OpenAI Whisper `turbo` | Non-speech v1, 12 samples | 2.0% WER; 95.0% legacy critical-information recall; 0.0% non-speech recall |
+| Faster-Whisper `small.en` | Frozen Core v1 synthetic baseline, 25 samples | 26.2% WER; 69.4% strict lexical recall; 90.3% canonical semantic recall |
+| Whisper-AT `medium.en` | Adapter and benchmark workflow | No completed result committed |
+| Distil-Whisper `large-v3` | Adapter and local runner | No completed result committed |
+
+The OpenAI Whisper reports are
+[`benchmarks/core-v1/model-a-report.md`](benchmarks/core-v1/model-a-report.md)
+and
+[`benchmarks/non-speech-v1/model-a-report.md`](benchmarks/non-speech-v1/model-a-report.md).
+The Faster-Whisper classification and scoring evidence is in
+[`benchmarks/core-v1/faster-whisper-synthetic-analysis.md`](benchmarks/core-v1/faster-whisper-synthetic-analysis.md).
+The older Whisper recall value uses the evaluator that produced those frozen
+reports, so I do not label it as strict or canonical scoring.
+
+WER does not tell the full accessibility story. DeafBench also measures
+critical information loss and non-speech events that WER misses.
 
 ---
 
