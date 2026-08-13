@@ -41,6 +41,11 @@ def contiguous_audio_chunks(
             if sample_rate != info.samplerate:
                 raise ValueError(f"{runtime_name} sample rate changed: {wav_path}")
             chunk_path = Path(directory) / f"chunk-{index:04d}.wav"
-            soundfile.write(str(chunk_path), audio, sample_rate)
+            soundfile.write(
+                str(chunk_path),
+                audio,
+                sample_rate,
+                subtype=info.subtype,
+            )
             chunk_paths.append(chunk_path)
         yield duration, tuple(chunk_paths)
