@@ -8,6 +8,10 @@ from typing import Any
 
 from deafbench.benchmark.models import ModelRunInfo, _validated_wavs
 from deafbench.benchmark.models._isolated import invoke_isolated_worker
+from deafbench.benchmark.models._isolated_result import (
+    required_mapping,
+    validated_records,
+)
 from deafbench.benchmark.workspace import atomic_write_jsonl
 from deafbench.model_registry import ModelRegistryError, get_model_license
 from deafbench.remote_code_audit import load_remote_code_audit, verify_audited_files
@@ -45,32 +49,11 @@ def _validated_records(
     payload: object,
     expected_ids: Sequence[str],
 ) -> list[dict[str, object]]:
-    if not isinstance(payload, list) or len(payload) != len(expected_ids):
-        raise ValueError("ARK-ASR worker returned incomplete predictions")
-    records: list[dict[str, object]] = []
-    for raw_record, expected_id in zip(payload, expected_ids, strict=True):
-        if not isinstance(raw_record, Mapping):
-            raise ValueError("ARK-ASR worker returned an invalid prediction")
-        sample_id = raw_record.get("id")
-        text = raw_record.get("text")
-        latency = raw_record.get("latency_ms")
-        if (
-            sample_id != expected_id
-            or not isinstance(text, str)
-            or isinstance(latency, bool)
-            or not isinstance(latency, (int, float))
-            or latency < 0
-        ):
-            raise ValueError("ARK-ASR worker returned an invalid prediction")
-        records.append({"id": sample_id, "latency_ms": latency, "text": text})
-    return records
+    return validated_records(payload, expected_ids, worker_name="ARK-ASR")
 
 
 def _required_mapping(payload: Mapping[str, Any], field: str) -> Mapping[str, object]:
-    value = payload.get(field)
-    if not isinstance(value, Mapping):
-        raise ValueError(f"ARK-ASR worker omitted {field}")
-    return value
+    return required_mapping(payload, field, worker_name="ARK-ASR")
 
 
 def run_ark_asr(
