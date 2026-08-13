@@ -25,6 +25,7 @@ class IncidentStop:
 
     def __init__(self, state_path: Path) -> None:
         self.state_path = state_path
+        self._blocked_latch = False
 
     def _state(self) -> dict[str, object]:
         if not self.state_path.exists():
@@ -53,13 +54,14 @@ class IncidentStop:
 
     def run_gate(self, category: str, operation: Callable[[], T]) -> T:
         state = self._state()
-        if state["blocked"]:
+        if state["blocked"] or self._blocked_latch:
             raise ProcessingBlocked("pilot processing is stopped pending approval")
         if category not in FAILURE_CATEGORIES:
             raise ValueError("unsupported incident category")
         try:
             return operation()
         except Exception as error:
+            self._blocked_latch = True
             state["blocked"] = True
             incidents = list(state["incidents"])
             incidents.append(
@@ -75,7 +77,7 @@ class IncidentStop:
 
     def restore(self, *, approval_reference: str, operator: str) -> None:
         state = self._state()
-        if not state["blocked"]:
+        if not state["blocked"] and not self._blocked_latch:
             raise ValueError("processing is not blocked")
         if not approval_reference.strip() or not operator.strip():
             raise ValueError("restoration requires explicit approval and operator")
@@ -90,3 +92,4 @@ class IncidentStop:
         state["restorations"] = restorations
         state["blocked"] = False
         self._write(state)
+        self._blocked_latch = False

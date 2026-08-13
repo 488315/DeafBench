@@ -54,3 +54,25 @@ def test_incident_state_preserves_prior_record_when_promotion_fails(
 
     assert stop.state_path.read_bytes() == original
     assert not tuple(tmp_path.glob("*.tmp"))
+
+
+def test_incident_persistence_failure_latches_processing_until_restored(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    stop = IncidentStop(tmp_path / "incident.json")
+    original_write = stop._write
+
+    def fail_write(_state: dict[str, object]) -> None:
+        raise OSError("simulated incident persistence failure")
+
+    monkeypatch.setattr(stop, "_write", fail_write)
+    with pytest.raises(OSError, match="persistence failure"):
+        stop.run_gate("integrity", lambda: 1 / 0)
+    with pytest.raises(ProcessingBlocked, match="pending approval"):
+        stop.run_gate("access", lambda: "must not run")
+
+    monkeypatch.setattr(stop, "_write", original_write)
+    stop.restore(approval_reference="approval-43", operator="operator")
+
+    assert stop.run_gate("access", lambda: "resumed") == "resumed"
