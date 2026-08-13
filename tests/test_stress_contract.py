@@ -118,3 +118,42 @@ def test_stress_contract_rejects_unexpected_stressor_fields(
 
     with pytest.raises(ValueError, match="unexpected fields"):
         load_stress_cases(path)
+
+
+@pytest.mark.parametrize(
+    ("stressor", "message"),
+    [
+        (None, "objects with a kind"),
+        ({"kind": "clean", "extra": 1}, "unexpected fields"),
+        (
+            {"kind": "additive_noise", "profile": "unknown", "snr_db": 0.0},
+            "unsupported noise profile",
+        ),
+        (
+            {"kind": "additive_noise", "profile": "wind", "snr_db": True},
+            "finite number",
+        ),
+        (
+            {"kind": "telephony", "codec": "pcm", "sample_rate_hz": 8_000},
+            "8 kHz G.711",
+        ),
+        ({"kind": "reverberation", "rt60_seconds": 2.1}, "between 0.1"),
+        ({"kind": "long_pause", "duration_seconds": -1.0}, "positive duration"),
+        ({"kind": "rate", "factor": 2.1}, "between 0.5"),
+        ({"kind": "overlap", "snr_db": -4.0}, "unsupported SNR"),
+        (
+            {"kind": "compression", "codec": "aac", "bit_rate_kbps": 16},
+            "unsupported compression",
+        ),
+    ],
+)
+def test_stress_contract_rejects_each_unsupported_profile(
+    tmp_path: Path,
+    stressor: object,
+    message: str,
+) -> None:
+    path = tmp_path / "references.jsonl"
+    _write_case(path, stressors=[stressor])
+
+    with pytest.raises(ValueError, match=message):
+        load_stress_cases(path)

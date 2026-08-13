@@ -91,3 +91,28 @@ def test_rate_variation_changes_duration(factor: float, expected_frames: int) ->
 def test_stress_audio_rejects_invalid_configuration(call, message: str) -> None:
     with pytest.raises(ValueError, match=message):
         call()
+
+
+def test_stress_audio_accepts_integer_stereo_and_one_dimensional_audio() -> None:
+    stereo = np.column_stack(
+        (np.full(48, 1_000, dtype=np.int16), np.full(48, -500, dtype=np.int16))
+    )
+    telephony = simulate_telephony(stereo, sample_rate=8_000)
+    rate = vary_rate(np.full(48, 0.1), factor=1.0)
+
+    assert telephony.shape == (48, 1)
+    assert rate.shape == (48, 1)
+
+
+@pytest.mark.parametrize(
+    "audio",
+    [
+        np.empty((0, 1)),
+        np.zeros((1, 1, 1)),
+        np.array([["not audio"]]),
+        np.array([[float("nan")]]),
+    ],
+)
+def test_stress_audio_rejects_malformed_audio(audio: np.ndarray) -> None:
+    with pytest.raises(ValueError, match="Audio"):
+        vary_rate(audio, factor=1.0)

@@ -89,3 +89,15 @@ def test_caption_timing_reports_drift_past_accessibility_threshold() -> None:
 def test_caption_timing_rejects_unusable_alignments(alignment) -> None:
     with pytest.raises(ValueError, match="timing"):
         evaluate_caption_timing(alignment)
+
+
+def test_stress_summary_rejects_missing_risk_mapping() -> None:
+    reference = _reference()
+    reference["risk_categories"] = {"Priya Shah": "PROPER_NAME"}
+
+    with pytest.raises(ValueError, match="no declared risk category"):
+        summarize_stress_results(
+            [reference],
+            [{"id": "stress-001", "text": "Meet Priya Shah at 8:30 PM"}],
+            [{"id": "stress-001", "text": "Meet Priya Shah"}],
+        )

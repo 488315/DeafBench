@@ -66,3 +66,31 @@ def test_load_summary_rejects_invalid_trials(
             concurrency=concurrency,
             wall_seconds=wall_seconds,
         )
+
+
+def test_load_summary_allows_unmeasured_optional_resources() -> None:
+    summary = summarize_load_trial(
+        [{"audio_seconds": 1.0, "latency_ms": 2.0, "ttfb_ms": 1.0}],
+        concurrency=1,
+        wall_seconds=0.5,
+    )
+
+    assert summary["p95_latency_ms"] == 2.0
+    assert summary["peak_vram_bytes"] is None
+    assert summary["peak_cpu_percent"] is None
+
+
+def test_load_summary_rejects_impossible_cpu_measurement() -> None:
+    with pytest.raises(ValueError, match="must not exceed 100"):
+        summarize_load_trial(
+            [
+                {
+                    "audio_seconds": 1.0,
+                    "latency_ms": 2.0,
+                    "ttfb_ms": 1.0,
+                    "peak_cpu_percent": 101.0,
+                }
+            ],
+            concurrency=1,
+            wall_seconds=0.5,
+        )
