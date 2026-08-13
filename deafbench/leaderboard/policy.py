@@ -62,6 +62,8 @@ def verify_evaluation_policy(path: Path | str) -> EvaluationPolicy:
         raise EvaluationPolicyError("data partitions must remain disjoint")
     if status not in {"clear", "suspected", "indeterminate"}:
         raise EvaluationPolicyError("invalid contamination audit status")
+    if not isinstance(final_claim_eligible, bool):
+        raise EvaluationPolicyError("final claim eligibility must be Boolean")
     if status != "clear" and final_claim_eligible is not False:
         raise EvaluationPolicyError("unknown contamination cannot permit a final claim")
 

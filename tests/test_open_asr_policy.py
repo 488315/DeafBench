@@ -46,3 +46,13 @@ def test_evaluation_policy_rejects_test_label_tuning(tmp_path):
 
     with pytest.raises(EvaluationPolicyError, match="test-label tuning"):
         verify_evaluation_policy(path)
+
+
+def test_evaluation_policy_rejects_textual_claim_eligibility(tmp_path):
+    policy = _policy_copy()
+    policy["contamination_audit"]["final_claim_eligible"] = "false"
+    path = tmp_path / "policy.json"
+    path.write_text(json.dumps(policy), encoding="utf-8")
+
+    with pytest.raises(EvaluationPolicyError, match="must be Boolean"):
+        verify_evaluation_policy(path)
