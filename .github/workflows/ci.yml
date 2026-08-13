@@ -62,6 +62,14 @@ jobs:
       - name: Compile Python sources
         run: python -m compileall -q deafbench tests tools
 
+      - name: Verify frozen benchmark integrity
+        run: >-
+          python -m pytest -q
+          tests/test_core_v1_freeze.py
+          tests/test_synthetic_v2_freeze.py
+          tests/test_stress_corpus.py
+          tests/test_real_speech_dev.py
+
       - name: Run low-level unit tests
         run: python -m pytest -m unit
 
