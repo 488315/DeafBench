@@ -138,6 +138,8 @@ def build_interstitial_scene(
     speech_rms = float(np.sqrt(np.mean(np.square(np.concatenate((before[:, 0], after[:, 0]))))))
 
     noise_frames = round(sample_rate * duration_seconds)
+    if noise_frames < 1:
+        raise ValueError("duration_seconds must produce at least one frame")
     rng = np.random.default_rng(seed)
     noise = _profile_noise(profile, noise_frames, sample_rate, rng)
     noise_rms = float(np.sqrt(np.mean(np.square(noise))))

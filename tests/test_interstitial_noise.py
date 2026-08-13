@@ -81,6 +81,7 @@ def test_interstitial_scene_is_reproducible_and_seed_sensitive() -> None:
         ("unknown", 10.0, 0.5, "Unsupported interstitial noise profile"),
         ("street-noise", float("nan"), 0.5, "finite"),
         ("street-noise", 10.0, 0.0, "positive"),
+        ("street-noise", 10.0, 0.000001, "at least one frame"),
     ],
 )
 def test_interstitial_scene_rejects_invalid_configuration(
