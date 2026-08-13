@@ -1,0 +1,1459 @@
+{
+  "datasets": {
+    "hf-audio-open-asr-leaderboard_ami_cleaned_test": {
+      "analyzed_rows": 7715,
+      "errors": {
+        "del": 2506,
+        "ins": 2117,
+        "sub": 3856
+      },
+      "reference_words": 82337,
+      "top_errors": [
+        {
+          "audio_filepath": "sample_12",
+          "duration": 18.63,
+          "errors": {
+            "del": 0,
+            "ins": 14,
+            "sub": 13
+          },
+          "prediction": "i always it always make me feel bad cause when i go to bed i like find you are still alive and never go to bed always busy",
+          "reference": "so if you can work on it that and then like no actually not",
+          "reference_words": 14,
+          "row": 12,
+          "wer": 192.86
+        },
+        {
+          "audio_filepath": "sample_3",
+          "duration": 23.33,
+          "errors": {
+            "del": 25,
+            "ins": 0,
+            "sub": 0
+          },
+          "prediction": "yeah m",
+          "reference": "he he d he does not have to know exactly what i mean yeah m i mean it is hot finished but it does not really say",
+          "reference_words": 27,
+          "row": 3,
+          "wer": 92.59
+        },
+        {
+          "audio_filepath": "sample_2389",
+          "duration": 4.34,
+          "errors": {
+            "del": 0,
+            "ins": 22,
+            "sub": 2
+          },
+          "prediction": "you you have to kinda call a new class and then it will take time but if you do not then it will not",
+          "reference": "yeah okay",
+          "reference_words": 2,
+          "row": 2389,
+          "wer": 1200.0
+        },
+        {
+          "audio_filepath": "sample_853",
+          "duration": 7.05,
+          "errors": {
+            "del": 14,
+            "ins": 0,
+            "sub": 6
+          },
+          "prediction": "hey was not it i thought he said",
+          "reference": "i thought i thought we said th i thought we ch yeah i thought we change it to the 10th or something",
+          "reference_words": 22,
+          "row": 853,
+          "wer": 90.91
+        },
+        {
+          "audio_filepath": "sample_2366",
+          "duration": 4.36,
+          "errors": {
+            "del": 0,
+            "ins": 14,
+            "sub": 5
+          },
+          "prediction": "i mean that is kind of yeah it is not it is not that i do not think it is not not too well",
+          "reference": "i mean that is going to that could be yeah",
+          "reference_words": 10,
+          "row": 2366,
+          "wer": 190.0
+        },
+        {
+          "audio_filepath": "sample_2343",
+          "duration": 4.39,
+          "errors": {
+            "del": 8,
+            "ins": 0,
+            "sub": 7
+          },
+          "prediction": "so it is definitely is the most common used thumb",
+          "reference": "so if there is a de so it will be a choice from the menu but yeah exactly",
+          "reference_words": 18,
+          "row": 2343,
+          "wer": 83.33
+        },
+        {
+          "audio_filepath": "sample_3063",
+          "duration": 3.62,
+          "errors": {
+            "del": 2,
+            "ins": 7,
+            "sub": 5
+          },
+          "prediction": "so but that is a stop list so you remove stuff that does not",
+          "reference": "yeah so the general one is pr yeah yeah",
+          "reference_words": 9,
+          "row": 3063,
+          "wer": 155.56
+        },
+        {
+          "audio_filepath": "sample_4963",
+          "duration": 2.18,
+          "errors": {
+            "del": 13,
+            "ins": 0,
+            "sub": 1
+          },
+          "prediction": "mmonday",
+          "reference": "no it is it just funny that you know have it finish by monday",
+          "reference_words": 14,
+          "row": 4963,
+          "wer": 100.0
+        },
+        {
+          "audio_filepath": "sample_3749",
+          "duration": 2.99,
+          "errors": {
+            "del": 0,
+            "ins": 12,
+            "sub": 1
+          },
+          "prediction": "it has got a separate sponge when you look at these things actually",
+          "reference": "yeah",
+          "reference_words": 1,
+          "row": 3749,
+          "wer": 1300.0
+        },
+        {
+          "audio_filepath": "sample_5341",
+          "duration": 1.97,
+          "errors": {
+            "del": 0,
+            "ins": 12,
+            "sub": 1
+          },
+          "prediction": "so it is 20 even if 10 20 do you cut it off",
+          "reference": "yeah",
+          "reference_words": 1,
+          "row": 5341,
+          "wer": 1300.0
+        },
+        {
+          "audio_filepath": "sample_3816",
+          "duration": 2.93,
+          "errors": {
+            "del": 0,
+            "ins": 11,
+            "sub": 2
+          },
+          "prediction": "yeah like if we are going to just take a look or something",
+          "reference": "probably not",
+          "reference_words": 2,
+          "row": 3816,
+          "wer": 650.0
+        },
+        {
+          "audio_filepath": "sample_5372",
+          "duration": 1.95,
+          "errors": {
+            "del": 0,
+            "ins": 10,
+            "sub": 3
+          },
+          "prediction": "yeah we will have it in half an hour and then we will",
+          "reference": "so after dnlg",
+          "reference_words": 3,
+          "row": 5372,
+          "wer": 433.33
+        },
+        {
+          "audio_filepath": "sample_1235",
+          "duration": 6.13,
+          "errors": {
+            "del": 0,
+            "ins": 5,
+            "sub": 8
+          },
+          "prediction": "yeah sd browser and some sort of some speech and some music so",
+          "reference": "or just or is it more like right",
+          "reference_words": 8,
+          "row": 1235,
+          "wer": 162.5
+        },
+        {
+          "audio_filepath": "sample_3235",
+          "duration": 3.44,
+          "errors": {
+            "del": 12,
+            "ins": 0,
+            "sub": 1
+          },
+          "prediction": "yeah",
+          "reference": "you know it is not it is not the end of the world",
+          "reference_words": 13,
+          "row": 3235,
+          "wer": 100.0
+        },
+        {
+          "audio_filepath": "sample_4790",
+          "duration": 2.28,
+          "errors": {
+            "del": 12,
+            "ins": 0,
+            "sub": 1
+          },
+          "prediction": "h",
+          "reference": "well that is what is the that is the working group is it",
+          "reference_words": 13,
+          "row": 4790,
+          "wer": 100.0
+        },
+        {
+          "audio_filepath": "sample_1366",
+          "duration": 5.87,
+          "errors": {
+            "del": 13,
+            "ins": 0,
+            "sub": 0
+          },
+          "prediction": "okay",
+          "reference": "okay you are the designer of course you want to give it a one",
+          "reference_words": 14,
+          "row": 1366,
+          "wer": 92.86
+        },
+        {
+          "audio_filepath": "sample_2947",
+          "duration": 3.75,
+          "errors": {
+            "del": 9,
+            "ins": 0,
+            "sub": 4
+          },
+          "prediction": "it is the in dap yeah",
+          "reference": "do you mean just the yeah but it is not going to take very long",
+          "reference_words": 15,
+          "row": 2947,
+          "wer": 86.67
+        },
+        {
+          "audio_filepath": "sample_1252",
+          "duration": 6.1,
+          "errors": {
+            "del": 12,
+            "ins": 0,
+            "sub": 1
+          },
+          "prediction": "that would be a good idea",
+          "reference": "bet that would be a good yeah i think that d no that is that is a lot",
+          "reference_words": 18,
+          "row": 1252,
+          "wer": 72.22
+        },
+        {
+          "audio_filepath": "sample_1331",
+          "duration": 5.94,
+          "errors": {
+            "del": 0,
+            "ins": 8,
+            "sub": 5
+          },
+          "prediction": "instead of it would just search for keywords and when it when they you would tell them they are to a projection of the topics perhaps actually get searching the keywords",
+          "reference": "instead it would just search for key words when it when they you tell him that with topics but actually get searching with key words",
+          "reference_words": 25,
+          "row": 1331,
+          "wer": 52.0
+        },
+        {
+          "audio_filepath": "sample_4103",
+          "duration": 2.73,
+          "errors": {
+            "del": 0,
+            "ins": 10,
+            "sub": 2
+          },
+          "prediction": "i thought the other stuff was more important than the discussion so",
+          "reference": "yeah definitely",
+          "reference_words": 2,
+          "row": 4103,
+          "wer": 600.0
+        }
+      ]
+    },
+    "hf-audio-open-asr-leaderboard_earnings22_test": {
+      "analyzed_rows": 2737,
+      "errors": {
+        "del": 1015,
+        "ins": 986,
+        "sub": 1736
+      },
+      "reference_words": 48688,
+      "top_errors": [
+        {
+          "audio_filepath": "sample_67",
+          "duration": 20.3400625,
+          "errors": {
+            "del": 5,
+            "ins": 8,
+            "sub": 11
+          },
+          "prediction": "before we begin our prepared remarks allow me to remind you that certain statements made during the course of the discussion may constitute forward looking statements which are based on management s current expectations and beliefs and are subject to a number of risks and uncertainties that could cause actual results to materially differ including factors that may be beyond the company s control",
+          "reference": "before we begin i would like to remind allow me to remind you that certain statements made in the course of the discussion will constitute correlating statements which are based on management s current expectations and beliefs and as such you will see a number of risks and uncertainties that the report s actual may be beyond the company s control",
+          "reference_words": 61,
+          "row": 67,
+          "wer": 39.34
+        },
+        {
+          "audio_filepath": "sample_420",
+          "duration": 12.040125,
+          "errors": {
+            "del": 0,
+            "ins": 19,
+            "sub": 0
+          },
+          "prediction": "if 20 years from now i am going to be writing memoirs i will i will promise to answer that but but for now it is it it really has to remain between playstation and us and and you know we will we will we will we will have announcements to sh announcements to share when they are ready",
+          "reference": "if 20 years from now i am going to be writing memoirs i promise to answer that but for now it really has to remain between playstation and us and we will have announcements to share when they are ready",
+          "reference_words": 40,
+          "row": 420,
+          "wer": 47.5
+        },
+        {
+          "audio_filepath": "sample_69",
+          "duration": 20.2000625,
+          "errors": {
+            "del": 7,
+            "ins": 0,
+            "sub": 11
+          },
+          "prediction": "our 3rd quarter results demonstrate that the strategic initiatives undertaken since the start of the pandemic and their successful execution are delivering improved margins when compared to 2019 our performance this quarter underscores the future earnings power of the company",
+          "reference": "our 3rd quarter result demonstrates that the strategic initiatives and the stake in since the start of the pandemic and there is a careful execution and delivery improvement in when compared to 2018 our performance this quarter and this course the future earnings power of the company",
+          "reference_words": 47,
+          "row": 69,
+          "wer": 38.3
+        },
+        {
+          "audio_filepath": "sample_942",
+          "duration": 8.32,
+          "errors": {
+            "del": 0,
+            "ins": 10,
+            "sub": 6
+          },
+          "prediction": "speaking on today s call is our ceo gabriel scofin who will provide an overview of the 3rd quarter and update you on our strategic priorities",
+          "reference": "speaking on our next call is our ceo damian scokin who is on our specific priorities",
+          "reference_words": 16,
+          "row": 942,
+          "wer": 100.0
+        },
+        {
+          "audio_filepath": "sample_10",
+          "duration": 28.620125,
+          "errors": {
+            "del": 3,
+            "ins": 4,
+            "sub": 8
+          },
+          "prediction": "the 2nd one was about the sony and the playstation particular set of metrics how the conversation progresses so iii cannot go deep into the set of metrics or how the conversation progresses this has to remain at the discretion of of of playstation of course ourselves but yes there is there is some set of metrics let us let us put it like that at a high level but again we are not going we can not we cannot go into the details of of where we are with that",
+          "reference": "the 2nd one was about the sony and the playstation in particular instead of netflix how the conversation progresses so iii cannot go deep into the set of metrics so the how the conversation progresses it has to remain at the discretion of of of playstation and of course ourselves but yes there is there is some sort of metrics lets lets put it like that at a high level but again we are not goi we we cannot go into the details of of where we are with that",
+          "reference_words": 90,
+          "row": 10,
+          "wer": 16.67
+        },
+        {
+          "audio_filepath": "sample_2629",
+          "duration": 0.540125,
+          "errors": {
+            "del": 13,
+            "ins": 0,
+            "sub": 1
+          },
+          "prediction": "okay",
+          "reference": "you you have mentioned benefits from timing of orders in in if you can",
+          "reference_words": 14,
+          "row": 2629,
+          "wer": 100.0
+        },
+        {
+          "audio_filepath": "sample_219",
+          "duration": 15.1200625,
+          "errors": {
+            "del": 1,
+            "ins": 1,
+            "sub": 12
+          },
+          "prediction": "in addition to reporting financial results in accordance with us generally accepted accounting principles we discuss certain non gaap financial measures and operating metrics including foreign exchange user calculations",
+          "reference": "in our recent reporting financial returns and performance in us generally accepted accounting principal we will discuss certain longterm financial metrics and operating metrics including for administrations and calculations",
+          "reference_words": 29,
+          "row": 219,
+          "wer": 48.28
+        },
+        {
+          "audio_filepath": "sample_37",
+          "duration": 22.4800625,
+          "errors": {
+            "del": 6,
+            "ins": 1,
+            "sub": 6
+          },
+          "prediction": "the new campaign was extremely effective still running and what we are pointing towards is getting back to travel and being able to afford the travel as we always have been positioned in the minds of consumers",
+          "reference": "this is damian t the new campaign was extremely this has been extremely successful and what we are pointing towards is getting back to travel and being able to afford the travel as as always have been positioned in the market section",
+          "reference_words": 42,
+          "row": 37,
+          "wer": 30.95
+        },
+        {
+          "audio_filepath": "sample_281",
+          "duration": 13.960125,
+          "errors": {
+            "del": 10,
+            "ins": 0,
+            "sub": 3
+          },
+          "prediction": "our christian hansen business but that our acquired business that were not part of organic growth in h2 had a very strong performance so the comparables are not as easy as people might might think",
+          "reference": "the non comparables in the 2nd half of the year was for our business but that our acquired business that were not part of organic growth in h2 had a very strong performance so the comparables are not as easy as people might might think",
+          "reference_words": 45,
+          "row": 281,
+          "wer": 28.89
+        },
+        {
+          "audio_filepath": "sample_607",
+          "duration": 10.4,
+          "errors": {
+            "del": 0,
+            "ins": 7,
+            "sub": 5
+          },
+          "prediction": "gaap financial measures and operating methods should not be considered in isolation a substitute for or superior to gaap financial measures and are provided as supplementary information on this",
+          "reference": "longer financial measures and operating metrics should not be considered to to the financial measures and are provided as supplementary information only",
+          "reference_words": 22,
+          "row": 607,
+          "wer": 54.55
+        },
+        {
+          "audio_filepath": "sample_1072",
+          "duration": 7.6000625,
+          "errors": {
+            "del": 10,
+            "ins": 0,
+            "sub": 2
+          },
+          "prediction": "so close to 60% of product sales revenues came from cyberpunk and as i mentioned most of the sales came from",
+          "reference": "so close to 60% of products say it is revenues came from cyberpunk and as i mentioned most of the sales came from pc digital distribution channels crosstalk yep go ahead",
+          "reference_words": 31,
+          "row": 1072,
+          "wer": 38.71
+        },
+        {
+          "audio_filepath": "sample_520",
+          "duration": 11.240125,
+          "errors": {
+            "del": 4,
+            "ins": 2,
+            "sub": 6
+          },
+          "prediction": "2nd question bit of a a reminder have you impaired anything on the cyberpunk development or do you plan to revisit this once you know when you when you launch on back on the ps or if that gets delayed",
+          "reference": "2nd question and a bit of a a reminder how do you paired on the cyberpunk development or do you contribute it i guess once you know when you when you launch back on the ps store or if that gets delayed",
+          "reference_words": 42,
+          "row": 520,
+          "wer": 28.57
+        },
+        {
+          "audio_filepath": "sample_288",
+          "duration": 13.7800625,
+          "errors": {
+            "del": 7,
+            "ins": 1,
+            "sub": 4
+          },
+          "prediction": "but i can just i can just repeat what what what what i have already said that next year is is the year when we want to to to to split teams and and to work full scale",
+          "reference": "but i can just i can just repeat what wha wha what i already said that next year is is the year when we want to to to to speed things and and whether you want to speed things and to work full scale",
+          "reference_words": 44,
+          "row": 288,
+          "wer": 27.27
+        },
+        {
+          "audio_filepath": "sample_1754",
+          "duration": 4.3999375,
+          "errors": {
+            "del": 11,
+            "ins": 0,
+            "sub": 0
+          },
+          "prediction": "thank you our next question comes from",
+          "reference": "thanks alex thank you thank you our next question comes from the line of robert lee with kvw",
+          "reference_words": 18,
+          "row": 1754,
+          "wer": 61.11
+        },
+        {
+          "audio_filepath": "sample_2144",
+          "duration": 2.7798125,
+          "errors": {
+            "del": 10,
+            "ins": 0,
+            "sub": 1
+          },
+          "prediction": "the next question comes from the line of francesca shoul from",
+          "reference": "thank you thank you stefan thank you the next question comes from the line of francesca schild from bnp paribas exane",
+          "reference_words": 21,
+          "row": 2144,
+          "wer": 52.38
+        },
+        {
+          "audio_filepath": "sample_88",
+          "duration": 19.3000625,
+          "errors": {
+            "del": 1,
+            "ins": 3,
+            "sub": 7
+          },
+          "prediction": "our receivables increased by 1000000000 decreased by 1910000 zloty leading to an increase of cash and bank deposits by 823000000 zloty and 114000000 zloty increase of included in the other financial assets line",
+          "reference": "the increased by 1000000000 decreased by 1000000000 91000000s leading to an increase in cash and bank deposits by 823000000s and 140000000s increase in domestic included in the other financial assets line",
+          "reference_words": 31,
+          "row": 88,
+          "wer": 35.48
+        },
+        {
+          "audio_filepath": "sample_55",
+          "duration": 21.2800625,
+          "errors": {
+            "del": 0,
+            "ins": 8,
+            "sub": 3
+          },
+          "prediction": "based on the strong financial position and taking into consideration the 455000000 zloty excess of short term liabilities over receivables as of the end of q one the board of cd projekt proposed to the general meeting to pay out a dividend in the total amount of nearly 504000000 zloty which translates into 5 zloty per share",
+          "reference": "based on the strong financial position and taking into consideration the 455000000s excess of liabilities over receivables as of the end of q one the board proposed to the general to pay out a dividend in the total amount of nearly 504000000s which translates into 5 latic per share",
+          "reference_words": 49,
+          "row": 55,
+          "wer": 22.45
+        },
+        {
+          "audio_filepath": "sample_1227",
+          "duration": 6.7800625,
+          "errors": {
+            "del": 0,
+            "ins": 8,
+            "sub": 2
+          },
+          "prediction": "investors should read the definition of these measures and metrics included in our press release press release to ensure that they understand them",
+          "reference": "investment secures the definition of these measures and metrics to ensure that they understand them",
+          "reference_words": 15,
+          "row": 1227,
+          "wer": 66.67
+        },
+        {
+          "audio_filepath": "sample_1317",
+          "duration": 6.400125,
+          "errors": {
+            "del": 0,
+            "ins": 4,
+            "sub": 6
+          },
+          "prediction": "of course depending on the on the project in the different phases on on future aaa triple aaa game",
+          "reference": "of course depending on the project and the different phases i prefer to play content",
+          "reference_words": 15,
+          "row": 1317,
+          "wer": 66.67
+        },
+        {
+          "audio_filepath": "sample_591",
+          "duration": 10.5600625,
+          "errors": {
+            "del": 0,
+            "ins": 4,
+            "sub": 6
+          },
+          "prediction": "all in all our cash bank deposits and t bonds value increased by 1400000 zloty and reached an unprecedented total of 1915000 zloty",
+          "reference": "only now our cash from deposits and value increased by 1000000000 and reached an unprecedented total of 1000000 950000000",
+          "reference_words": 19,
+          "row": 591,
+          "wer": 52.63
+        }
+      ]
+    },
+    "hf-audio-open-asr-leaderboard_librispeech_test.clean": {
+      "analyzed_rows": 2620,
+      "errors": {
+        "del": 60,
+        "ins": 59,
+        "sub": 575
+      },
+      "reference_words": 53004,
+      "top_errors": [
+        {
+          "audio_filepath": "sample_14",
+          "duration": 28.41,
+          "errors": {
+            "del": 1,
+            "ins": 0,
+            "sub": 11
+          },
+          "prediction": "well as i say it is an awful queer world they clap all the burglars in jail and the murderers and the wife beaters i allers thought a gentle reproof would be enough punishment for a wife beater cause he probably has a lot of provocation that nobody knows and the fire bugs can not think of the right name something like sendiaries and the breakers of the piece and what not and yet the law has nothing to say to a man like hand lord",
+          "reference": "well as i say it is an awful queer world they clap all the burglars into jail and the murderers and the wife beaters i have allers thought a gentle reproof would be enough punishment for a wife beater cause he probably has a lot 0 provocation that nobody knows and the firebugs can not think 0 the right name something like cendenaries an the breakers 0 the peace an what not an yet the law has nothin to say to a man like hen lord",
+          "reference_words": 86,
+          "row": 14,
+          "wer": 13.95
+        },
+        {
+          "audio_filepath": "sample_8",
+          "duration": 30.04,
+          "errors": {
+            "del": 4,
+            "ins": 0,
+            "sub": 5
+          },
+          "prediction": "but reckoning time whose millioned accidents creep in twixt vows enchange decrees of kings tan sacred beauty blunt the sharpest intense divert strong minds to the course of altering things alas why fearing of time s tyranny might i not then say now i love you best when i was certain or in certainty crowning the present doubting of the rest",
+          "reference": "but reckoning time whose 1000000 would accidents creep in twixt vows and change decrees of kings tan sacred beauty blunt the sharp saint intents divert strong minds to the course of altering things alas why fearing of time s tyranny might i not then say now i love you best when i was certain 0 er incertainty crowning the present doubting of the rest",
+          "reference_words": 64,
+          "row": 8,
+          "wer": 14.06
+        },
+        {
+          "audio_filepath": "sample_1341",
+          "duration": 5.63,
+          "errors": {
+            "del": 0,
+            "ins": 0,
+            "sub": 6
+          },
+          "prediction": "money i did like to do into the barn to tommy to see the widowed",
+          "reference": "munny i tould ike to do into de barn to tommy to see de whittawd",
+          "reference_words": 15,
+          "row": 1341,
+          "wer": 40.0
+        },
+        {
+          "audio_filepath": "sample_1143",
+          "duration": 6.525,
+          "errors": {
+            "del": 0,
+            "ins": 1,
+            "sub": 5
+          },
+          "prediction": "sometimes i am that yearning fur a smoke i am nearly crazy and i dunno which is worse dying one way or the other",
+          "reference": "sometimes i am that yearning for a smoke i am nearly crazy an i dunno which is worst dyin one way or another",
+          "reference_words": 23,
+          "row": 1143,
+          "wer": 26.09
+        },
+        {
+          "audio_filepath": "sample_1021",
+          "duration": 7.165,
+          "errors": {
+            "del": 0,
+            "ins": 1,
+            "sub": 4
+          },
+          "prediction": "9923 elsinor double not yes hello is that you horatio hanlet speaking",
+          "reference": "9923 elsinore 99 yes hallo is that you horatio hamlet speaking",
+          "reference_words": 11,
+          "row": 1021,
+          "wer": 45.45
+        },
+        {
+          "audio_filepath": "sample_742",
+          "duration": 8.865,
+          "errors": {
+            "del": 2,
+            "ins": 0,
+            "sub": 3
+          },
+          "prediction": "how is it lavalier said mademoiselle de tennicharante that the vicomte de bragelone spoke of you as louise",
+          "reference": "how is it la valliere said mademoiselle de tonnay charente that the vicomte de bragelonne spoke of you as louise",
+          "reference_words": 20,
+          "row": 742,
+          "wer": 25.0
+        },
+        {
+          "audio_filepath": "sample_41",
+          "duration": 23.26,
+          "errors": {
+            "del": 1,
+            "ins": 0,
+            "sub": 4
+          },
+          "prediction": "thus saying and pressing the crucifix to her breast she fell fainting into the arms of donna estefania who as a gentlewoman to whose sex pity is unnatural as cruelty as to man instantly pressed her lips to those of the fainting girl shedding over her so many tears that there needed no other sprinkling of water to recover leocadia from her swoon",
+          "reference": "thus saying and pressing the crucifix to her breast she fell fainting into the arms of dona estafania who as a gentlewoman to whose sex pity is as natural as cruelty is to man instantly pressed her lips to those of the fainting girl shedding over her so many tears that there needed no other sprinkling of water to recover leocadia from her swoon",
+          "reference_words": 64,
+          "row": 41,
+          "wer": 7.81
+        },
+        {
+          "audio_filepath": "sample_836",
+          "duration": 8.14,
+          "errors": {
+            "del": 0,
+            "ins": 2,
+            "sub": 2
+          },
+          "prediction": "goobles do not grow on the tops of vines but on the ground on the roots like yams is that so",
+          "reference": "goobers do not grow on the tops of vines but underground on the roots like yams is that so",
+          "reference_words": 19,
+          "row": 836,
+          "wer": 21.05
+        },
+        {
+          "audio_filepath": "sample_844",
+          "duration": 8.09,
+          "errors": {
+            "del": 2,
+            "ins": 0,
+            "sub": 2
+          },
+          "prediction": "to say nothing said montalais so that when mademoiselle detonacherant thinks athene is the only one who knows it",
+          "reference": "to say nothing said montalais so that when mademoiselle de tonnay charente thinks athenais is the only one who knows it",
+          "reference_words": 21,
+          "row": 844,
+          "wer": 19.05
+        },
+        {
+          "audio_filepath": "sample_727",
+          "duration": 8.94,
+          "errors": {
+            "del": 1,
+            "ins": 1,
+            "sub": 2
+          },
+          "prediction": "the weak need contingency must be strengthened and fortified and a couple of 100 votes in one way or the other secured from opposition",
+          "reference": "the weak kneed contingency must be strengthened and fortified and a couple of 100 votes in one way or another secured from the opposition",
+          "reference_words": 24,
+          "row": 727,
+          "wer": 16.67
+        },
+        {
+          "audio_filepath": "sample_853",
+          "duration": 8.025,
+          "errors": {
+            "del": 1,
+            "ins": 0,
+            "sub": 3
+          },
+          "prediction": "i would not mind a cup of coffee myself said cap n bill i have had considerable exercise this mornin and i am all ready for breakfast",
+          "reference": "i would not mind a cup 0 coffee myself said cap n bill i have had consid ble exercise this mornin and i am all ready for breakfas",
+          "reference_words": 28,
+          "row": 853,
+          "wer": 14.29
+        },
+        {
+          "audio_filepath": "sample_561",
+          "duration": 10.515,
+          "errors": {
+            "del": 1,
+            "ins": 0,
+            "sub": 3
+          },
+          "prediction": "but take it whilst i live and wear montfichet s shield in the days when my eyes can be rejoiced by so brave a sight for you will never disgrace ars ducheon i warrant me",
+          "reference": "but take it whilst i live and wear montfichet s shield in the days when my eyes can be rejoiced by so brave a sight for you will ne er disgrace our scutcheon i warrant me",
+          "reference_words": 36,
+          "row": 561,
+          "wer": 11.11
+        },
+        {
+          "audio_filepath": "sample_145",
+          "duration": 17.39,
+          "errors": {
+            "del": 1,
+            "ins": 1,
+            "sub": 2
+          },
+          "prediction": "you are my all the world and i must strive to know my shames and praises from your tongue none else to me nor i to none alive that my steeled sense or change is right or wrong",
+          "reference": "you are my all the world and i must strive to know my shames and praises from your tongue none else to me nor i to none alive that my steel would sense or changes right or wrong",
+          "reference_words": 38,
+          "row": 145,
+          "wer": 10.53
+        },
+        {
+          "audio_filepath": "sample_35",
+          "duration": 23.86,
+          "errors": {
+            "del": 0,
+            "ins": 0,
+            "sub": 4
+          },
+          "prediction": "she was honorably buried in the church of saint seuvert without the slightest opposition from the venerable priest who far from sharing the anti christian intolerances of the clergy in general said that her profession as an actress had not hindered her from being a good christian and that the earth was a common mother of all human beings as jesus christ had been the savior of all mankind",
+          "reference": "she was honorably buried in the church of saint sauveur without the slightest opposition from the venerable priest who far from sharing the anti christain intolerancy of the clergy in general said that her profession as an actress had not hindered her from being a good christian and that the earth was the common mother of all human beings as jesus christ had been the savior of all mankind",
+          "reference_words": 69,
+          "row": 35,
+          "wer": 5.8
+        },
+        {
+          "audio_filepath": "sample_2444",
+          "duration": 2.44,
+          "errors": {
+            "del": 0,
+            "ins": 2,
+            "sub": 1
+          },
+          "prediction": "conseil was my man s servant",
+          "reference": "conseil was my manservant",
+          "reference_words": 4,
+          "row": 2444,
+          "wer": 75.0
+        },
+        {
+          "audio_filepath": "sample_2149",
+          "duration": 3.195,
+          "errors": {
+            "del": 0,
+            "ins": 0,
+            "sub": 3
+          },
+          "prediction": "brother mc cardle brother kioff",
+          "reference": "brother mac ardle brother keogh",
+          "reference_words": 5,
+          "row": 2149,
+          "wer": 60.0
+        },
+        {
+          "audio_filepath": "sample_1784",
+          "duration": 4.205,
+          "errors": {
+            "del": 1,
+            "ins": 0,
+            "sub": 2
+          },
+          "prediction": "i reside in the maree rue de dusport",
+          "reference": "i reside in the marais rue de douze portes",
+          "reference_words": 9,
+          "row": 1784,
+          "wer": 33.33
+        },
+        {
+          "audio_filepath": "sample_1850",
+          "duration": 3.995,
+          "errors": {
+            "del": 0,
+            "ins": 0,
+            "sub": 3
+          },
+          "prediction": "la vallier is quite a poetess said tonay charonte",
+          "reference": "la valliere is quite a poetess said tonnay charente",
+          "reference_words": 9,
+          "row": 1850,
+          "wer": 33.33
+        },
+        {
+          "audio_filepath": "sample_2116",
+          "duration": 3.275,
+          "errors": {
+            "del": 0,
+            "ins": 0,
+            "sub": 3
+          },
+          "prediction": "morning girls hope you ville as well as ye look",
+          "reference": "mornin girls hope ye feel as well as ye look",
+          "reference_words": 10,
+          "row": 2116,
+          "wer": 30.0
+        },
+        {
+          "audio_filepath": "sample_1489",
+          "duration": 5.11,
+          "errors": {
+            "del": 1,
+            "ins": 0,
+            "sub": 2
+          },
+          "prediction": "it is too difficult replied mademoiselle detones charon laughing loudly",
+          "reference": "it is too difficult replied mademoiselle de tonnay charente laughing loudly",
+          "reference_words": 11,
+          "row": 1489,
+          "wer": 27.27
+        }
+      ]
+    },
+    "hf-audio-open-asr-leaderboard_librispeech_test.other": {
+      "analyzed_rows": 2939,
+      "errors": {
+        "del": 103,
+        "ins": 144,
+        "sub": 1343
+      },
+      "reference_words": 52841,
+      "top_errors": [
+        {
+          "audio_filepath": "sample_427",
+          "duration": 10.695,
+          "errors": {
+            "del": 2,
+            "ins": 1,
+            "sub": 8
+          },
+          "prediction": "no my name s blodget alexander blodget reverend alexander blodget i suppose i must say as i am one of the large poor servants",
+          "reference": "no my name s blodgett elexander blodgett reverend elexander blodgett i s pose i must say as i am 10 the lord s poor servants",
+          "reference_words": 25,
+          "row": 427,
+          "wer": 44.0
+        },
+        {
+          "audio_filepath": "sample_1485",
+          "duration": 5.105,
+          "errors": {
+            "del": 0,
+            "ins": 3,
+            "sub": 7
+          },
+          "prediction": "which moves it is just finding resistin the gypsyn tats master",
+          "reference": "was moses justified in resisting the egyptian taskmaster",
+          "reference_words": 8,
+          "row": 1485,
+          "wer": 125.0
+        },
+        {
+          "audio_filepath": "sample_50",
+          "duration": 19.655,
+          "errors": {
+            "del": 1,
+            "ins": 1,
+            "sub": 7
+          },
+          "prediction": "way back in the days when grandpap buzzard had his little falling out with old king eagle and done flies so high he scorched the feathers off in his head he had a cousin did grandpap buzzard and this cousin was just naturally lazy and no count",
+          "reference": "way back in the days when grandpap buzzard had his lil falling out with ol king eagle and done fly so high he sco tch the feathers offen his haid he had a cousin did grandpap buzzard and this cousin was jes naturally lazy and no count",
+          "reference_words": 47,
+          "row": 50,
+          "wer": 19.15
+        },
+        {
+          "audio_filepath": "sample_2471",
+          "duration": 2.895,
+          "errors": {
+            "del": 5,
+            "ins": 0,
+            "sub": 3
+          },
+          "prediction": "sim quastrote sim",
+          "reference": "see im crost the road there see him",
+          "reference_words": 8,
+          "row": 2471,
+          "wer": 100.0
+        },
+        {
+          "audio_filepath": "sample_1171",
+          "duration": 6.23,
+          "errors": {
+            "del": 0,
+            "ins": 2,
+            "sub": 6
+          },
+          "prediction": "going to church saint hayes and thursda s days must have been acquainted in the astonishing experience",
+          "reference": "going to church at hayes in those days must have been quite an exciting experience",
+          "reference_words": 15,
+          "row": 1171,
+          "wer": 53.33
+        },
+        {
+          "audio_filepath": "sample_1979",
+          "duration": 3.86,
+          "errors": {
+            "del": 0,
+            "ins": 2,
+            "sub": 5
+          },
+          "prediction": "clever as a train dog he is an all out 0 his own ad",
+          "reference": "clever as a traindawg e is an all outer is own ead",
+          "reference_words": 12,
+          "row": 1979,
+          "wer": 58.33
+        },
+        {
+          "audio_filepath": "sample_1791",
+          "duration": 4.29,
+          "errors": {
+            "del": 1,
+            "ins": 0,
+            "sub": 6
+          },
+          "prediction": "but scuse me den yo fig on doing some detecting and givin up fishin",
+          "reference": "but scuse me did not yo figger on doin some detectin an give up fishin",
+          "reference_words": 15,
+          "row": 1791,
+          "wer": 46.67
+        },
+        {
+          "audio_filepath": "sample_1531",
+          "duration": 4.96,
+          "errors": {
+            "del": 0,
+            "ins": 2,
+            "sub": 5
+          },
+          "prediction": "i hope he is clever enough to do what he is told keep his mug shut that is all",
+          "reference": "i ope es clever enough to do wot es told keep is mug shut that is all",
+          "reference_words": 17,
+          "row": 1531,
+          "wer": 41.18
+        },
+        {
+          "audio_filepath": "sample_848",
+          "duration": 7.73,
+          "errors": {
+            "del": 0,
+            "ins": 0,
+            "sub": 7
+          },
+          "prediction": "but who is come at last and who is welcome as long as he will keep from preaching on what he knows naught about",
+          "reference": "but hoo s come at last and hoo s welcome as long as hoo will keep from preaching on what hoo knows nought about",
+          "reference_words": 24,
+          "row": 848,
+          "wer": 29.17
+        },
+        {
+          "audio_filepath": "sample_1382",
+          "duration": 5.465,
+          "errors": {
+            "del": 0,
+            "ins": 0,
+            "sub": 6
+          },
+          "prediction": "its place was full of jets and strong gun able to deliver the oppressed",
+          "reference": "his quest was for a just and strong god able to deliver the oppressed",
+          "reference_words": 14,
+          "row": 1382,
+          "wer": 42.86
+        },
+        {
+          "audio_filepath": "sample_1053",
+          "duration": 6.685,
+          "errors": {
+            "del": 1,
+            "ins": 0,
+            "sub": 5
+          },
+          "prediction": "evidently the intention which made things present for the royal folk at tobacco during his visit",
+          "reference": "evidently the intention was to make things pleasant for the royal foe of tobacco during his visit",
+          "reference_words": 17,
+          "row": 1053,
+          "wer": 35.29
+        },
+        {
+          "audio_filepath": "sample_887",
+          "duration": 7.535,
+          "errors": {
+            "del": 0,
+            "ins": 0,
+            "sub": 6
+          },
+          "prediction": "why he just stretch his full head as far down the chimney as he can and listen and listen",
+          "reference": "why he jes stretch his fool haid as far down that chimney as he can an listen an listen",
+          "reference_words": 19,
+          "row": 887,
+          "wer": 31.58
+        },
+        {
+          "audio_filepath": "sample_395",
+          "duration": 10.985,
+          "errors": {
+            "del": 0,
+            "ins": 2,
+            "sub": 4
+          },
+          "prediction": "hey there are tripes fit for our sport and in earnest excellent go to billyos of the dun ox you know with the black street",
+          "reference": "heyday here are tripes fit for our sport and in earnest excellent godebillios of the dun ox you know with the black streak",
+          "reference_words": 23,
+          "row": 395,
+          "wer": 26.09
+        },
+        {
+          "audio_filepath": "sample_235",
+          "duration": 13.53,
+          "errors": {
+            "del": 0,
+            "ins": 1,
+            "sub": 5
+          },
+          "prediction": "because dom mabelan gives 417 epistles of saint bernard while marlonas horse only gives 367 i do not despise merlona s horses neither do i",
+          "reference": "because dom mabillon gives 417 epistles of saint bernard while merlonus horstius only gives 367 i do not despise merlonus horstius neither do i",
+          "reference_words": 24,
+          "row": 235,
+          "wer": 25.0
+        },
+        {
+          "audio_filepath": "sample_686",
+          "duration": 8.48,
+          "errors": {
+            "del": 0,
+            "ins": 1,
+            "sub": 5
+          },
+          "prediction": "when he get home he try and try to brush that suit off but it does not get into the skin and it stayed there",
+          "reference": "when he get home he try an try to brush that soot off but it done get into the skin an it stay there",
+          "reference_words": 24,
+          "row": 686,
+          "wer": 25.0
+        },
+        {
+          "audio_filepath": "sample_1267",
+          "duration": 5.86,
+          "errors": {
+            "del": 0,
+            "ins": 1,
+            "sub": 5
+          },
+          "prediction": "if any one asks you if you ever see him you never set eyes on him in all you are born not to remember him",
+          "reference": "if any one arsts you if you ever see im you never set eyes on im in all your born not to remember im",
+          "reference_words": 24,
+          "row": 1267,
+          "wer": 25.0
+        },
+        {
+          "audio_filepath": "sample_320",
+          "duration": 12.075,
+          "errors": {
+            "del": 3,
+            "ins": 1,
+            "sub": 2
+          },
+          "prediction": "perrots in that quarter were usually distrusted by the ships it is true but the cs4 of them far more are innocent than are guilty of any acts of violence",
+          "reference": "proas in that quarter were usually distrusted by ships it is true but the sea is full of them and far more are innocent than are guilty of any acts of violence",
+          "reference_words": 32,
+          "row": 320,
+          "wer": 18.75
+        },
+        {
+          "audio_filepath": "sample_134",
+          "duration": 16.065,
+          "errors": {
+            "del": 0,
+            "ins": 0,
+            "sub": 6
+          },
+          "prediction": "mister and missus huttersley have been seeing it to grove a fortnight and as missus hargrave is still absent and the weather was remarkably fine i never passed a day without seeing my 2 friends millicent and esther either there or here",
+          "reference": "mister and missus hattersley have been staying at the grove a fortnight and as mister hargrave is still absent and the weather was remarkably fine i never passed a day without seeing my 2 friends milicent and esther either there or here",
+          "reference_words": 42,
+          "row": 134,
+          "wer": 14.29
+        },
+        {
+          "audio_filepath": "sample_240",
+          "duration": 13.475,
+          "errors": {
+            "del": 0,
+            "ins": 2,
+            "sub": 4
+          },
+          "prediction": "he heard that magician going up the spiral staircase to his room above and after changing himself to a mouse to slip under the door and see that the room was really empty it was sir doomed s proper shape and opened the doors of the cupboard at the far end of the room",
+          "reference": "he heard the magician going up the spiral staircase to his room above and after changing himself to a mouse to slip under the door and see that the room was really empty chris resumed his proper shape and opened the doors of the cupboard at the far end of the room",
+          "reference_words": 52,
+          "row": 240,
+          "wer": 11.54
+        },
+        {
+          "audio_filepath": "sample_2657",
+          "duration": 2.54,
+          "errors": {
+            "del": 0,
+            "ins": 1,
+            "sub": 4
+          },
+          "prediction": "white once and a half the size i lay",
+          "reference": "wild ones aint alf the size i lay",
+          "reference_words": 8,
+          "row": 2657,
+          "wer": 62.5
+        }
+      ]
+    },
+    "hf-audio-open-asr-leaderboard_voxpopuli_cleaned_aa_test": {
+      "analyzed_rows": 628,
+      "errors": {
+        "del": 295,
+        "ins": 182,
+        "sub": 289
+      },
+      "reference_words": 17781,
+      "top_errors": [
+        {
+          "audio_filepath": "sample_54",
+          "duration": 19.7199375,
+          "errors": {
+            "del": 3,
+            "ins": 1,
+            "sub": 3
+          },
+          "prediction": "to have that european language in today s globalized world in today s globalized economy in this global village which is cultural economic social and political is the most valuable asset from the entire eu that we must take full account of and",
+          "reference": "to have those european world languages in today s globalized world is in today s globalized economy in this global village which is cultural economic social and political it is a most valuable asset from the entire eu that we must take full account and",
+          "reference_words": 45,
+          "row": 54,
+          "wer": 15.56
+        },
+        {
+          "audio_filepath": "sample_45",
+          "duration": 20.2799375,
+          "errors": {
+            "del": 1,
+            "ins": 3,
+            "sub": 3
+          },
+          "prediction": "1st on the russia s policy of the eu which should continually increase proportionalist sanctions according to the principle more for more 2nd there is a false perception of minsk where russia is not party to the peace process but an aggressor and ukraine is a victim that should be made clear",
+          "reference": "1st on russia policy of eu who should continue and increase proportionally sanctions according to the principle more for more 2nd there is a false perception of minsk where russia is not party to the peace process but an aggressor and ukraine is a victim that should be made clear",
+          "reference_words": 50,
+          "row": 45,
+          "wer": 14.0
+        },
+        {
+          "audio_filepath": "sample_309",
+          "duration": 10.0788125,
+          "errors": {
+            "del": 4,
+            "ins": 0,
+            "sub": 2
+          },
+          "prediction": "madam president sexual harassment is a form of violence and it is the most extreme form of gender based discrimination",
+          "reference": "yes madame jeanne thank you chair sexual harassment is a form of violence and it is the most extreme form of gender based discrimination",
+          "reference_words": 24,
+          "row": 309,
+          "wer": 25.0
+        },
+        {
+          "audio_filepath": "sample_455",
+          "duration": 7.7999375,
+          "errors": {
+            "del": 2,
+            "ins": 1,
+            "sub": 3
+          },
+          "prediction": "it was a difficult one but it was not clear at the very beginning that we could make it and that we would have greater europeanisation in this area",
+          "reference": "it is a difficult one it was not clear in the very beginning that we could make it and that we would have an a greater europeanization in this area",
+          "reference_words": 30,
+          "row": 455,
+          "wer": 20.0
+        },
+        {
+          "audio_filepath": "sample_78",
+          "duration": 17.6199375,
+          "errors": {
+            "del": 1,
+            "ins": 0,
+            "sub": 5
+          },
+          "prediction": "it is not only market it is not only technology in the 1st place it is new relationships in the whole society new types of services new type of well being new types of engagement and activity and participation of people for that i suppose it is very important also to build trust",
+          "reference": "it is not only market it is not only technology on the 1st place it is new relationships as a whole society new type of services new type of well being new type of engagement and activity and participation of people and for that i suppose it is very important also to build trust",
+          "reference_words": 54,
+          "row": 78,
+          "wer": 11.11
+        },
+        {
+          "audio_filepath": "sample_2",
+          "duration": 32.4,
+          "errors": {
+            "del": 3,
+            "ins": 2,
+            "sub": 1
+          },
+          "prediction": "none of the other players china the us or russia have that combination of distance and credibility what is more there is a new momentum in eu chinese relations to create a new international architecture but it could spill it over security affairs in east asia too trump s belligerence and domestic weakness limits american engagement in the diplomatic track on north korea and this creates a vacuum",
+          "reference": "none of the other players china us or russia have that combination of distance and credibility and what is more there is a new momentum in eu chinese relations to create new international architecture but it could spill it over the security affairs in east asia too trump s belligerence and domestic weakness limit american engagement in the diplomatic track on north korea and this this creates a vacuum",
+          "reference_words": 69,
+          "row": 2,
+          "wer": 8.7
+        },
+        {
+          "audio_filepath": "sample_0",
+          "duration": 38.435625,
+          "errors": {
+            "del": 1,
+            "ins": 2,
+            "sub": 3
+          },
+          "prediction": "cedefop s role is to contribute to the shaping and implementing of vat but also to shaping skills and qualification policies at union level the agency can do this by providing crucial evidence and services for policy making and knowledge sharing amongst the union and national actors in particular to governments and social partners i believe that the revision of the functioning of this tripartite agency has been a very good one and i fully appreciate the agency s great work in supporting and development of inclusive and quality vat systems now we have to work together that we put in place",
+          "reference": "cedefop s role is to contribute to the shaping and implementing of vet but also shaping skills and qualification policies at union level the agency can do this by providing crucial evidence and services for policymaking and knowledge sharing amongst the union and national actors in particular to governments and social partners i believe that the revision of the functioning of this tripartite agency agency has been a very good one and i fully appreciate the agency s great work in supporting and developing inclusive and quality vet systems now we have to work together that we put in place",
+          "reference_words": 100,
+          "row": 0,
+          "wer": 6.0
+        },
+        {
+          "audio_filepath": "sample_593",
+          "duration": 5.54,
+          "errors": {
+            "del": 4,
+            "ins": 0,
+            "sub": 1
+          },
+          "prediction": "this debate shows that we go hand in hand in the same direction",
+          "reference": "think that this debate shows that we are we go hand in hand into the same direction",
+          "reference_words": 17,
+          "row": 593,
+          "wer": 29.41
+        },
+        {
+          "audio_filepath": "sample_457",
+          "duration": 7.7399375,
+          "errors": {
+            "del": 1,
+            "ins": 2,
+            "sub": 2
+          },
+          "prediction": "we are wealthy not only for a small portion of the people but wealthy for all citizens and each election gives a chance to this",
+          "reference": "wealthy not only for a small portion of the people but wealthy for all citizens and each elections give a chance to this you",
+          "reference_words": 24,
+          "row": 457,
+          "wer": 20.83
+        },
+        {
+          "audio_filepath": "sample_489",
+          "duration": 7.2399375,
+          "errors": {
+            "del": 2,
+            "ins": 2,
+            "sub": 1
+          },
+          "prediction": "i believe that there is an urgent need for economic relevance in the eu and the efsi is potentially headed towards the correct direction",
+          "reference": "and i do believe that there is urgent need for economic relevance in the eu and efsi is potentially headed toward the correct direction",
+          "reference_words": 24,
+          "row": 489,
+          "wer": 20.83
+        },
+        {
+          "audio_filepath": "sample_242",
+          "duration": 11.6799375,
+          "errors": {
+            "del": 0,
+            "ins": 3,
+            "sub": 2
+          },
+          "prediction": "2017 was the year when we saw the obstacles to the resolvability of the venetian banks and the 1st resolution under the eu framework the popular case we have shown that further transparency is clearly needed",
+          "reference": "2017 was the year when we saw the obstacles to resolvability of the venetian banks and the 1st resolution under the eu framework the popular case which showed further transparency is clearly needed",
+          "reference_words": 33,
+          "row": 242,
+          "wer": 15.15
+        },
+        {
+          "audio_filepath": "sample_161",
+          "duration": 13.9,
+          "errors": {
+            "del": 3,
+            "ins": 2,
+            "sub": 0
+          },
+          "prediction": "mister president businesses small medium and large have been contacting me in their droves about this much vaunted eu investment this mythical eu money that the pro european argument says the uk is so heavily dependent on",
+          "reference": "thank you mister president businesses small medium and large have been contacting me in their droves about this much vaunted eu investment this mythical eu money that pro the pro european argument says the uk is so heavily",
+          "reference_words": 38,
+          "row": 161,
+          "wer": 13.16
+        },
+        {
+          "audio_filepath": "sample_126",
+          "duration": 15.2599375,
+          "errors": {
+            "del": 3,
+            "ins": 1,
+            "sub": 1
+          },
+          "prediction": "at the same time we can not be naive and we need to look at it in a very accurate way indeed the previous debate on wireguard clearly demonstrates that we have to draw the right lessons",
+          "reference": "at the same time we will not we can not be naive and we need to look at it in a very accurate way indeed the previous debate on wirecard clearly demonstrates we have to draw the right lessons",
+          "reference_words": 39,
+          "row": 126,
+          "wer": 12.82
+        },
+        {
+          "audio_filepath": "sample_58",
+          "duration": 19.219875,
+          "errors": {
+            "del": 1,
+            "ins": 4,
+            "sub": 0
+          },
+          "prediction": "secondly the european union should use the enhanced pca as a platform to promote improvement of relations between kazakhstan and other countries of the central asia region furthermore it is crucial that the pca contains provisions for inter regional cooperation in the central asia region",
+          "reference": "secondly european union should use the enhanced pca as a platform to promote improvement of of relations between kazakhstan and other countries of central asia region furthermore it is crucial that pca contains provisions for interregional cooperation in central asia region",
+          "reference_words": 41,
+          "row": 58,
+          "wer": 12.2
+        },
+        {
+          "audio_filepath": "sample_87",
+          "duration": 17.14,
+          "errors": {
+            "del": 2,
+            "ins": 1,
+            "sub": 2
+          },
+          "prediction": "related to this area the eu has many more topics on its agenda than just trade defense and security cooperation the fight against terrorism and regional cooperation for the support and stabilization of surrounding regions especially the middle east and sub saharan africa",
+          "reference": "related to this area eu has much more topics on its agenda than just trade defense and security cooperation the fight against terrorists and regional cooperation for the support and stabilization of surrounding region regions especially the middle east and the sub saharan africa",
+          "reference_words": 44,
+          "row": 87,
+          "wer": 11.36
+        },
+        {
+          "audio_filepath": "sample_28",
+          "duration": 21.499,
+          "errors": {
+            "del": 3,
+            "ins": 1,
+            "sub": 1
+          },
+          "prediction": "4th point while on the one hand large trade deficits are driven by excessive spending and in debtness in some member states including the united states of america on the other large export driven economies in certain emerging countries are experiencing trade surpluses",
+          "reference": "4th point while on the other on the one hand large trade deficits are driven by excessive spending and indebtedness in some member states including the united states of america on the other large export driven economies in certain emerging countries are experiencing trade surpluses",
+          "reference_words": 45,
+          "row": 28,
+          "wer": 11.11
+        },
+        {
+          "audio_filepath": "sample_105",
+          "duration": 15.8983125,
+          "errors": {
+            "del": 0,
+            "ins": 1,
+            "sub": 4
+          },
+          "prediction": "in the meantime migrants and asylum seekers still risk their lives at sea to reach it kandian s safe harbor state does not be lifted before the works to restore the reception center are finalized given that the extent of the damage was very limited in any case",
+          "reference": "in the meantime migrants and asylum seekers still risk their lives at sea to reach it can the unsafe harbor status not be lifted before the works to restore the reception center are finalized given that the extent of the damage was very limited in any case",
+          "reference_words": 47,
+          "row": 105,
+          "wer": 10.64
+        },
+        {
+          "audio_filepath": "sample_106",
+          "duration": 15.88,
+          "errors": {
+            "del": 4,
+            "ins": 0,
+            "sub": 1
+          },
+          "prediction": "i know it is very much a challenge but i would like the european parliament to lead on this very topic and not to follow we have seen that all the developments on the internet are taking a very high and very rapid flight",
+          "reference": "and i know it is very much a challenge but i would like the european parliament to lead on this very on this very topic and not to follow we have seen that all the developments on the internet are taking a very high a very rapid flight",
+          "reference_words": 48,
+          "row": 106,
+          "wer": 10.42
+        },
+        {
+          "audio_filepath": "sample_25",
+          "duration": 21.52,
+          "errors": {
+            "del": 1,
+            "ins": 1,
+            "sub": 3
+          },
+          "prediction": "i would like to stress that the abolition of the exequator should constitute a real step forward in judicial integration that the commission does not see this as the mere removal of a superflu formality but as a step forward in mutual trust in each other s judicial system",
+          "reference": "i would like to stress that the abolition of exequatur should constitute a real step forward in judicial integration that the commission does not see this as the mere removal of a superfluous formality but as a step forward in the mutual trust in each other s judicial systems",
+          "reference_words": 49,
+          "row": 25,
+          "wer": 10.2
+        },
+        {
+          "audio_filepath": "sample_75",
+          "duration": 18.06,
+          "errors": {
+            "del": 1,
+            "ins": 1,
+            "sub": 3
+          },
+          "prediction": "the eu s intentions are to help the yemeni population and this is why we need to support the efforts in identifying political solutions as soon as possible using dialog and negotiations we need to understand that all parties in the conflict must comply with their obligations under international law",
+          "reference": "eu s intention are to help the yemeni population and this is why we need to support the efforts in identifying political solution as soon as possible using dialog and negotiations we need to understand that all parties in the conflict must comply with their obligation under the international law",
+          "reference_words": 50,
+          "row": 75,
+          "wer": 10.0
+        }
+      ]
+    }
+  }
+}

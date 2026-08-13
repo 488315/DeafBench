@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "status": "predeclared-before-generation",
+  "rules": {
+    "sample_rate": 48000,
+    "channels": 1,
+    "min_edge_silence_ms": 100,
+    "max_edge_silence_ms": 700,
+    "max_clipping_fraction": 0.001,
+    "min_seconds_per_word": 0.08,
+    "max_seconds_per_word": 0.45,
+    "min_alignment_coverage": 0.95,
+    "min_alignment_token_score": 0.25,
+    "min_entity_coverage": 0.95,
+    "analysis_frame_ms": 10
+  },
+  "required_gates": [
+    "readable_container",
+    "required_format",
+    "nonempty_waveform",
+    "not_truncated",
+    "bounded_silence",
+    "bounded_clipping",
+    "plausible_duration",
+    "reference_hash",
+    "forced_alignment_coverage",
+    "typed_critical_entity_fidelity"
+  ],
+  "alignment_contract": {
+    "kind": "reference-conditioned forced alignment",
+    "minimum_token_coverage": 0.95,
+    "covered_token_minimum_score": 0.25,
+    "minimum_per-typed-entity_coverage": 0.95,
+    "baseline_model_may_supply_alignment": false
+  },
+  "independent_asr_contract": {
+    "role": "supporting evidence only",
+    "can_accept_a_sample": false,
+    "disagreement_action": "quarantine"
+  }
+}

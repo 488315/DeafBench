@@ -1,0 +1,334 @@
+"""Aggregate-only artifact export for the customer-run pilot."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import re
+import tempfile
+from collections import Counter
+from dataclasses import dataclass
+from pathlib import Path
+
+from deafbench.pilot.export_scan import assert_export_safe
+from deafbench.pilot.manifest import (
+    EXECUTION_NOTICE,
+    SELF_SIGNED_NOTICE,
+    verify_signed_manifest,
+    write_signed_manifest,
+)
+from deafbench.pilot.zero_custody import (
+    ExecutionAttestation,
+    validate_execution_attestation,
+)
+from deafbench.result_manifest import validate_result_manifest
+
+
+PILOT_MODEL_IDS = (
+    "Qwen/Qwen3-ASR-1.7B-hf",
+    "nvidia/parakeet-tdt-0.6b-v2",
+    "ibm-granite/granite-speech-4.1-2b",
+)
+_SAFE_CONFIGURATION = frozenset(
+    {
+        "batch_size",
+        "device",
+        "dtype",
+        "keyword_biasing",
+        "language",
+        "max_new_tokens",
+        "num_beams",
+        "timestamps",
+        "trust_remote_code",
+    }
+)
+_SAFE_DEVICES = re.compile(r"(?:cpu|mps|cuda(?::[0-9]+)?)\Z")
+_SAFE_DTYPES = frozenset(
+    {
+        "bfloat16",
+        "float16",
+        "float32",
+        "int8",
+        "int8_float16",
+        "torch.bfloat16",
+        "torch.float16",
+        "torch.float32",
+    }
+)
+_SAFE_LANGUAGES = frozenset({"en", "English"})
+
+
+@dataclass(frozen=True)
+class CustomerExportResult:
+    manifest_sha256: str
+    model_count: int
+    sample_count: int
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _load_json(path: Path) -> dict[str, object]:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError("result manifest is unreadable") from exc
+    if not isinstance(value, dict):
+        raise ValueError("result manifest must be an object")
+    return value
+
+
+def _registry_models(repo_root: Path) -> dict[str, dict[str, object]]:
+    registry = _load_json(repo_root / "deafbench" / "model-registry.json")
+    models = registry.get("models")
+    if not isinstance(models, list):
+        raise ValueError("model registry is invalid")
+    return {
+        str(model.get("model_id")): model
+        for model in models
+        if isinstance(model, dict)
+    }
+
+
+def _audit_evaluation(result: dict[str, object]) -> dict[str, object]:
+    evaluations = result.get("evaluations")
+    if not isinstance(evaluations, list):
+        raise ValueError("result evaluations are invalid")
+    lane = (
+        "customer-audit"
+        if result.get("status") == "customer_audit_complete"
+        else "synthetic-v2"
+    )
+    matches = [
+        evaluation
+        for evaluation in evaluations
+        if isinstance(evaluation, dict) and evaluation.get("lane") == lane
+    ]
+    if len(matches) != 1 or matches[0].get("scope") != "complete":
+        raise ValueError("result lacks one complete audit evaluation")
+    return matches[0]
+
+
+def _corpus_manifest(result: dict[str, object], lane: str) -> str:
+    corpora = result.get("corpora")
+    expected_name = (
+        "customer-authorized-audio" if lane == "customer-audit" else "synthetic-v2"
+    )
+    matches = [
+        corpus
+        for corpus in corpora
+        if isinstance(corpus, dict) and corpus.get("name") == expected_name
+    ] if isinstance(corpora, list) else []
+    if len(matches) != 1:
+        raise ValueError("result lacks one audit corpus manifest")
+    manifest_sha256 = matches[0].get("manifest_sha256")
+    if not isinstance(manifest_sha256, str):
+        raise ValueError("result corpus manifest lacks manifest_sha256")
+    return manifest_sha256
+
+
+def _safe_configuration(decoding: dict[str, object]) -> dict[str, object]:
+    exported: dict[str, object] = {}
+    for key in sorted(decoding):
+        if key not in _SAFE_CONFIGURATION:
+            continue
+        value = decoding[key]
+        if key == "keyword_biasing":
+            exported[key] = bool(value)
+        elif key == "device" and isinstance(value, str) and _SAFE_DEVICES.fullmatch(value):
+            exported[key] = value
+        elif key == "dtype" and value in _SAFE_DTYPES:
+            exported[key] = value
+        elif key == "language" and value in _SAFE_LANGUAGES:
+            exported[key] = value
+        elif key in {"batch_size", "max_new_tokens", "num_beams"} and (
+            isinstance(value, int) and not isinstance(value, bool) and 0 < value <= 65536
+        ):
+            exported[key] = value
+        elif key in {"timestamps", "trust_remote_code"} and isinstance(value, bool):
+            exported[key] = value
+        else:
+            raise ValueError(f"unsafe aggregate configuration value for {key}")
+    return exported
+
+
+def _aggregate_model(
+    result: dict[str, object], registry: dict[str, dict[str, object]]
+) -> dict[str, object]:
+    model = result.get("model")
+    if not isinstance(model, dict):
+        raise ValueError("result model identity is invalid")
+    model_id = str(model.get("model_id"))
+    revision = str(model.get("revision"))
+    entry = registry.get(model_id)
+    if (
+        entry is None
+        or entry.get("revision") != revision
+        or entry.get("intended_lane") != "commercial_candidate"
+        or not str(entry.get("commercial_use", "")).startswith("commercial_")
+        or result.get("license_classification") != "commercial_candidate"
+    ):
+        raise ValueError("result model is not pinned to a permitted registry entry")
+
+    evaluation = _audit_evaluation(result)
+    lane = str(evaluation["lane"])
+    metrics = evaluation.get("metrics")
+    failures = evaluation.get("critical_failures")
+    decoding = result.get("decoding")
+    if not isinstance(metrics, dict) or not isinstance(failures, list):
+        raise ValueError("result aggregate evidence is invalid")
+    if not isinstance(decoding, dict):
+        raise ValueError("result decoding configuration is invalid")
+    failure_counts = Counter(
+        str(failure.get("entity_type"))
+        for failure in failures
+        if isinstance(failure, dict)
+    )
+    required_metrics = {
+        "wer_percent",
+        "strict_lexical_recall_percent",
+        "canonical_semantic_recall_percent",
+        "substitutions",
+        "insertions",
+        "deletions",
+        "local_rtfx",
+        "median_latency_ms",
+        "peak_vram_bytes",
+    }
+    if not required_metrics.issubset(metrics):
+        raise ValueError("result metrics are incomplete")
+    return {
+        "model_id": model_id,
+        "revision": revision,
+        "license_classification": "commercial_candidate",
+        "configuration": _safe_configuration(decoding),
+        "aggregate_metrics": {
+            **{key: metrics[key] for key in sorted(required_metrics)},
+            "critical_failures_by_entity_type": dict(sorted(failure_counts.items())),
+        },
+        "sample_count": evaluation.get("sample_count"),
+        "evaluator_version": result.get("evaluator_revision"),
+        "evaluation_track": lane,
+        "corpus_manifest": _corpus_manifest(result, lane),
+    }
+
+
+def _report(models: list[dict[str, object]], sample_count: int) -> str:
+    lines = [
+        "# Accessibility-Critical ASR Audit",
+        "",
+        EXECUTION_NOTICE,
+        "",
+        SELF_SIGNED_NOTICE,
+        "",
+        f"Audio sample count: {sample_count}",
+        "",
+        "| Model | WER | Strict recall | Canonical recall | Local RTFx |",
+        "|---|---:|---:|---:|---:|",
+    ]
+    for model in models:
+        metrics = model["aggregate_metrics"]
+        lines.append(
+            f"| {model['model_id']} | {metrics['wer_percent']:.1f}% | "
+            f"{metrics['strict_lexical_recall_percent']:.1f}% | "
+            f"{metrics['canonical_semantic_recall_percent']:.1f}% | "
+            f"{metrics['local_rtfx']:.2f} |"
+        )
+    lines.extend(
+        [
+            "",
+            "Only aggregate metrics are included. Results are not a certification or "
+            "a Hugging Face leaderboard result.",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def create_customer_export(
+    *,
+    repo_root: Path,
+    result_paths: list[Path],
+    output_dir: Path,
+    signing_key: Path,
+    execution_attestation: ExecutionAttestation,
+) -> CustomerExportResult:
+    """Create a verified aggregate-only export from local result manifests."""
+
+    execution_attestation = validate_execution_attestation(execution_attestation)
+    destination = Path(output_dir)
+    if destination.exists():
+        raise FileExistsError("export directory must not already exist")
+    if len(result_paths) != len(PILOT_MODEL_IDS):
+        raise ValueError("export requires the exact three-model pilot set")
+    registry = _registry_models(Path(repo_root))
+    loaded = [
+        (dict(validate_result_manifest(_load_json(Path(path)))), Path(path))
+        for path in result_paths
+    ]
+    aggregates = [_aggregate_model(result, registry) for result, _ in loaded]
+    by_id = {str(model["model_id"]): model for model in aggregates}
+    paths_by_id = {
+        str(result["model"]["model_id"]): path for result, path in loaded
+    }
+    if set(by_id) != set(PILOT_MODEL_IDS):
+        raise ValueError("export requires the exact three-model pilot set")
+    ordered = [by_id[model_id] for model_id in PILOT_MODEL_IDS]
+    counts = {model.pop("sample_count") for model in ordered}
+    evaluators = {model.pop("evaluator_version") for model in ordered}
+    tracks = {model.pop("evaluation_track") for model in ordered}
+    corpora = {model.pop("corpus_manifest") for model in ordered}
+    if len(tracks) != 1:
+        raise ValueError("model results do not share the same evaluation track")
+    if len(counts) != 1 or len(evaluators) != 1 or len(corpora) != 1:
+        raise ValueError("model results do not share one dataset and evaluator")
+    sample_count = counts.pop()
+    evaluator = evaluators.pop()
+    if not isinstance(sample_count, int) or not isinstance(evaluator, str):
+        raise ValueError("model result identity is invalid")
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(
+        dir=destination.parent, prefix="deafbench-export-"
+    ) as temporary:
+        staging = Path(temporary) / "artifacts"
+        staging.mkdir()
+        report_path = staging / "report.md"
+        report_path.write_text(
+            _report(ordered, sample_count), encoding="utf-8", newline="\n"
+        )
+        artifact_hashes = [
+            {
+                "artifact_type": "local_result_manifest",
+                "model_id": str(model["model_id"]),
+                "sha256": _sha256(path),
+            }
+            for model in ordered
+            for path in (paths_by_id[str(model["model_id"])],)
+        ]
+        artifact_hashes.append(
+            {"artifact_type": "redacted_report", "sha256": _sha256(report_path)}
+        )
+        digest = write_signed_manifest(
+            staging / "manifest.json",
+            payload={
+                "schema_version": 1,
+                "execution_notice": EXECUTION_NOTICE,
+                "execution_attestation_sha256": execution_attestation.sha256,
+                "evaluator_version": evaluator,
+                "sample_count": sample_count,
+                "models": ordered,
+                "artifact_hashes": artifact_hashes,
+            },
+            key_path=Path(signing_key),
+        )
+        assert_export_safe(staging)
+        if not verify_signed_manifest(staging / "manifest.json"):
+            raise ValueError("export manifest signature verification failed")
+        staging.replace(destination)
+    return CustomerExportResult(digest, len(ordered), sample_count)

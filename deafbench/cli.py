@@ -5,6 +5,7 @@ from .parser import parse_jsonl, align_records
 from .metrics import evaluate_dataset
 from .report import generate_markdown_report
 from .benchmark.models import MODEL_NAMES
+from .leaderboard.cli import add_leaderboard_parser, run_leaderboard
 
 
 _BENCHMARK_RUNTIME_UNAVAILABLE = (
@@ -15,13 +16,20 @@ _BENCHMARK_RUNTIME_UNAVAILABLE = (
 
 
 def format_terminal_output(metrics: dict) -> str:
+    canonical_recall = metrics.get(
+        "canonical_critical_recall", metrics["critical_recall"]
+    )
+    strict_recall = metrics.get("strict_critical_recall", canonical_recall)
     lines = [
         "DeafBench v0.1",
         "",
         f"Samples: {metrics['samples']}",
         "",
         f"WER                       {metrics['wer']:>6.1f}%",
-        f"Critical Information      {metrics['critical_recall']:>6.1f}%",
+        f"Strict Critical Information    {strict_recall:>6.1f}%",
+        f"Canonical Critical Information {canonical_recall:>6.1f}%",
+        f"WER edits (S/I/D)         {metrics.get('substitutions', 0)}/"
+        f"{metrics.get('insertions', 0)}/{metrics.get('deletions', 0)}",
     ]
 
     if metrics.get("non_speech_recall") is not None:
@@ -138,6 +146,8 @@ def main(args: Optional[List[str]] = None) -> int | None:
     benchmark_parser.add_argument("--repo-root", dest="benchmark_repo_root")
     benchmark_parser.add_argument("--scene-profile", default="default-v1")
     benchmark_parser.add_argument("--seed", type=int, default=42)
+
+    add_leaderboard_parser(subparsers)
     
     parsed = parser.parse_args(args)
 
@@ -155,6 +165,9 @@ def main(args: Optional[List[str]] = None) -> int | None:
         if parsed.benchmark_repo_root is not None:
             benchmark_args.extend(["--repo-root", parsed.benchmark_repo_root])
         return _run_benchmark(benchmark_args)
+
+    if parsed.command == "leaderboard":
+        return run_leaderboard(parsed)
     
     try:
         references = parse_jsonl(parsed.references)

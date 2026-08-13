@@ -1,0 +1,101 @@
+{
+  "claim_boundary": "Local reproducibility evidence only. The two-row public smoke is partial, is not a seven-set macro-average, and is not a Hugging Face verified leaderboard result.",
+  "corpora": [
+    {
+      "frozen": true,
+      "manifest_sha256": "b962df9c122870825e75fdd4d628acc1101cff7bfc023d11fe967ed116cf0055",
+      "name": "synthetic-v2"
+    },
+    {
+      "frozen": true,
+      "manifest_sha256": "4615d2d50d6fe8377a5836130c39c9c6daf5b26dec46861bc7fef53208811823",
+      "name": "librispeech-test.clean-two-row-smoke"
+    }
+  ],
+  "decoding": {
+    "device": "cuda:0",
+    "dtype": "torch.bfloat16",
+    "language": "English",
+    "max_new_tokens": 256,
+    "trust_remote_code": false
+  },
+  "evaluations": [
+    {
+      "critical_failures": [
+        {
+          "entity_type": "UNCLASSIFIED",
+          "id": "core-001",
+          "term": "Dr. Martinez"
+        },
+        {
+          "entity_type": "UNCLASSIFIED",
+          "id": "core-007",
+          "term": "192 dot 168 dot 1 dot 25"
+        },
+        {
+          "entity_type": "CODE",
+          "id": "core-010",
+          "term": "503"
+        },
+        {
+          "entity_type": "UNCLASSIFIED",
+          "id": "core-018",
+          "term": "security update"
+        },
+        {
+          "entity_type": "CODE",
+          "id": "core-019",
+          "term": "alpha seven nine"
+        }
+      ],
+      "evidence": {
+        "predictions_sha256": "5a12323c1835ca3050fb7ce89b6a6cfbf7795c39066afa11c3333ec4177e4ebb",
+        "report_sha256": "80dedf5f93ffb9e94ad3df18e5b4d205d831e0c20c60b858bb560d99af73051c",
+        "run_metadata_sha256": "b655394a3c3e743be1d2b37630eed9fd7b1ce737f4666c804082797856d2a3ee"
+      },
+      "lane": "synthetic-v2",
+      "metrics": {
+        "canonical_semantic_recall_percent": 91.9,
+        "deletions": 7,
+        "insertions": 10,
+        "local_rtfx": 9.89078298476959,
+        "median_latency_ms": 495.9883,
+        "peak_vram_bytes": 4144613888,
+        "strict_lexical_recall_percent": 67.7,
+        "substitutions": 43,
+        "wer_percent": 21.0
+      },
+      "sample_count": 25,
+      "scope": "complete"
+    },
+    {
+      "critical_failures": [],
+      "evidence": {
+        "dataset_revision": "b6bdcd0beb34f8975dc659796176d88f43aff502",
+        "official_evaluator_revision": "9585fc39bff55697a2ec1c5f13921b18812bfde8",
+        "official_manifest_sha256": "3b912a10f5f355dabc2cebaf92aab05fc9a071e0a0b9517b0fc435e52cf040e0",
+        "predictions_sha256": "f6274fd5097ce84cf15fa6afcd65490a6586456a2cb2789476ed75e0134b28fc"
+      },
+      "lane": "hugging-face-compatibility-smoke",
+      "metrics": {
+        "deletions": 0,
+        "insertions": 0,
+        "local_rtfx": 12.4251,
+        "median_latency_ms": 2771.2137,
+        "peak_vram_bytes": 4353538048,
+        "substitutions": 2,
+        "wer_percent": 1.16
+      },
+      "sample_count": 2,
+      "scope": "partial"
+    }
+  ],
+  "evaluator_revision": "6f5b294c07a2d7b37094336cec8e01011556850b",
+  "license_classification": "commercial_candidate",
+  "model": {
+    "model_id": "Qwen/Qwen3-ASR-1.7B-hf",
+    "revision": "bcd2b5b7f32b480ab5790554cfa8347f246a14f3"
+  },
+  "schema_version": 1,
+  "status": "smoke_complete"
+}

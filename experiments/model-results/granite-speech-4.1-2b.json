@@ -1,0 +1,102 @@
+{
+  "claim_boundary": "Local reproducibility evidence only. The two-row public smoke is partial, is not a seven-set macro-average, and is not a Hugging Face verified leaderboard result.",
+  "corpora": [
+    {
+      "frozen": true,
+      "manifest_sha256": "b962df9c122870825e75fdd4d628acc1101cff7bfc023d11fe967ed116cf0055",
+      "name": "synthetic-v2"
+    },
+    {
+      "frozen": true,
+      "manifest_sha256": "4615d2d50d6fe8377a5836130c39c9c6daf5b26dec46861bc7fef53208811823",
+      "name": "librispeech-test.clean-two-row-smoke"
+    }
+  ],
+  "decoding": {
+    "device": "cuda",
+    "dtype": "torch.bfloat16",
+    "keyword_biasing": false,
+    "max_new_tokens": 200,
+    "num_beams": 1,
+    "trust_remote_code": false
+  },
+  "evaluations": [
+    {
+      "critical_failures": [
+        {
+          "entity_type": "UNCLASSIFIED",
+          "id": "core-007",
+          "term": "192 dot 168 dot 1 dot 25"
+        },
+        {
+          "entity_type": "UNCLASSIFIED",
+          "id": "core-014",
+          "term": "Unreal Engine"
+        },
+        {
+          "entity_type": "UNCLASSIFIED",
+          "id": "core-018",
+          "term": "security update"
+        },
+        {
+          "entity_type": "SSID",
+          "id": "core-019",
+          "term": "Office Guest"
+        },
+        {
+          "entity_type": "CODE",
+          "id": "core-019",
+          "term": "alpha seven nine"
+        }
+      ],
+      "evidence": {
+        "predictions_sha256": "a153eb413c10a3d034401fd2cc3abd7dc096d325a5d54ce2b00e20fc275dfeda",
+        "report_sha256": "540c9900ea2d06a3165719bddfd7549a9860fa183cdb1383570637f0c7727539",
+        "run_metadata_sha256": "bcc31fa1f18aed89593d1d8210ea65dcc6dbb693b0f3d00ec60745241a7686a2"
+      },
+      "lane": "synthetic-v2",
+      "metrics": {
+        "canonical_semantic_recall_percent": 91.9,
+        "deletions": 15,
+        "insertions": 8,
+        "local_rtfx": 12.905931875645352,
+        "median_latency_ms": 356.799444,
+        "peak_vram_bytes": 4668391424,
+        "strict_lexical_recall_percent": 69.4,
+        "substitutions": 31,
+        "wer_percent": 18.9
+      },
+      "sample_count": 25,
+      "scope": "complete"
+    },
+    {
+      "critical_failures": [],
+      "evidence": {
+        "dataset_revision": "b6bdcd0beb34f8975dc659796176d88f43aff502",
+        "official_evaluator_revision": "9585fc39bff55697a2ec1c5f13921b18812bfde8",
+        "official_manifest_sha256": "6f87ad10cb4e7d9d452b1df7cf16dba7e01d5bc435dc100a700628dffcff1d95",
+        "predictions_sha256": "80689e1c8c7bb2e12aca99108dd6f6326799416ec2724ce4e21adc7d10a81a06"
+      },
+      "lane": "hugging-face-compatibility-smoke",
+      "metrics": {
+        "deletions": 0,
+        "insertions": 4,
+        "local_rtfx": 7.4304,
+        "median_latency_ms": 4634.004836,
+        "peak_vram_bytes": 4742408704,
+        "substitutions": 2,
+        "wer_percent": 3.47
+      },
+      "sample_count": 2,
+      "scope": "partial"
+    }
+  ],
+  "evaluator_revision": "6f5b294c07a2d7b37094336cec8e01011556850b",
+  "license_classification": "commercial_candidate",
+  "model": {
+    "model_id": "ibm-granite/granite-speech-4.1-2b",
+    "revision": "de575db64086f84fdc79da4932d1076e965bc546"
+  },
+  "schema_version": 1,
+  "status": "smoke_complete"
+}

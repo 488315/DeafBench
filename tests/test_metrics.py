@@ -1,7 +1,6 @@
 import pytest
 from deafbench.parser import normalize_text, align_records
 from deafbench.metrics import (
-    calculate_wer,
     evaluate_critical_info,
     evaluate_non_speech_info,
     evaluate_speaker_attribution,
@@ -155,6 +154,179 @@ def test_evaluate_dataset():
     assert metrics["critical_recall"] == 100.0
     assert metrics["speaker_accuracy"] == 100.0
     assert metrics["median_latency_ms"] == 500.0
+
+
+@pytest.mark.parametrize(
+    (
+        "sample_id",
+        "entity_type",
+        "expected",
+        "prediction",
+        "semantic_match",
+    ),
+    [
+        pytest.param(
+            "core-001",
+            "TIME",
+            "2:15 PM",
+            "My appointment is Friday at 2 clear 15 p.m.",
+            False,
+            id="recognition-error-invalid-time-word",
+        ),
+        pytest.param(
+            "core-006",
+            "TIME",
+            "8:30 PM",
+            "Take 15 milligrams at 8 30 p.m., not 50 milligrams.",
+            True,
+            id="formatting-only-spoken-time",
+        ),
+        pytest.param(
+            "core-009",
+            "TIME",
+            "4:45 PM",
+            "Jordan needs 83927 Thursday at 4 core 5 p.m.",
+            False,
+            id="recognition-error-corrupted-time",
+        ),
+        pytest.param(
+            "core-011",
+            "USERNAME",
+            "dev_user twenty three",
+            "My username is devcusser23 and the code is 481926.",
+            False,
+            id="recognition-error-username-characters",
+        ),
+        pytest.param(
+            "core-012",
+            "TIME",
+            "11:45 PM",
+            "The migration starts at 11 o'clock 45pm.",
+            True,
+            id="semantic-equivalent-spoken-time",
+        ),
+        pytest.param(
+            "core-016",
+            "DIGIT_SEQUENCE",
+            "seven four nine two six eight one",
+            "The package delivery number is seven.",
+            False,
+            id="recognition-error-incomplete-digit-sequence",
+        ),
+        pytest.param(
+            "core-019",
+            "SSID",
+            "Office Guest",
+            "The Wi-Fi network name is Alpha's Guest.",
+            False,
+            id="recognition-error-different-wifi-name",
+        ),
+    ],
+)
+def test_reported_failures_use_strict_and_typed_semantic_scoring(
+    sample_id,
+    entity_type,
+    expected,
+    prediction,
+    semantic_match,
+):
+    """Lock the seven baseline failures to their documented pass/fail reason."""
+    result = evaluate_critical_info(
+        {
+            "id": sample_id,
+            "critical": [expected],
+            "critical_types": {expected: entity_type},
+        },
+        {"id": sample_id, "text": prediction},
+    )
+
+    assert result["strict_matched"] == []
+    assert (result["canonical_matched"] == [expected]) is semantic_match
+    assert (result["canonical_missed"] == [expected]) is not semantic_match
+
+
+@pytest.mark.parametrize(
+    ("entity_type", "expected", "prediction", "matches"),
+    [
+        ("TIME", "8:30 PM", "at eight thirty p.m.", True),
+        ("TIME", "8:30 PM", "at 8 30 p.m.", True),
+        ("TIME", "9 AM", "at nine a.m.", True),
+        ("DIGIT_SEQUENCE", "seven four nine", "number 749", True),
+        ("DIGIT_SEQUENCE", "seven four nine", "number 74", False),
+        ("USERNAME", "dev_user twenty three", "dev underscore user 23", True),
+        ("USERNAME", "dev_user twenty three", "devuser23", False),
+        ("CODE", "alpha seven nine", "code Alpha79", True),
+        ("CODE", "alpha seven nine", "code Alpha-79", False),
+        ("PASSWORD", "481926", "password 481926", True),
+        ("PASSWORD", "481926", "password is four eight one nine two six", True),
+        ("PASSWORD", "481926", "password 48192", False),
+        ("SSID", "Office Guest", "network officeguest", True),
+        ("SSID", "Office Guest", "network Alpha Guest", False),
+        ("PROPER_NAME", "Ada Lovelace", "speaker ada   lovelace", True),
+        ("PROPER_NAME", "Ada Lovelace", "speaker Ava Lovelace", False),
+    ],
+)
+def test_typed_entities_apply_only_their_allowed_normalization(
+    entity_type, expected, prediction, matches
+):
+    result = evaluate_critical_info(
+        {
+            "critical": [expected],
+            "critical_types": {expected: entity_type},
+        },
+        {"text": prediction},
+    )
+
+    assert (result["canonical_matched"] == [expected]) is matches
+
+
+@pytest.mark.parametrize(
+    "critical_types",
+    [
+        [],
+        {"other": "TIME"},
+        {"hello": "FUZZY"},
+    ],
+)
+def test_critical_entity_contract_rejects_malformed_types(critical_types):
+    with pytest.raises(ValueError, match="critical_types"):
+        evaluate_critical_info(
+            {"critical": ["hello"], "critical_types": critical_types},
+            {"text": "hello"},
+        )
+
+
+def test_evaluate_dataset_reports_per_sample_and_aggregate_word_errors():
+    refs = [
+        {"id": "s1", "text": "alpha beta", "critical": [], "sounds": []},
+        {"id": "s2", "text": "one two", "critical": [], "sounds": []},
+    ]
+    preds = [
+        {"id": "s1", "text": "alpha gamma extra"},
+        {"id": "s2", "text": "one"},
+    ]
+
+    metrics = evaluate_dataset(align_records(refs, preds))
+
+    assert metrics["substitutions"] == 1
+    assert metrics["insertions"] == 1
+    assert metrics["deletions"] == 1
+    assert metrics["word_errors_by_sample"] == [
+        {
+            "id": "s1",
+            "wer": 100.0,
+            "substitutions": 1,
+            "insertions": 1,
+            "deletions": 0,
+        },
+        {
+            "id": "s2",
+            "wer": 50.0,
+            "substitutions": 0,
+            "insertions": 0,
+            "deletions": 1,
+        },
+    ]
 
 
 def test_evaluate_dataset_leaves_non_speech_unscored_without_reference_sounds():

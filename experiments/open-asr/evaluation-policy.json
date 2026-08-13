@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "track": "hugging-face-open-asr-compatibility",
+  "data_partitions": {
+    "training": "training_sources_only",
+    "development": "validation_sources_only",
+    "official_public_test": "declared_milestone_evaluation_only",
+    "official_private_test": "maintainer_only_unavailable"
+  },
+  "integrity_rules": {
+    "official_test_training_allowed": false,
+    "repeated_test_label_tuning_allowed": false,
+    "training_development_evaluation_disjoint": true,
+    "official_test_milestones_must_be_predeclared": true,
+    "deafbench_typed_scoring_may_replace_official_wer": false,
+    "leaderboard_win_claim_requires_hugging_face_verification": true
+  },
+  "current_milestone": {
+    "name": "pinned-open-model-public-baseline-reproduction",
+    "status": "complete",
+    "candidate_model_training_started": false,
+    "fine_tuning_authorized": false
+  },
+  "contamination_audit": {
+    "model_id": "soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M",
+    "model_revision": "d410fb15a71cbf87ec5e0a860356563deb9d8f01",
+    "status": "indeterminate",
+    "suspected_overlaps": [],
+    "finding": "No sample-level overlap is confirmed, but the published model materials do not provide a complete sample-level training inventory from which official-test exclusion can be proved.",
+    "required_before_candidate_evaluation": "Record every training and development source revision and compare stable sample or audio-content identities against all official evaluation manifests.",
+    "commercial_training_eligible": false,
+    "final_claim_eligible": false
+  }
+}

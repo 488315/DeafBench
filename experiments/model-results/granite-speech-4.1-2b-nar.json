@@ -1,0 +1,115 @@
+{
+  "claim_boundary": "Local reproducibility evidence only. The two-row public smoke is partial, is not a seven-set macro-average, and is not a Hugging Face verified leaderboard result.",
+  "corpora": [
+    {
+      "frozen": true,
+      "manifest_sha256": "b962df9c122870825e75fdd4d628acc1101cff7bfc023d11fe967ed116cf0055",
+      "name": "synthetic-v2"
+    },
+    {
+      "frozen": true,
+      "manifest_sha256": "4615d2d50d6fe8377a5836130c39c9c6daf5b26dec46861bc7fef53208811823",
+      "name": "librispeech-test.clean-two-row-smoke"
+    }
+  ],
+  "decoding": {
+    "attn_implementation": "flash_attention_2",
+    "device": "cuda",
+    "dtype": "torch.bfloat16",
+    "trust_remote_code": true
+  },
+  "evaluations": [
+    {
+      "critical_failures": [
+        {
+          "entity_type": "TIME",
+          "id": "core-006",
+          "term": "8:30 PM"
+        },
+        {
+          "entity_type": "USERNAME",
+          "id": "core-011",
+          "term": "dev_user twenty three"
+        },
+        {
+          "entity_type": "PASSWORD",
+          "id": "core-011",
+          "term": "481926"
+        },
+        {
+          "entity_type": "TIME",
+          "id": "core-012",
+          "term": "11:45 PM"
+        },
+        {
+          "entity_type": "DIGIT_SEQUENCE",
+          "id": "core-016",
+          "term": "seven four nine two six eight one"
+        },
+        {
+          "entity_type": "TIME",
+          "id": "core-017",
+          "term": "4:30 PM"
+        },
+        {
+          "entity_type": "UNCLASSIFIED",
+          "id": "core-018",
+          "term": "security update"
+        },
+        {
+          "entity_type": "CODE",
+          "id": "core-019",
+          "term": "alpha seven nine"
+        }
+      ],
+      "evidence": {
+        "predictions_sha256": "4d191d0c5f1256eae5f53f2ecf4d3d208dd695c81f9eaf9292ad537456f3ff21",
+        "report_sha256": "8a2dfab7cddde40331961631729017cd454a85c775c3b5fe3af3bf976127f1f2",
+        "run_metadata_sha256": "a3c774307c9a6815efd5b4168933156de254ccc62f35bc0bb143d29782157cd9"
+      },
+      "lane": "synthetic-v2",
+      "metrics": {
+        "canonical_semantic_recall_percent": 87.1,
+        "deletions": 29,
+        "insertions": 8,
+        "local_rtfx": 45.07126050719135,
+        "median_latency_ms": 72.06785,
+        "peak_vram_bytes": 4573812736,
+        "strict_lexical_recall_percent": 64.5,
+        "substitutions": 79,
+        "wer_percent": 40.6
+      },
+      "sample_count": 25,
+      "scope": "complete"
+    },
+    {
+      "critical_failures": [],
+      "evidence": {
+        "dataset_revision": "b6bdcd0beb34f8975dc659796176d88f43aff502",
+        "official_evaluator_revision": "9585fc39bff55697a2ec1c5f13921b18812bfde8",
+        "official_manifest_sha256": "56744491438135f675e1705edac221a8f50f3fce1fda262618fbe069560b6cad",
+        "predictions_sha256": "e00e15617fa8312e68fa904956eefa412ed721cc3a68a2f9d929f50400e08181"
+      },
+      "lane": "hugging-face-compatibility-smoke",
+      "metrics": {
+        "deletions": 0,
+        "insertions": 0,
+        "local_rtfx": 25.1504,
+        "median_latency_ms": 1369.064734,
+        "peak_vram_bytes": 4792551936,
+        "substitutions": 5,
+        "wer_percent": 2.89
+      },
+      "sample_count": 2,
+      "scope": "partial"
+    }
+  ],
+  "evaluator_revision": "a11d17fe0859d6872a3098b72d38ab389b3a98b1",
+  "license_classification": "commercial_candidate",
+  "model": {
+    "model_id": "ibm-granite/granite-speech-4.1-2b-nar",
+    "revision": "a1e3416e25ce29ab3852778e54fa8b3bd59c4bf2"
+  },
+  "schema_version": 1,
+  "status": "smoke_complete"
+}

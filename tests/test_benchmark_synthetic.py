@@ -202,6 +202,29 @@ def test_untouched_matching_set_is_current(tmp_path: Path) -> None:
     )
 
 
+def test_scoring_metadata_does_not_invalidate_synthetic_audio(
+    tmp_path: Path,
+) -> None:
+    references, audio_dir, _ = _generate(tmp_path)
+    records = [
+        json.loads(line)
+        for line in references.read_text(encoding="utf-8").splitlines()
+    ]
+    records[0]["critical"] = ["seated"]
+    records[0]["critical_types"] = {"seated": "PROPER_NAME"}
+    references.write_text(
+        "".join(json.dumps(record) + "\n" for record in records),
+        encoding="utf-8",
+    )
+
+    assert synthetic_set_is_current(
+        audio_dir,
+        references,
+        "default-v1",
+        42,
+    )
+
+
 @pytest.mark.parametrize(
     "mutation",
     [
@@ -244,7 +267,12 @@ def test_cache_rejects_incomplete_or_inconsistent_sets(
     elif mutation == "malformed_manifest":
         manifest.write_text("not json\n", encoding="utf-8")
     elif mutation == "changed_reference":
-        references.write_bytes(references.read_bytes() + b"\n")
+        references.write_text(
+            references.read_text(encoding="utf-8").replace(
+                "Stay seated.", "Stand up."
+            ),
+            encoding="utf-8",
+        )
     elif mutation == "nonuniform_fingerprint":
         records[1]["fingerprint"] = "different"
         _write_manifest(manifest, records)

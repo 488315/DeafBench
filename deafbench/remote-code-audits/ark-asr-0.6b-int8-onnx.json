@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "model_id": "AutoArk-AI/ark-asr-0.6b-int8-onnx",
+  "revision": "ced3e6c0cc45eda7f718b885e9fd9562ed3ec94d",
+  "reviewed_utc": "2026-08-10",
+  "execution_policy": {
+    "allow_network_during_inference": false,
+    "isolate_from_main_process": true,
+    "require_exact_file_hashes": true,
+    "trust_remote_code": true
+  },
+  "review_findings": {
+    "dynamic_code_execution": [
+      "Transformers loads the hash-verified configuration_arkasr.py and processing_arkasr.py modules because the official script enables trust_remote_code."
+    ],
+    "filesystem_access": [
+      "infer_ark_audio_onnx.py reads pinned runtime assets and caller-provided audio paths and configures Hugging Face caches under the process temporary directory.",
+      "processing_arkasr.py reads processor_config.json and caller-provided audio paths."
+    ],
+    "network_access": [],
+    "process_execution": [],
+    "unsafe_deserialization": []
+  },
+  "files": [
+    {
+      "path": "chat_template.jinja",
+      "sha256": "b65159f329e94704814031bb882de38ae9d0ac8955e520044e37ab49b2252ada"
+    },
+    {
+      "path": "config.json",
+      "sha256": "24d383b963ac31e807e7dc49d515c50a97aa35ecff434995eb64202f1d22f1e8"
+    },
+    {
+      "path": "configuration_arkasr.py",
+      "sha256": "f7dc852c604f985b675c866e352ce81dfbc69f3a6c69646d0863adf9dd6e3aed"
+    },
+    {
+      "path": "infer_ark_audio_onnx.py",
+      "sha256": "ff0c3750f4952d0ab14adc29036ec80f46b37276e30a61f7741a03fc9d6c0cf6"
+    },
+    {
+      "path": "llm_kv_cpu_fp32_int8.json",
+      "sha256": "e3a6c0f0e80e8a5fcefe36a810a7806edee3700c8bfaa7f4d740d60328b26163"
+    },
+    {
+      "path": "llm_kv_fp32_qwen_native.json",
+      "sha256": "e3a6c0f0e80e8a5fcefe36a810a7806edee3700c8bfaa7f4d740d60328b26163"
+    },
+    {
+      "path": "modeling_arkasr.py",
+      "sha256": "2d80c5e09b933853066aac2d3b414404948576aabed75b0f918ed2248999f785"
+    },
+    {
+      "path": "modeling_audio.py",
+      "sha256": "645093b34975a9556503384bb10ad9cf23d8b137bbe0cad1cc50715cf0d21fd3"
+    },
+    {
+      "path": "preprocessor_config.json",
+      "sha256": "1e180caf7382179f67c7ffe0ac585d1d639ee9032dadae6868968ffb2e65dd77"
+    },
+    {
+      "path": "processing_arkasr.py",
+      "sha256": "1db5338f55e714f97eb5d8ed076568897dda7339cb585e3b13fc7d8782c1a94e"
+    },
+    {
+      "path": "processor_config.json",
+      "sha256": "d637206d91054c242bea3f2ab25210582161f0c135cc1aa97c3b068d5e0fbd57"
+    },
+    {
+      "path": "runtime_manifest.json",
+      "sha256": "89afaf499ec6c2e87ba91795333d29add0e261c49f08cecbbde79502482dc152"
+    },
+    {
+      "path": "tokenizer_config.json",
+      "sha256": "f0b39ce6eb0220f3edcda039e9b9990c57cf68cd59abacf6aaf69e14a82041f6"
+    }
+  ]
+}

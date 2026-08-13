@@ -1,0 +1,11 @@
+Model: soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M
+Pinned revision: d410fb15a71cbf87ec5e0a860356563deb9d8f01
+Source: https://huggingface.co/soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M/tree/d410fb15a71cbf87ec5e0a860356563deb9d8f01
+
+Exact model-card license declaration:
+
+license: cc-by-nc-4.0
+
+The pinned model repository contains no standalone LICENSE or NOTICE file.
+This file preserves the upstream model-card declaration as provenance; it is
+not legal advice and does not replace the license terms.

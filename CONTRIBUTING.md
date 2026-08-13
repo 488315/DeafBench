@@ -28,6 +28,9 @@ Thank you for your interest in contributing to DeafBench!
 
 ## Code Guidelines
 
-- Keep initial scope focused on accessibility-specific evaluation metrics.
+- Keep contributions within accessibility-critical ASR evaluation,
+  reproducible official-compatible measurement, and zero-custody customer-run
+  audits. Model training, hosted customer data, and unrelated general-purpose
+  ML features are out of scope.
 - Maintain test coverage for metrics parsing and evaluation logic.
 - Follow PEP 8 and Python formatting conventions.

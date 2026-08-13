@@ -1,0 +1,100 @@
+{
+  "claim_boundary": "Local reproducibility evidence only. The two-row public smoke is partial, is not a seven-set macro-average, and is not a Hugging Face verified leaderboard result.",
+  "corpora": [
+    {
+      "frozen": true,
+      "manifest_sha256": "b962df9c122870825e75fdd4d628acc1101cff7bfc023d11fe967ed116cf0055",
+      "name": "synthetic-v2"
+    },
+    {
+      "frozen": true,
+      "manifest_sha256": "4615d2d50d6fe8377a5836130c39c9c6daf5b26dec46861bc7fef53208811823",
+      "name": "librispeech-test.clean-two-row-smoke"
+    }
+  ],
+  "decoding": {
+    "archive": "parakeet-tdt-0.6b-v2.nemo",
+    "batch_size": 1,
+    "device": "cuda",
+    "timestamps": true
+  },
+  "evaluations": [
+    {
+      "critical_failures": [
+        {
+          "entity_type": "TIME",
+          "id": "core-006",
+          "term": "8:30 PM"
+        },
+        {
+          "entity_type": "UNCLASSIFIED",
+          "id": "core-007",
+          "term": "192 dot 168 dot 1 dot 25"
+        },
+        {
+          "entity_type": "TIME",
+          "id": "core-012",
+          "term": "11:45 PM"
+        },
+        {
+          "entity_type": "UNCLASSIFIED",
+          "id": "core-018",
+          "term": "security update"
+        },
+        {
+          "entity_type": "SSID",
+          "id": "core-019",
+          "term": "Office Guest"
+        }
+      ],
+      "evidence": {
+        "predictions_sha256": "3ea5e6a78d35d736c5eb4d6cbe0ca23cf567270cba265a2a75e0eddbf99b58d9",
+        "report_sha256": "ad353ff1b27a399b51c547b57a5e99ade408e1cbf189688b38708af8d47d08b5",
+        "run_metadata_sha256": "6fc2e9d7644688e5047cb0aa6198b396418227b77c9fd5c9cb16ebd52a2dfda2"
+      },
+      "lane": "synthetic-v2",
+      "metrics": {
+        "canonical_semantic_recall_percent": 91.9,
+        "deletions": 22,
+        "insertions": 11,
+        "local_rtfx": 71.23259281002858,
+        "median_latency_ms": 51.961543,
+        "peak_vram_bytes": 5014955008,
+        "strict_lexical_recall_percent": 64.5,
+        "substitutions": 32,
+        "wer_percent": 22.7
+      },
+      "sample_count": 25,
+      "scope": "complete"
+    },
+    {
+      "critical_failures": [],
+      "evidence": {
+        "dataset_revision": "b6bdcd0beb34f8975dc659796176d88f43aff502",
+        "official_evaluator_revision": "9585fc39bff55697a2ec1c5f13921b18812bfde8",
+        "official_manifest_sha256": "f7f1a5c77394369f3c2cc723aed45f3e1b4c7d2ab7e97403a3d388456e0939f8",
+        "predictions_sha256": "433faa04932b63d37ca48371f59fd911dc803996ae00ae634dcf9e143afa60a8"
+      },
+      "lane": "hugging-face-compatibility-smoke",
+      "metrics": {
+        "deletions": 0,
+        "insertions": 0,
+        "local_rtfx": 91.84794308342016,
+        "median_latency_ms": 374.88591299999996,
+        "peak_vram_bytes": 5014955008,
+        "substitutions": 4,
+        "wer_percent": 2.31
+      },
+      "sample_count": 2,
+      "scope": "partial"
+    }
+  ],
+  "evaluator_revision": "6f5b294c07a2d7b37094336cec8e01011556850b",
+  "license_classification": "commercial_candidate",
+  "model": {
+    "model_id": "nvidia/parakeet-tdt-0.6b-v2",
+    "revision": "ae9ad07059c7c739ffaf932226a8fe64ae2620b0"
+  },
+  "schema_version": 1,
+  "status": "smoke_complete"
+}

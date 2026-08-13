@@ -1,0 +1,96 @@
+{
+  "composite_wer": {
+    "soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M": 5.23
+  },
+  "datasets": {
+    "soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M | hf-audio-open-asr-leaderboard_ami_cleaned_test": {
+      "audio_length": 28727.5903125,
+      "del": 2506,
+      "inference_time": 321.17056584358215,
+      "ins": 2117,
+      "rtfx": 89.4465,
+      "sub": 3856,
+      "wer": 10.3
+    },
+    "soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M | hf-audio-open-asr-leaderboard_earnings22_test": {
+      "audio_length": 19531.59225,
+      "del": 1015,
+      "inference_time": 225.695570230484,
+      "ins": 986,
+      "rtfx": 86.5395,
+      "sub": 1736,
+      "wer": 7.68
+    },
+    "soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M | hf-audio-open-asr-leaderboard_gigaspeech_cleaned_test": {
+      "audio_length": 126515.196,
+      "del": 7332,
+      "inference_time": 1275.1344015598297,
+      "ins": 7212,
+      "rtfx": 99.2171,
+      "sub": 18526,
+      "wer": 8.33
+    },
+    "soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M | hf-audio-open-asr-leaderboard_librispeech_test.clean": {
+      "audio_length": 19452.480625,
+      "del": 60,
+      "inference_time": 199.84243059158325,
+      "ins": 59,
+      "rtfx": 97.3391,
+      "sub": 575,
+      "wer": 1.31
+    },
+    "soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M | hf-audio-open-asr-leaderboard_librispeech_test.other": {
+      "audio_length": 19229.570125,
+      "del": 103,
+      "inference_time": 212.49397039413452,
+      "ins": 144,
+      "rtfx": 90.4947,
+      "sub": 1343,
+      "wer": 3.01
+    },
+    "soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M | hf-audio-open-asr-leaderboard_spgispeech_test": {
+      "audio_length": 360007.4995,
+      "del": 3216,
+      "inference_time": 3575.3537454605103,
+      "ins": 3620,
+      "rtfx": 100.6914,
+      "sub": 9083,
+      "wer": 1.64
+    },
+    "soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M | hf-audio-open-asr-leaderboard_voxpopuli_cleaned_aa_test": {
+      "audio_length": 7122.378375,
+      "del": 295,
+      "inference_time": 378.5201892852783,
+      "ins": 182,
+      "rtfx": 18.8164,
+      "sub": 289,
+      "wer": 4.31
+    }
+  },
+  "evaluation": {
+    "completed_sets": 7,
+    "expected_rows": {
+      "hf-audio-open-asr-leaderboard_ami_cleaned_test": 7715,
+      "hf-audio-open-asr-leaderboard_earnings22_test": 2737,
+      "hf-audio-open-asr-leaderboard_gigaspeech_cleaned_test": 18757,
+      "hf-audio-open-asr-leaderboard_librispeech_test.clean": 2620,
+      "hf-audio-open-asr-leaderboard_librispeech_test.other": 2939,
+      "hf-audio-open-asr-leaderboard_spgispeech_test": 39341,
+      "hf-audio-open-asr-leaderboard_voxpopuli_cleaned_aa_test": 628
+    },
+    "expected_sets": 7,
+    "observed_rows": {
+      "hf-audio-open-asr-leaderboard_ami_cleaned_test": 7715,
+      "hf-audio-open-asr-leaderboard_earnings22_test": 2737,
+      "hf-audio-open-asr-leaderboard_gigaspeech_cleaned_test": 18757,
+      "hf-audio-open-asr-leaderboard_librispeech_test.clean": 2620,
+      "hf-audio-open-asr-leaderboard_librispeech_test.other": 2939,
+      "hf-audio-open-asr-leaderboard_spgispeech_test": 39341,
+      "hf-audio-open-asr-leaderboard_voxpopuli_cleaned_aa_test": 628
+    },
+    "status": "complete"
+  },
+  "upstream_wer_sum": {
+    "soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M": 36.580000000000005
+  }
+}

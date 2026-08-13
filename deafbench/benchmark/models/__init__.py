@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -13,6 +14,13 @@ MODEL_NAMES = (
     "whisper-at",
     "faster-whisper",
     "distil-whisper",
+    "qwen3-asr-0.6b",
+    "qwen3-asr-1.7b",
+    "parakeet-tdt-0.6b-v2",
+    "granite-speech-4.1-2b",
+    "granite-speech-4.1-2b-nar",
+    "ark-asr-0.6b",
+    "ark-asr-0.6b-int8-onnx",
 )
 
 
@@ -22,6 +30,9 @@ class ModelRunInfo:
 
     name: str
     model_id: str
+    revision: str | None = None
+    decoding: Mapping[str, object] | None = None
+    performance: Mapping[str, object] | None = None
 
 
 def _validated_wavs(audio_dir: Path, references: Path) -> tuple[Path, ...]:

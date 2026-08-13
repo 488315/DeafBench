@@ -57,13 +57,24 @@ def test_faster_whisper_writes_complete_segment_transcript(
         backend=FakeBackend(),
     )
 
-    assert info == ModelRunInfo("faster-whisper", "small.en")
+    assert info == ModelRunInfo(
+        "faster-whisper",
+        "small.en",
+        revision="d1d751a5f8271d482d14ca55d9e2deeebbae577f",
+        decoding={
+            "beam_size": 5,
+            "compute_type": "int8",
+            "device": "cpu",
+            "language": "en",
+        },
+    )
     assert [json.loads(line) for line in output.read_text().splitlines()] == [
         {"id": "sample-001", "text": " Hello world."}
     ]
     assert calls["model_kwargs"] == {
         "device": "cpu",
         "compute_type": "int8",
+        "revision": "d1d751a5f8271d482d14ca55d9e2deeebbae577f",
     }
     assert calls["model_id"] == "small.en"
     assert calls["transcribe_kwargs"] == {

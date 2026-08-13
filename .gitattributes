@@ -1,0 +1,13 @@
+# Frozen benchmark evidence is byte-addressed and must not receive EOL conversion.
+benchmarks/core-v1/*.jsonl -text whitespace=cr-at-eol
+benchmarks/synthetic-v2/*.json -text
+benchmarks/synthetic-v2/*.jsonl -text whitespace=cr-at-eol
+deafbench/recorder/data/*.jsonl -text whitespace=cr-at-eol
+deafbench/licenses/*.txt -text
+
+# Official-track evidence hashes Git blob bytes and must remain byte-stable.
+experiments/open-asr/evidence-manifest.json -text
+experiments/open-asr/results/*.json -text
+experiments/open-asr/results/*.jsonl -text
+experiments/open-asr/results/full-public/*.jsonl -text
+experiments/open-asr/*.sh text eol=lf

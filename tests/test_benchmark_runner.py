@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import subprocess
@@ -32,8 +33,13 @@ def _write_wav(path: Path) -> None:
         handle.writeframes(b"\x00\x00" * 32)
 
 
-def _write_dataset(root: Path, *, human_complete: bool) -> Path:
-    dataset_dir = root / "benchmarks" / "core-v1"
+def _write_dataset(
+    root: Path,
+    *,
+    human_complete: bool,
+    dataset: str = "core-v1",
+) -> Path:
+    dataset_dir = root / "benchmarks" / dataset
     dataset_dir.mkdir(parents=True)
     references = dataset_dir / "references.jsonl"
     records = [
@@ -126,6 +132,45 @@ def test_auto_uses_complete_human_set_without_synthetic_factory(
     assert "tts" not in metadata
 
 
+def test_run_metadata_preserves_model_performance_evidence(tmp_path: Path) -> None:
+    references = _write_dataset(tmp_path, human_complete=True)
+
+    def measured_runner(
+        _audio_dir: Path,
+        _references: Path,
+        output: Path,
+    ) -> ModelRunInfo:
+        atomic_write_jsonl(
+            output,
+            [
+                {"id": "core-001", "text": "Meet at platform four."},
+                {"id": "core-002", "text": "The alarm is active."},
+            ],
+        )
+        return ModelRunInfo(
+            "whisper",
+            "test-model",
+            performance={
+                "local_rtfx": 12.5,
+                "median_latency_ms": 40.0,
+                "peak_vram_bytes": 123_456,
+            },
+        )
+
+    result = run_benchmark(
+        BenchmarkConfig(tmp_path, "core-v1", "whisper"),
+        whisper_runner=measured_runner,
+    )
+
+    metadata = json.loads(result.metadata.read_text(encoding="utf-8"))
+    assert metadata["performance"] == {
+        "local_rtfx": 12.5,
+        "median_latency_ms": 40.0,
+        "peak_vram_bytes": 123_456,
+    }
+    assert references.is_file()
+
+
 def test_auto_generates_synthetic_transactional_run(tmp_path: Path) -> None:
     _write_dataset(tmp_path, human_complete=False)
     generated: list[tuple[str, int]] = []
@@ -165,7 +210,7 @@ def test_auto_generates_synthetic_transactional_run(tmp_path: Path) -> None:
     assert metadata == {
         "audio": str(tmp_path / "benchmarks/core-v1/audio-synthetic"),
         "audio_source": "synthetic",
-        "benchmark_version": "0.1.1",
+        "benchmark_version": "0.2.0",
         "dataset": "core-v1",
         "model": "whisper",
         "model_id": "test-model",
@@ -206,6 +251,158 @@ def test_current_synthetic_set_does_not_construct_whisperspeech(
         "engine": "whisperspeech",
         "version": "persisted-test-version",
     }
+
+
+def test_validated_v2_set_does_not_regenerate_synthetic_audio(tmp_path: Path) -> None:
+    references = _write_dataset(
+        tmp_path,
+        human_complete=False,
+        dataset="synthetic-v2",
+    )
+    audio_dir = references.parent / "audio-synthetic"
+    generation = []
+    accepted = []
+    for line in references.read_text(encoding="utf-8").splitlines():
+        sample_id = json.loads(line)["id"]
+        wav = audio_dir / f"{sample_id}.wav"
+        _write_wav(wav)
+        generation.append(
+            {
+                "id": sample_id,
+                "audio_sha256": hashlib.sha256(wav.read_bytes()).hexdigest(),
+                "replacement_reason": (
+                    "test replacement" if sample_id == "core-001" else None
+                ),
+            }
+        )
+        if sample_id == "core-001":
+            accepted.append({"id": sample_id, "status": "accepted"})
+    atomic_write_jsonl(references.parent / "generation-manifest.jsonl", generation)
+    (references.parent / "freeze-manifest.json").write_text(
+        json.dumps(
+            {
+                "artifacts": {
+                    "required": {
+                        "benchmarks/synthetic-v2/references.jsonl": hashlib.sha256(
+                            references.read_bytes()
+                        ).hexdigest()
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    (references.parent / "quality-report.json").write_text(
+        json.dumps({"samples": accepted}),
+        encoding="utf-8",
+    )
+
+    def fail_synthetic_factory() -> tuple[object, TTSInfo]:
+        raise AssertionError("validated v2 audio must not be regenerated")
+
+    result = run_benchmark(
+        BenchmarkConfig(tmp_path, "synthetic-v2", "whisper"),
+        synthetic_factory=fail_synthetic_factory,
+        whisper_runner=_fake_model_runner,
+    )
+
+    metadata = json.loads(result.metadata.read_text(encoding="utf-8"))
+    assert metadata["tts"]["engine"] == "validated-synthetic-v2"
+
+
+def test_validated_v2_rejects_replacement_outside_frozen_allowance(
+    tmp_path: Path,
+) -> None:
+    references = _write_dataset(
+        tmp_path,
+        human_complete=False,
+        dataset="synthetic-v2",
+    )
+    dataset = references.parent
+    audio_dir = dataset / "audio-synthetic"
+    generation = []
+    for sample_id in ("core-001", "core-002"):
+        wav = audio_dir / f"{sample_id}.wav"
+        _write_wav(wav)
+        generation.append(
+            {
+                "id": sample_id,
+                "audio_sha256": hashlib.sha256(wav.read_bytes()).hexdigest(),
+                "replacement_reason": "test replacement",
+            }
+        )
+    atomic_write_jsonl(dataset / "generation-manifest.jsonl", generation)
+    (dataset / "freeze-manifest.json").write_text(
+        json.dumps(
+            {
+                "artifacts": {
+                    "required": {
+                        "benchmarks/synthetic-v2/references.jsonl": hashlib.sha256(
+                            references.read_bytes()
+                        ).hexdigest()
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    (dataset / "quality-report.json").write_text(
+        json.dumps(
+            {
+                "samples": [
+                    {"id": "core-001", "status": "accepted"},
+                    {"id": "core-002", "status": "accepted"},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    called = False
+
+    def runner(*args: object, **kwargs: object) -> ModelRunInfo:
+        nonlocal called
+        called = True
+        return _fake_model_runner(*args, **kwargs)
+
+    with pytest.raises(ValueError, match="outside the frozen allowance"):
+        run_benchmark(
+            BenchmarkConfig(tmp_path, "synthetic-v2", "whisper"),
+            whisper_runner=runner,
+        )
+
+    assert called is False
+
+
+def test_validated_v2_rejects_changed_references_before_inference(tmp_path: Path) -> None:
+    references = _write_dataset(tmp_path, human_complete=False, dataset="synthetic-v2")
+    dataset = references.parent
+    (dataset / "generation-manifest.jsonl").write_text("{}\n", encoding="utf-8")
+    (dataset / "quality-report.json").write_text('{"samples": []}', encoding="utf-8")
+    (dataset / "freeze-manifest.json").write_text(
+        json.dumps(
+            {
+                "artifacts": {
+                    "required": {
+                        "benchmarks/synthetic-v2/references.jsonl": "0" * 64
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    called = False
+
+    def runner(*args: object, **kwargs: object) -> ModelRunInfo:
+        nonlocal called
+        called = True
+        return _fake_model_runner(*args, **kwargs)
+
+    with pytest.raises(ValueError, match="reference hash mismatch"):
+        run_benchmark(
+            BenchmarkConfig(tmp_path, "synthetic-v2", "whisper"),
+            whisper_runner=runner,
+        )
+    assert called is False
 
 
 def test_failed_rerun_preserves_every_previous_run_byte(tmp_path: Path) -> None:
@@ -273,6 +470,13 @@ def test_failed_run_promotion_restores_previous_bundle(
         ("whisper-at", "run_whisper_at"),
         ("faster-whisper", "run_faster_whisper"),
         ("distil-whisper", "run_distil_whisper"),
+        ("qwen3-asr-0.6b", "run_qwen3_asr"),
+        ("qwen3-asr-1.7b", "run_qwen3_asr_1_7b"),
+        ("parakeet-tdt-0.6b-v2", "run_parakeet"),
+        ("granite-speech-4.1-2b", "run_granite_speech"),
+        ("granite-speech-4.1-2b-nar", "run_granite_nar"),
+        ("ark-asr-0.6b", "run_ark_asr"),
+        ("ark-asr-0.6b-int8-onnx", "run_ark_asr_onnx"),
     ],
 )
 def test_default_model_runner_is_selected_lazily(
@@ -284,7 +488,20 @@ def test_default_model_runner_is_selected_lazily(
     assert runner.__name__ == function_name
 
 
-@pytest.mark.parametrize("model", ["faster-whisper", "distil-whisper"])
+@pytest.mark.parametrize(
+    "model",
+    [
+        "faster-whisper",
+        "distil-whisper",
+        "qwen3-asr-0.6b",
+        "qwen3-asr-1.7b",
+        "parakeet-tdt-0.6b-v2",
+        "granite-speech-4.1-2b",
+        "granite-speech-4.1-2b-nar",
+        "ark-asr-0.6b",
+        "ark-asr-0.6b-int8-onnx",
+    ],
+)
 def test_main_accepts_additional_local_models(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

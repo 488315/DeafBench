@@ -30,7 +30,8 @@ def test_compare_command_prints_summary(tmp_path, capsys):
     output = capsys.readouterr().out
     assert "DeafBench v0.1" in output
     assert "Samples: 1" in output
-    assert "Critical Information" in output
+    assert "Strict Critical Information" in output
+    assert "Canonical Critical Information" in output
     assert "Non-Speech Information       N/A" in output
 
 

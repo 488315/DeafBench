@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "status": "frozen_smoke_fixture",
+  "purpose": "Two-row pipeline smoke only; never use this fixture for decoding selection or a leaderboard claim.",
+  "source": {
+    "dataset_id": "hf-audio/open-asr-leaderboard",
+    "revision": "b6bdcd0beb34f8975dc659796176d88f43aff502",
+    "config": "librispeech",
+    "split": "test.clean",
+    "upstream_url": "https://huggingface.co/datasets/hf-audio/open-asr-leaderboard",
+    "upstream_corpus": "LibriSpeech ASR corpus",
+    "upstream_corpus_license": "CC-BY-4.0"
+  },
+  "materialization": {
+    "selection": "first two rows in pinned split order",
+    "stored_audio": false,
+    "evaluation_sample_rate_hz": 48000,
+    "source_sample_rate_hz": 16000,
+    "resampling": "scipy.signal.resample_poly"
+  },
+  "samples": [
+    {
+      "fixture_id": "sample-000",
+      "source_id": "4507-16021-0047",
+      "duration_seconds": 34.955,
+      "evaluation_audio_sha256": "affa66fb3f64bb159fe3f15e7c92917d90fa0867d78a02e2525beb747e80fdaa",
+      "reference": "yesterday you were trembling for a health that is dear to you to day you fear for your own to morrow it will be anxiety about money the day after to morrow the diatribe of a slanderer the day after that the misfortune of some friend then the prevailing weather then something that has been broken or lost then a pleasure with which your conscience and your vertebral column reproach you again the course of public affairs"
+    },
+    {
+      "fixture_id": "sample-001",
+      "source_id": "1995-1836-0004",
+      "duration_seconds": 33.91,
+      "evaluation_audio_sha256": "452b53de41bc4525c720929d3e32bffa0c040493626124f45a866f6e6b86d7ac",
+      "reference": "as she awaited her guests she surveyed the table with both satisfaction and disquietude for her social functions were few tonight there were she checked them off on her fingers sir james creighton the rich english manufacturer and lady creighton mister and missus vanderpool mister harry cresswell and his sister john taylor and his sister and mister charles smith whom the evening papers mentioned as likely to be united states senator from new jersey a selection of guests that had been determined unknown to the hostess by the meeting of cotton interests earlier in the day"
+    }
+  ]
+}

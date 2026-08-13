@@ -1,0 +1,110 @@
+{
+  "claim_boundary": "Local reproducibility evidence only. The two-row public smoke is partial, is not a seven-set macro-average, and is not a Hugging Face verified leaderboard result.",
+  "corpora": [
+    {
+      "frozen": true,
+      "manifest_sha256": "b962df9c122870825e75fdd4d628acc1101cff7bfc023d11fe967ed116cf0055",
+      "name": "synthetic-v2"
+    },
+    {
+      "frozen": true,
+      "manifest_sha256": "4615d2d50d6fe8377a5836130c39c9c6daf5b26dec46861bc7fef53208811823",
+      "name": "librispeech-test.clean-two-row-smoke"
+    }
+  ],
+  "decoding": {
+    "asr_block_token_id_from": 151670,
+    "audio_max_seconds": 30.0,
+    "execution_provider": "CPUExecutionProvider",
+    "long_audio_strategy": "contiguous_30_second_chunks_without_overlap",
+    "max_new_tokens": 256,
+    "precision": "int8",
+    "trust_remote_code": true
+  },
+  "evaluations": [
+    {
+      "critical_failures": [
+        {
+          "entity_type": "UNCLASSIFIED",
+          "id": "core-006",
+          "term": "not 50 milligrams"
+        },
+        {
+          "entity_type": "UNCLASSIFIED",
+          "id": "core-007",
+          "term": "192 dot 168 dot 1 dot 25"
+        },
+        {
+          "entity_type": "UNCLASSIFIED",
+          "id": "core-012",
+          "term": "March 18th"
+        },
+        {
+          "entity_type": "UNCLASSIFIED",
+          "id": "core-018",
+          "term": "security update"
+        },
+        {
+          "entity_type": "SSID",
+          "id": "core-019",
+          "term": "Office Guest"
+        },
+        {
+          "entity_type": "CODE",
+          "id": "core-019",
+          "term": "alpha seven nine"
+        }
+      ],
+      "evidence": {
+        "predictions_sha256": "e38aa31e9a71a4aec07e2f26aeb14c162d953ee1a48c0202e234a156430b5873",
+        "report_sha256": "819a2c705397f758ea079f59c1075abc87c772bebd7ebbe95ee5bccaf8199069",
+        "run_metadata_sha256": "705c24b4e65ecb76ac592d548493a5892c4082f96f2a2bd3d027a20678d4ec47"
+      },
+      "lane": "synthetic-v2",
+      "metrics": {
+        "canonical_semantic_recall_percent": 90.3,
+        "deletions": 5,
+        "insertions": 25,
+        "local_rtfx": 2.40186270332646,
+        "median_latency_ms": 2042.882526,
+        "peak_vram_bytes": 0,
+        "strict_lexical_recall_percent": 66.1,
+        "substitutions": 46,
+        "wer_percent": 26.6
+      },
+      "sample_count": 25,
+      "scope": "complete"
+    },
+    {
+      "critical_failures": [],
+      "evidence": {
+        "dataset_revision": "b6bdcd0beb34f8975dc659796176d88f43aff502",
+        "official_analysis_sha256": "544330c7c26b91847f274ee1ecc0aec8cbb904f8f696305bfe5e917e42582f61",
+        "official_evaluator_revision": "9585fc39bff55697a2ec1c5f13921b18812bfde8",
+        "official_manifest_sha256": "59fbf88dc04e413fa60fdaa52da9d495dca9f46860a00406ae6fed70f2dad1c8",
+        "official_score_sha256": "b4a5664f1a642149ecc25d3fa1899c5cfbaf977ba5fa7cdc0523e1ad4d26e88e",
+        "predictions_sha256": "026e76dfc1fe52531ebac0eeea35b5cf07c1bf495dce1cfd2e6596e0a2ae9edd"
+      },
+      "lane": "hugging-face-compatibility-smoke",
+      "metrics": {
+        "deletions": 0,
+        "insertions": 1,
+        "local_rtfx": 3.0089605287305297,
+        "median_latency_ms": 11443.320599,
+        "peak_vram_bytes": 0,
+        "substitutions": 4,
+        "wer_percent": 2.89
+      },
+      "sample_count": 2,
+      "scope": "partial"
+    }
+  ],
+  "evaluator_revision": "0cdfd228170e97253fc2ce2702387dd5661c37ae",
+  "license_classification": "commercial_candidate",
+  "model": {
+    "model_id": "AutoArk-AI/ark-asr-0.6b-int8-onnx",
+    "revision": "ced3e6c0cc45eda7f718b885e9fd9562ed3ec94d"
+  },
+  "schema_version": 1,
+  "status": "smoke_complete"
+}

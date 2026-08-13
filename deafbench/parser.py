@@ -1,6 +1,6 @@
 import json
 import re
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List
 
 def normalize_text(text: str) -> str:
     """Normalize text for basic string matching (lowercase, clean spaces & punctuation)."""

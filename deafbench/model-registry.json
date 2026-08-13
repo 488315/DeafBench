@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "legal_advice": false,
+  "models": [
+    {
+      "model_id": "Qwen/Qwen3-ASR-0.6B-hf",
+      "revision": "7f1569a48a89f3e3f4dc3a5c9d28bddd903bc76c",
+      "upstream_url": "https://huggingface.co/Qwen/Qwen3-ASR-0.6B-hf",
+      "spdx_license": "Apache-2.0",
+      "commercial_use": "commercial_permitted",
+      "attribution_requirements": [
+        "Retain the Apache-2.0 license text and applicable copyright notices in redistributions."
+      ],
+      "redistribution_restrictions": [
+        "Meet the Apache-2.0 Section 4 redistribution conditions and preserve NOTICE content if upstream later supplies one."
+      ],
+      "remote_code_required": false,
+      "supported_languages": [
+        "zh", "en", "yue", "ar", "de", "fr", "es", "pt", "id", "it",
+        "ko", "ru", "th", "vi", "ja", "tr", "hi", "ms", "nl", "sv",
+        "da", "fi", "pl", "cs", "fil", "fa", "el", "hu", "mk", "ro"
+      ],
+      "parameter_count": 782426112,
+      "expected_weight_size_bytes": 1564928088,
+      "tested_peak_vram_bytes": 1843668480,
+      "supported_runtimes": ["transformers>=5.13.0", "torch"],
+      "intended_lane": "commercial_candidate",
+      "license_files": ["licenses/Apache-2.0.txt"],
+      "notice_files": []
+    },
+    {
+      "model_id": "Qwen/Qwen3-ASR-1.7B-hf",
+      "revision": "bcd2b5b7f32b480ab5790554cfa8347f246a14f3",
+      "upstream_url": "https://huggingface.co/Qwen/Qwen3-ASR-1.7B-hf",
+      "spdx_license": "Apache-2.0",
+      "commercial_use": "commercial_permitted",
+      "attribution_requirements": [
+        "Retain the Apache-2.0 license text and applicable copyright notices in redistributions."
+      ],
+      "redistribution_restrictions": [
+        "Meet the Apache-2.0 Section 4 redistribution conditions and preserve NOTICE content if upstream later supplies one."
+      ],
+      "remote_code_required": false,
+      "supported_languages": [
+        "zh", "en", "yue", "ar", "de", "fr", "es", "pt", "id", "it",
+        "ko", "ru", "th", "vi", "ja", "tr", "hi", "ms", "nl", "sv",
+        "da", "fi", "pl", "cs", "fil", "fa", "el", "hu", "mk", "ro"
+      ],
+      "parameter_count": 2038052480,
+      "expected_weight_size_bytes": 4076193080,
+      "tested_peak_vram_bytes": 4353538048,
+      "supported_runtimes": ["transformers>=5.13.0", "torch"],
+      "intended_lane": "commercial_candidate",
+      "license_files": ["licenses/Apache-2.0.txt"],
+      "notice_files": []
+    },
+    {
+      "model_id": "nvidia/parakeet-tdt-0.6b-v2",
+      "revision": "ae9ad07059c7c739ffaf932226a8fe64ae2620b0",
+      "upstream_url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2",
+      "spdx_license": "CC-BY-4.0",
+      "commercial_use": "commercial_with_attribution",
+      "attribution_requirements": [
+        "Identify NVIDIA as the creator, retain the copyright notice supplied with the model, name and link CC-BY-4.0, retain the license disclaimer, link the model source when reasonably practicable, and indicate modifications."
+      ],
+      "redistribution_restrictions": [
+        "Do not impose additional legal terms or effective technological measures that restrict exercise of the CC-BY-4.0 licensed rights."
+      ],
+      "remote_code_required": false,
+      "supported_languages": ["en"],
+      "parameter_count": 600000000,
+      "expected_weight_size_bytes": 2472222720,
+      "tested_peak_vram_bytes": 5014955008,
+      "supported_runtimes": ["nemo_toolkit[asr]>=2.4,<3"],
+      "intended_lane": "commercial_candidate",
+      "license_files": ["licenses/CC-BY-4.0.txt"],
+      "notice_files": []
+    },
+    {
+      "model_id": "ibm-granite/granite-speech-4.1-2b",
+      "revision": "de575db64086f84fdc79da4932d1076e965bc546",
+      "upstream_url": "https://huggingface.co/ibm-granite/granite-speech-4.1-2b",
+      "spdx_license": "Apache-2.0",
+      "commercial_use": "commercial_permitted",
+      "attribution_requirements": [
+        "Retain the Apache-2.0 license text and applicable copyright notices in redistributions."
+      ],
+      "redistribution_restrictions": [
+        "Meet the Apache-2.0 Section 4 redistribution conditions and preserve NOTICE content if upstream later supplies one."
+      ],
+      "remote_code_required": false,
+      "supported_languages": ["en", "fr", "de", "es", "pt", "ja"],
+      "parameter_count": 2313207148,
+      "expected_weight_size_bytes": 4626414392,
+      "tested_peak_vram_bytes": 4742408704,
+      "supported_runtimes": ["transformers>=4.57.6", "torch"],
+      "intended_lane": "commercial_candidate",
+      "license_files": ["licenses/Apache-2.0.txt"],
+      "notice_files": []
+    },
+    {
+      "model_id": "ibm-granite/granite-speech-4.1-2b-nar",
+      "revision": "a1e3416e25ce29ab3852778e54fa8b3bd59c4bf2",
+      "upstream_url": "https://huggingface.co/ibm-granite/granite-speech-4.1-2b-nar",
+      "spdx_license": "Apache-2.0",
+      "commercial_use": "commercial_permitted",
+      "attribution_requirements": [
+        "Retain the Apache-2.0 license text and applicable copyright notices in redistributions."
+      ],
+      "redistribution_restrictions": [
+        "Meet the Apache-2.0 Section 4 redistribution conditions and preserve NOTICE content if upstream later supplies one."
+      ],
+      "remote_code_required": true,
+      "supported_languages": ["en", "fr", "de", "es", "pt"],
+      "parameter_count": 2254635356,
+      "expected_weight_size_bytes": 4509382472,
+      "tested_peak_vram_bytes": 4792551936,
+      "supported_runtimes": [
+        "transformers>=5.5.3",
+        "torch>=2.9.1",
+        "flash-attn==2.8.3"
+      ],
+      "intended_lane": "commercial_candidate",
+      "license_files": ["licenses/Apache-2.0.txt"],
+      "notice_files": []
+    },
+    {
+      "model_id": "AutoArk-AI/ARK-ASR-0.6B",
+      "revision": "45776b56d58cdfb2e2eb632f7e110f38684633e0",
+      "upstream_url": "https://huggingface.co/AutoArk-AI/ARK-ASR-0.6B",
+      "spdx_license": "Apache-2.0",
+      "commercial_use": "commercial_permitted",
+      "attribution_requirements": [
+        "Retain the Apache-2.0 license text and applicable copyright notices in redistributions."
+      ],
+      "redistribution_restrictions": [
+        "Meet the Apache-2.0 Section 4 redistribution conditions and preserve NOTICE content if upstream later supplies one."
+      ],
+      "remote_code_required": true,
+      "supported_languages": [
+        "zh", "en", "de", "ja", "fr", "ko", "es", "pl", "it", "ro",
+        "hu", "cs", "nl", "fi", "hr", "sk", "sl", "et", "lt"
+      ],
+      "parameter_count": 1299463168,
+      "expected_weight_size_bytes": 2599020680,
+      "tested_peak_vram_bytes": 2460302848,
+      "supported_runtimes": ["transformers>=4.57.6,<6", "torch"],
+      "intended_lane": "commercial_candidate",
+      "license_files": ["licenses/Apache-2.0.txt"],
+      "notice_files": []
+    },
+    {
+      "model_id": "AutoArk-AI/ark-asr-0.6b-int8-onnx",
+      "revision": "ced3e6c0cc45eda7f718b885e9fd9562ed3ec94d",
+      "upstream_url": "https://huggingface.co/AutoArk-AI/ark-asr-0.6b-int8-onnx",
+      "spdx_license": "Apache-2.0",
+      "commercial_use": "commercial_permitted",
+      "attribution_requirements": [
+        "Retain the Apache-2.0 license text and applicable copyright notices in redistributions."
+      ],
+      "redistribution_restrictions": [
+        "Meet the Apache-2.0 Section 4 redistribution conditions and preserve NOTICE content if upstream later supplies one."
+      ],
+      "remote_code_required": true,
+      "supported_languages": [
+        "zh", "en", "de", "ja", "fr", "ko", "es", "pl", "it", "ro",
+        "hu", "cs", "nl", "fi", "hr", "sk", "sl", "et", "lt"
+      ],
+      "parameter_count": 1299463168,
+      "expected_weight_size_bytes": 1769362146,
+      "tested_peak_vram_bytes": null,
+      "supported_runtimes": [
+        "onnxruntime>=1.23,<2",
+        "transformers>=4.57.6,<6",
+        "torch"
+      ],
+      "intended_lane": "commercial_candidate",
+      "license_files": ["licenses/Apache-2.0.txt"],
+      "notice_files": []
+    },
+    {
+      "model_id": "soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M",
+      "revision": "d410fb15a71cbf87ec5e0a860356563deb9d8f01",
+      "upstream_url": "https://huggingface.co/soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M",
+      "spdx_license": "CC-BY-NC-4.0",
+      "commercial_use": "noncommercial",
+      "attribution_requirements": [
+        "Give appropriate credit, link CC-BY-NC-4.0, indicate changes, and retain the model source and pinned revision in evaluation evidence."
+      ],
+      "redistribution_restrictions": [
+        "Do not use the model or adapted material for commercial purposes without separate permission from the rights holder.",
+        "Do not impose additional legal terms or effective technological measures that restrict exercise of the licensed rights."
+      ],
+      "remote_code_required": false,
+      "supported_languages": ["en"],
+      "parameter_count": 288000000,
+      "expected_weight_size_bytes": 1155177039,
+      "tested_peak_vram_bytes": 6794249216,
+      "supported_runtimes": ["icefall", "k2", "torch"],
+      "intended_lane": "research_only",
+      "license_files": [
+        "licenses/Zipformer-cr-ctc-transducer-XL-290M/MODEL_CARD_LICENSE.txt"
+      ],
+      "notice_files": []
+    }
+  ]
+}

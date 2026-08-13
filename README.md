@@ -1,36 +1,129 @@
 # DeafBench
 
-Evaluate what ASR metrics miss.
+I wrote DeafBench because I am Deaf, I use cochlear implants, and the normal
+ASR score does not always describe whether captions are useful to me. A system
+can have a low word error rate and still get the time, medication amount,
+username, Wi-Fi name, confirmation code, speaker, or sound event wrong. Those
+are not small mistakes when the caption is the information I have to act on.
 
-DeafBench is an open-source benchmark for measuring AI caption failures that matter to Deaf and hard-of-hearing users.
+My background is in IT, so I built this like an audit instead of a demo.
+DeafBench keeps the references, model revisions, decoding settings, evaluator
+revision, and artifact hashes with the result. It reports WER, but it also
+reports strict lexical and typed canonical recall for critical information,
+non-speech information, speaker attribution, latency, and the actual
+substitution, insertion, and deletion counts. The typed evaluator only accepts
+the harmless representation changes allowed for that entity type; it does not
+turn a different username, code, time, or Wi-Fi name into a pass.
 
-## Why DeafBench?
+The project now has two separate jobs. The synthetic track measures whether an
+ASR system preserves accessibility-critical information. The Hugging Face
+compatibility track uses the pinned Open ASR Leaderboard datasets, normalizer,
+preprocessing, WER calculation, and seven-dataset macro-average. I do not mix
+those scores because they answer different questions.
 
-I'm Deaf, I use cochlear implants, and I have an IT background, so I look at captioning the same way I'd troubleshoot a system: if it drops the part that matters, a good-looking metric does not mean much.
+## The goal
 
-The captioning systems I personally struggle with most are Google Chrome Live Caption and Android Live Caption through Android System Intelligence. Google Gemini can also have a hard time understanding me when I speak. My speech isn't always clear, but I still try my best to speak, and I want speech systems to be tested for that real-world accessibility gap instead of only clean audio.
+My goal is to build an ASR system that beats the Hugging Face Open ASR
+Leaderboard while still doing better on the information that matters to Deaf
+and hard-of-hearing users. The current reproduced Zipformer baseline scored
+**5.23% public seven-set macro WER** with the pinned official-compatible local
+workflow. That result is useful evidence that the runner matches the public
+contract, but it is not a verified leaderboard win, it does not include the
+private sets, and the Zipformer checkpoint is CC-BY-NC-4.0, so it cannot be the
+commercial foundation without separate permission.
 
-DeafBench is an **ASR benchmark for Deaf and hard-of-hearing captions** built for **caption evaluation beyond word error rate (WER)**. It checks what speech-to-text and automatic speech recognition systems preserve, including critical information, environmental sound captions, speaker attribution, and latency.
+I will only say DeafBench beat the leaderboard after a separate candidate is
+evaluated at a declared milestone and Hugging Face verifies the result. Until
+then, 5.23% is the local public compatibility baseline to beat, not a product
+claim. The exact upstream revisions, commands, and evidence are in
+[`experiments/open-asr/README.md`](experiments/open-asr/README.md).
 
-The goal is simple: compare ASR and audio-captioning systems based on what a Deaf or hard-of-hearing user actually gets, not just how close the transcript is word for word.
+## Models that work with DeafBench
 
-## OpenAI Whisper turbo results
+The models below have working adapters in this repository. The seven newer
+adapters have completed a 25-sample synthetic-v2 run and a two-row public
+real-speech smoke run, with byte-stable local result manifests under
+`experiments/model-results`. A smoke run proves that the pinned adapter executes
+and produces a valid result; it does not prove model quality or a leaderboard
+score.
 
-`Model A` uses OpenAI Whisper `turbo` through `tools/transcribe_whisper.py`.
+| DeafBench model name | Pinned model | Current evidence | License lane |
+| --- | --- | --- | --- |
+| `whisper` | OpenAI Whisper `turbo` | Core v1 and non-speech v1 reports | Runtime model; review upstream terms |
+| `whisper-at` | Whisper-AT `medium.en` | Adapter and benchmark workflow | Research integration; review upstream terms |
+| `faster-whisper` | `Systran/faster-whisper-small.en` | Frozen Core v1 baseline | Runtime model; review upstream terms |
+| `distil-whisper` | `distil-whisper/distil-large-v3` | Adapter and local runner | Runtime model; review upstream terms |
+| `qwen3-asr-0.6b` | `Qwen/Qwen3-ASR-0.6B-hf` | Synthetic-v2 plus real-speech smoke | Commercial candidate, Apache-2.0 |
+| `qwen3-asr-1.7b` | `Qwen/Qwen3-ASR-1.7B-hf` | Synthetic-v2 plus real-speech smoke | Commercial candidate, Apache-2.0 |
+| `parakeet-tdt-0.6b-v2` | `nvidia/parakeet-tdt-0.6b-v2` | Synthetic-v2 plus real-speech smoke | Commercial candidate, CC-BY-4.0 attribution required |
+| `granite-speech-4.1-2b` | `ibm-granite/granite-speech-4.1-2b` | Synthetic-v2 plus real-speech smoke | Commercial candidate, Apache-2.0 |
+| `granite-speech-4.1-2b-nar` | `ibm-granite/granite-speech-4.1-2b-nar` | Synthetic-v2 plus real-speech smoke | Commercial candidate, Apache-2.0; audited remote code |
+| `ark-asr-0.6b` | `AutoArk-AI/ARK-ASR-0.6B` | Synthetic-v2 plus real-speech smoke | Commercial candidate, Apache-2.0; audited isolated remote code |
+| `ark-asr-0.6b-int8-onnx` | `AutoArk-AI/ark-asr-0.6b-int8-onnx` | Synthetic-v2 plus real-speech smoke | Commercial candidate, Apache-2.0; audited isolated remote code |
 
-| Benchmark | Samples | WER | Critical Information Recall | Non-Speech Information Recall |
-| --- | ---: | ---: | ---: | ---: |
-| **Core v1** | 25 | **23.4%** | **88.7% (55/62)** | **N/A** |
-| **Non-speech v1** | 12 | **2.0%** | **95.0% (19/20)** | **0.0% (0/19)** |
+The machine-readable registry at
+[`deafbench/model-registry.json`](deafbench/model-registry.json) pins revisions,
+runtimes, license classifications, attribution requirements, expected download
+sizes, and measured peak VRAM. That registry is operational metadata, not legal
+advice. Model weights are third-party software and are not owned by DeafBench.
 
-This is why DeafBench exists: on **Non-speech v1**, Whisper got **2.0% WER** and **95.0% critical information recall**, but captioned **0 of 19** environmental sound events.
+## Results for all integrated models
 
-Full reports:
+These numbers do not belong in one leaderboard. Synthetic-v2 measures
+accessibility-critical information on 25 generated samples, while the public
+real-speech smoke set has only two rows and proves execution rather than model
+quality. Core v1 and Non-speech v1 are earlier, separately frozen benchmarks.
 
-- `benchmarks/core-v1/model-a-report.md`
-- `benchmarks/non-speech-v1/model-a-report.md`
+### Synthetic-v2 accessibility results
 
-WER does not tell the full accessibility story. DeafBench also measures critical information loss and non-speech events that WER misses.
+| Model | WER | Strict lexical recall | Canonical semantic recall | Local RTFx | Peak VRAM |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Qwen3-ASR 0.6B | 26.6% | 67.7% | 90.3% | 10.47 | 1.52 GiB |
+| Qwen3-ASR 1.7B | 21.0% | 67.7% | 91.9% | 9.89 | 3.86 GiB |
+| Parakeet TDT 0.6B v2 | 22.7% | 64.5% | 91.9% | 71.23 | 4.67 GiB |
+| Granite Speech 4.1 2B | 18.9% | 69.4% | 91.9% | 12.91 | 4.35 GiB |
+| Granite Speech 4.1 2B NAR | 40.6% | 64.5% | 87.1% | 45.07 | 4.26 GiB |
+| ARK-ASR 0.6B | 30.1% | 66.1% | 90.3% | 14.85 | 2.20 GiB |
+| ARK-ASR 0.6B INT8 ONNX | 26.6% | 66.1% | 90.3% | 2.40 | CPU |
+
+### Two-row public real-speech smoke results
+
+| Model | WER | Local RTFx | Peak VRAM |
+| --- | ---: | ---: | ---: |
+| Qwen3-ASR 0.6B | 2.31% | 12.27 | 1.72 GiB |
+| Qwen3-ASR 1.7B | 1.16% | 12.43 | 4.05 GiB |
+| Parakeet TDT 0.6B v2 | 2.31% | 91.85 | 4.67 GiB |
+| Granite Speech 4.1 2B | 3.47% | 7.43 | 4.42 GiB |
+| Granite Speech 4.1 2B NAR | 2.89% | 25.15 | 4.46 GiB |
+| ARK-ASR 0.6B | 2.89% | 7.49 | 2.29 GiB |
+| ARK-ASR 0.6B INT8 ONNX | 2.89% | 3.01 | CPU |
+
+The byte-stable evidence for both tables is in
+[`experiments/model-results`](experiments/model-results). These are local RTX
+4070 measurements except for the CPU ONNX row. The two-row smoke results are
+not the seven-dataset macro-average and are not Hugging Face verified.
+
+### Earlier model evidence
+
+| Model | Benchmark evidence | Result |
+| --- | --- | --- |
+| OpenAI Whisper `turbo` | Core v1, 25 samples | 23.4% WER; 88.7% legacy critical-information recall |
+| OpenAI Whisper `turbo` | Non-speech v1, 12 samples | 2.0% WER; 95.0% legacy critical-information recall; 0.0% non-speech recall |
+| Faster-Whisper `small.en` | Frozen Core v1 synthetic baseline, 25 samples | 26.2% WER; 69.4% strict lexical recall; 90.3% canonical semantic recall |
+| Whisper-AT `medium.en` | Adapter and benchmark workflow | No completed result committed |
+| Distil-Whisper `large-v3` | Adapter and local runner | No completed result committed |
+
+The OpenAI Whisper reports are
+[`benchmarks/core-v1/model-a-report.md`](benchmarks/core-v1/model-a-report.md)
+and
+[`benchmarks/non-speech-v1/model-a-report.md`](benchmarks/non-speech-v1/model-a-report.md).
+The Faster-Whisper classification and scoring evidence is in
+[`benchmarks/core-v1/faster-whisper-synthetic-analysis.md`](benchmarks/core-v1/faster-whisper-synthetic-analysis.md).
+The older Whisper recall value uses the evaluator that produced those frozen
+reports, so I do not label it as strict or canonical scoring.
+
+WER does not tell the full accessibility story. DeafBench also measures
+critical information loss and non-speech events that WER misses.
 
 ---
 
@@ -137,6 +230,12 @@ benchmarks/<dataset>/audio-synthetic/manifest.jsonl  # synthetic only
 benchmark version. Synthetic runs also record the scene profile, seed, and TTS
 engine/version. Run directories include both model and source so human and
 synthetic results cannot overwrite one another.
+
+Reports keep critical-information scoring in two separate views. Strict lexical
+recall measures the expected surface form; canonical semantic recall applies
+only the normalization allowed by an entity's explicit type, such as TIME or
+DIGIT_SEQUENCE. Reports also include per-sample WER and aggregate substitution,
+insertion, and deletion counts.
 
 ### Usage
 

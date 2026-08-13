@@ -1,0 +1,140 @@
+"""MMS reference-conditioned forced alignment for synthetic admission."""
+
+from __future__ import annotations
+
+import hashlib
+from collections.abc import Mapping, Sequence
+from io import BytesIO
+from pathlib import Path
+from typing import Any
+
+from .quality import AlignmentEvidence
+from .spoken_reference import SpokenReference
+
+
+def coverage_from_word_scores(
+    words: Sequence[str],
+    word_scores: Sequence[Sequence[float]],
+    entity_word_ranges: Mapping[str, tuple[int, int]],
+    *,
+    score_threshold: float,
+) -> tuple[float, dict[str, float]]:
+    """Calculate covered-character fractions from forced-alignment scores."""
+    if not 0 <= score_threshold <= 1:
+        raise ValueError("score threshold must be between zero and one")
+    if len(words) != len(word_scores):
+        raise ValueError("alignment word count does not match transcript")
+    for word, scores in zip(words, word_scores, strict=True):
+        if len(word) != len(scores):
+            raise ValueError("alignment character count does not match transcript")
+
+    def fraction(start: int, end: int) -> float:
+        selected = [
+            score
+            for scores in word_scores[start:end]
+            for score in scores
+        ]
+        if not selected:
+            return 0.0
+        return sum(score >= score_threshold for score in selected) / len(selected)
+
+    for start, end in entity_word_ranges.values():
+        if not 0 <= start < end <= len(words):
+            raise ValueError("invalid entity word range")
+    return fraction(0, len(words)), {
+        term: fraction(start, end)
+        for term, (start, end) in entity_word_ranges.items()
+    }
+
+
+def _model_sha256(model: Any) -> str:
+    digest = hashlib.sha256()
+    state = model.state_dict()
+    if not state:
+        raise RuntimeError("MMS forced-alignment model state is empty")
+    for name, tensor in sorted(state.items()):
+        value = tensor.detach().cpu().contiguous()
+        digest.update(name.encode("utf-8"))
+        digest.update(str(value.dtype).encode("ascii"))
+        digest.update(str(tuple(value.shape)).encode("ascii"))
+        digest.update(value.numpy().tobytes())
+    return digest.hexdigest()
+
+
+class MMSForcedAligner:
+    """Load torchaudio MMS_FA once and emit corpus-admission evidence."""
+
+    def __init__(self, *, device: str = "cpu") -> None:
+        import torch
+        import torchaudio
+        from torchaudio.pipelines import MMS_FA
+
+        self._torch = torch
+        self._torchaudio = torchaudio
+        self._bundle = MMS_FA
+        self._device = torch.device(device)
+        self._model = MMS_FA.get_model(with_star=False).to(self._device).eval()
+        self._tokenizer = MMS_FA.get_tokenizer()
+        self._aligner = MMS_FA.get_aligner()
+
+        self.adapter_revision = (
+            f"torchaudio={torchaudio.__version__};"
+            f"model_sha256={_model_sha256(self._model)}"
+        )
+
+    def _word_scores(
+        self,
+        audio_bytes: bytes,
+        words: tuple[str, ...],
+    ) -> tuple[tuple[float, ...], ...]:
+        import soundfile as sf
+
+        samples, sample_rate = sf.read(
+            BytesIO(audio_bytes),
+            dtype="float32",
+            always_2d=True,
+        )
+        mono = samples.mean(axis=1)
+        waveform = self._torch.from_numpy(mono).unsqueeze(0)
+        if sample_rate != self._bundle.sample_rate:
+            waveform = self._torchaudio.functional.resample(
+                waveform,
+                sample_rate,
+                self._bundle.sample_rate,
+            )
+        with self._torch.inference_mode():
+            emission, _ = self._model(waveform.to(self._device))
+        spans: list[list[Any]] = self._aligner(
+            emission[0],
+            self._tokenizer(list(words)),
+        )
+        return tuple(
+            tuple(float(span.score) for span in word_spans)
+            for word_spans in spans
+        )
+
+    def align(
+        self,
+        audio_path: Path,
+        prepared: SpokenReference,
+        *,
+        score_threshold: float,
+    ) -> AlignmentEvidence:
+        """Align one exact prepared reference and summarize coverage."""
+        audio_bytes = Path(audio_path).read_bytes()
+        word_scores = self._word_scores(audio_bytes, prepared.words)
+        token_coverage, entity_coverage = coverage_from_word_scores(
+            prepared.words,
+            word_scores,
+            prepared.entity_word_ranges,
+            score_threshold=score_threshold,
+        )
+        return AlignmentEvidence(
+            reference_sha256=prepared.reference_sha256,
+            audio_sha256=hashlib.sha256(audio_bytes).hexdigest(),
+            token_coverage=token_coverage,
+            critical_entity_coverage=entity_coverage,
+            coverage_score_threshold=score_threshold,
+            adapter="torchaudio-MMS_FA",
+            adapter_revision=self.adapter_revision,
+        )

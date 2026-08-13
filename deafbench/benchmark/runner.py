@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import shutil
@@ -39,6 +40,13 @@ ModelName = Literal[
     "whisper-at",
     "faster-whisper",
     "distil-whisper",
+    "qwen3-asr-0.6b",
+    "qwen3-asr-1.7b",
+    "parakeet-tdt-0.6b-v2",
+    "granite-speech-4.1-2b",
+    "granite-speech-4.1-2b-nar",
+    "ark-asr-0.6b",
+    "ark-asr-0.6b-int8-onnx",
 ]
 SyntheticFactory = Callable[[], tuple["SpeechGenerator", "TTSInfo"]]
 SyntheticGenerator = Callable[..., Path]
@@ -86,6 +94,85 @@ def _load_cached_tts(audio_dir: Path) -> TTSInfo:
     return TTSInfo(cast(str, tts["engine"]), cast(str, tts["version"]))
 
 
+def _load_validated_v2_tts(paths: RunPaths) -> TTSInfo | None:
+    """Recognize an admitted v2 corpus without invoking a mutable TTS cache."""
+    from deafbench.benchmark.synthetic import TTSInfo
+    from deafbench.benchmark.synthetic_v2_corpus import REPLACEMENT_REASONS
+
+    generation_path = paths.dataset_dir / "generation-manifest.jsonl"
+    quality_path = paths.dataset_dir / "quality-report.json"
+    if not generation_path.is_file() and not quality_path.is_file():
+        return None
+    if not generation_path.is_file() or not quality_path.is_file():
+        raise ValueError("Synthetic-v2 admission evidence is incomplete")
+    freeze_path = paths.dataset_dir / "freeze-manifest.json"
+    try:
+        freeze = json.loads(freeze_path.read_text(encoding="utf-8"))
+        required = freeze["artifacts"]["required"]
+        reference_digests = [
+            digest
+            for name, digest in required.items()
+            if Path(name).name == "references.jsonl"
+        ]
+    except (OSError, json.JSONDecodeError, KeyError, AttributeError) as exc:
+        raise ValueError("Synthetic-v2 freeze manifest is invalid") from exc
+    if (
+        len(reference_digests) != 1
+        or hashlib.sha256(paths.references.read_bytes()).hexdigest()
+        != reference_digests[0]
+    ):
+        raise ValueError("Synthetic-v2 reference hash mismatch")
+
+    records = [
+        json.loads(line)
+        for line in generation_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    expected_ids = {
+        cast(str, record["id"])
+        for record in load_reference_records(paths.references)
+    }
+    actual_ids = {record.get("id") for record in records}
+    if actual_ids != expected_ids or len(records) != len(actual_ids):
+        raise ValueError("Synthetic-v2 generation manifest is incomplete")
+    for record in records:
+        sample_id = cast(str, record["id"])
+        audio_path = paths.synthetic_audio / f"{sample_id}.wav"
+        expected_hash = record.get("audio_sha256")
+        if (
+            not isinstance(expected_hash, str)
+            or not audio_path.is_file()
+            or hashlib.sha256(audio_path.read_bytes()).hexdigest() != expected_hash
+        ):
+            raise ValueError(f"Synthetic-v2 audio hash mismatch: {sample_id}")
+
+    replacement_ids = {
+        cast(str, record["id"])
+        for record in records
+        if record.get("replacement_reason") is not None
+    }
+    unexpected_replacement_ids = replacement_ids - REPLACEMENT_REASONS.keys()
+    if unexpected_replacement_ids:
+        raise ValueError(
+            "Synthetic-v2 replacement IDs are outside the frozen allowance: "
+            f"{sorted(unexpected_replacement_ids)}"
+        )
+    quality = json.loads(quality_path.read_text(encoding="utf-8"))
+    samples = quality.get("samples")
+    if not isinstance(samples, list):
+        raise ValueError("Synthetic-v2 quality report is invalid")
+    accepted_ids = {
+        sample.get("id")
+        for sample in samples
+        if isinstance(sample, dict) and sample.get("status") == "accepted"
+    }
+    if len(samples) != len(accepted_ids) or accepted_ids != replacement_ids:
+        raise ValueError("Synthetic-v2 contains unaccepted replacements")
+
+    revision = hashlib.sha256(generation_path.read_bytes()).hexdigest()
+    return TTSInfo("validated-synthetic-v2", f"manifest-sha256:{revision}")
+
+
 def _prepare_synthetic(
     config: BenchmarkConfig,
     paths: RunPaths,
@@ -93,6 +180,10 @@ def _prepare_synthetic(
     synthetic_generator: SyntheticGenerator,
 ) -> TTSInfo:
     from deafbench.benchmark.synthetic import synthetic_set_is_current
+
+    validated_v2 = _load_validated_v2_tts(paths)
+    if validated_v2 is not None:
+        return validated_v2
 
     if synthetic_set_is_current(
         paths.synthetic_audio,
@@ -141,6 +232,34 @@ def _default_model_runner(model: ModelName) -> ModelRunner:
         from deafbench.benchmark.models.faster_whisper import run_faster_whisper
 
         return run_faster_whisper
+    if model == "qwen3-asr-0.6b":
+        from deafbench.benchmark.models.qwen3_asr import run_qwen3_asr
+
+        return run_qwen3_asr
+    if model == "qwen3-asr-1.7b":
+        from deafbench.benchmark.models.qwen3_asr import run_qwen3_asr_1_7b
+
+        return run_qwen3_asr_1_7b
+    if model == "parakeet-tdt-0.6b-v2":
+        from deafbench.benchmark.models.parakeet import run_parakeet
+
+        return run_parakeet
+    if model == "granite-speech-4.1-2b":
+        from deafbench.benchmark.models.granite_speech import run_granite_speech
+
+        return run_granite_speech
+    if model == "granite-speech-4.1-2b-nar":
+        from deafbench.benchmark.models.granite_nar import run_granite_nar
+
+        return run_granite_nar
+    if model == "ark-asr-0.6b":
+        from deafbench.benchmark.models.ark_asr import run_ark_asr
+
+        return run_ark_asr
+    if model == "ark-asr-0.6b-int8-onnx":
+        from deafbench.benchmark.models.ark_asr_onnx import run_ark_asr_onnx
+
+        return run_ark_asr_onnx
     from deafbench.benchmark.models.distil_whisper import run_distil_whisper
 
     return run_distil_whisper
@@ -192,6 +311,12 @@ def _metadata(
         "samples": sample_count,
         "benchmark_version": __version__,
     }
+    if model_info.revision is not None:
+        value["model_revision"] = model_info.revision
+    if model_info.decoding is not None:
+        value["decoding"] = dict(model_info.decoding)
+    if model_info.performance is not None:
+        value["performance"] = dict(model_info.performance)
     if source == "synthetic":
         if tts_info is None:
             raise ValueError("Synthetic run is missing TTS provenance")
