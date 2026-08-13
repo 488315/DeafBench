@@ -82,7 +82,7 @@ def validate_case_root(
     )
 
     if candidate == Path(candidate.anchor) or any(
-        _is_same_or_within(path, candidate) for path in unsafe
+        _overlaps(candidate, path) for path in unsafe
     ):
         raise ValueError("Case root is an unsafe broad path")
     if any(_overlaps(candidate, path) for path in worktrees):

@@ -43,6 +43,10 @@ def test_case_root_rejects_cloud_synced_and_shared_paths(tmp_path: Path) -> None
         validate_case_root(shared / "cases", shared_roots=(shared,))
 
 
-def test_case_root_rejects_unsafe_broad_paths(tmp_path: Path) -> None:
+@pytest.mark.parametrize("relative", (".", "customer-cases"))
+def test_case_root_rejects_unsafe_broad_paths(
+    tmp_path: Path,
+    relative: str,
+) -> None:
     with pytest.raises(ValueError, match="broad"):
-        validate_case_root(tmp_path, unsafe_roots=(tmp_path,))
+        validate_case_root(tmp_path / relative, unsafe_roots=(tmp_path,))
