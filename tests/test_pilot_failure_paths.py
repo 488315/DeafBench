@@ -48,4 +48,8 @@ def test_retention_rejects_ambiguous_or_non_extensions() -> None:
 
 def test_ledger_fails_closed_on_unknown_contracts(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="unsupported"):
-        append_event(tmp_path / "ledger.jsonl", case_id="case-test", event="unknown")
+        append_event(
+            tmp_path / "ledger.jsonl",
+            case_id="case-" + "a" * 32,
+            event="unknown",
+        )

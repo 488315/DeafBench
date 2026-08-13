@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Mapping
@@ -22,9 +23,18 @@ EVENTS = frozenset(
         "deletion",
     }
 )
-_PROHIBITED_METADATA = frozenset(
-    {"customer_name", "email", "transcript", "prediction", "content", "raw_text"}
-)
+_CASE_ID = re.compile(r"case-[0-9a-f]{32}\Z")
+_MODEL_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._/-]{0,199}\Z")
+_METADATA_FIELDS = {
+    "case_creation": frozenset(),
+    "validation": frozenset(),
+    "model_execution": frozenset({"model_id"}),
+    "report_generation": frozenset(),
+    "access": frozenset(),
+    "retention_change": frozenset(),
+    "delivery": frozenset(),
+    "deletion": frozenset(),
+}
 GENESIS_HASH = "0" * 64
 
 
@@ -62,9 +72,13 @@ def append_event(
 
     if event not in EVENTS:
         raise ValueError("unsupported pilot ledger event")
+    if _CASE_ID.fullmatch(case_id) is None:
+        raise ValueError("ledger case identifier must be opaque")
     details = dict(metadata or {})
-    if _PROHIBITED_METADATA.intersection(details):
-        raise ValueError("ledger metadata contains a prohibited content field")
+    if not set(details).issubset(_METADATA_FIELDS[event]):
+        raise ValueError("ledger event contains unsupported metadata fields")
+    if "model_id" in details and _MODEL_ID.fullmatch(details["model_id"]) is None:
+        raise ValueError("ledger metadata value is invalid")
     if path.exists() and not verify_ledger(path):
         raise RuntimeError("pilot ledger integrity verification failed")
     existing = _read(path)

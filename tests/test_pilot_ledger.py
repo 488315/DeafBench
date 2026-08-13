@@ -10,10 +10,11 @@ from deafbench.pilot.ledger import append_event, verify_ledger
 def test_ledger_is_append_only_and_hash_chained(tmp_path: Path) -> None:
     path = tmp_path / "ledger.jsonl"
     moment = datetime(2026, 8, 10, tzinfo=timezone.utc)
-    first = append_event(path, case_id="case-test", event="case_creation", occurred_at=moment)
+    case_id = "case-" + "a" * 32
+    first = append_event(path, case_id=case_id, event="case_creation", occurred_at=moment)
     append_event(
         path,
-        case_id="case-test",
+        case_id=case_id,
         event="model_execution",
         metadata={"model_id": "example/model"},
         occurred_at=moment,
@@ -26,22 +27,48 @@ def test_ledger_is_append_only_and_hash_chained(tmp_path: Path) -> None:
 
 def test_ledger_detects_modified_history(tmp_path: Path) -> None:
     path = tmp_path / "ledger.jsonl"
-    append_event(path, case_id="case-test", event="access")
+    case_id = "case-" + "a" * 32
+    append_event(path, case_id=case_id, event="access")
     path.write_text(path.read_text().replace('"event":"access"', '"event":"delivery"'))
 
     assert verify_ledger(path) is False
     with pytest.raises(RuntimeError, match="integrity"):
-        append_event(path, case_id="case-test", event="deletion")
+        append_event(path, case_id=case_id, event="deletion")
 
 
 @pytest.mark.parametrize(
     "field", ["customer_name", "email", "transcript", "prediction", "content", "raw_text"]
 )
 def test_ledger_rejects_customer_content_fields(tmp_path: Path, field: str) -> None:
-    with pytest.raises(ValueError, match="prohibited"):
+    with pytest.raises(ValueError, match="unsupported metadata"):
         append_event(
             tmp_path / "ledger.jsonl",
-            case_id="case-test",
+            case_id="case-" + "a" * 32,
             event="access",
             metadata={field: "must not be logged"},
+        )
+
+
+def test_ledger_rejects_nonopaque_case_identifier(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="case identifier"):
+        append_event(tmp_path / "ledger.jsonl", case_id="case-customer", event="access")
+
+
+def test_ledger_rejects_unknown_metadata_for_event(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="unsupported metadata"):
+        append_event(
+            tmp_path / "ledger.jsonl",
+            case_id="case-" + "a" * 32,
+            event="access",
+            metadata={"note": "customer content could hide here"},
+        )
+
+
+def test_ledger_rejects_invalid_allowed_metadata_value(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="metadata value"):
+        append_event(
+            tmp_path / "ledger.jsonl",
+            case_id="case-" + "a" * 32,
+            event="model_execution",
+            metadata={"model_id": "customer name"},
         )
