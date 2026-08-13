@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 import json
 from dataclasses import dataclass
 from pathlib import Path
 from statistics import median
 import sys
 from time import perf_counter
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 from deafbench.benchmark.models._isolated import RESULT_MARKER
 from deafbench.remote_code_audit import (

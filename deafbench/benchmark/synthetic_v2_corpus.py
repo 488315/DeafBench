@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 import hashlib
 import os
 import shutil
 import tempfile
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Any, Mapping, Protocol, cast
+from typing import Any, Protocol, cast
 
 import numpy as np
 

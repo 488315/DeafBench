@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 import json
 import platform
 import shutil
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Mapping
 
 import soundfile as sf
 

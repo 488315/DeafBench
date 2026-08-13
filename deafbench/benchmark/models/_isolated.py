@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 import json
 import os
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
-from typing import Any, Mapping
+from typing import Any
 
 
 RESULT_MARKER = "DEAFBENCH_MODEL_RESULT="

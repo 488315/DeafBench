@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 import wave
 from dataclasses import dataclass
 from math import gcd
 from pathlib import Path
 from statistics import median
 from time import perf_counter
-from typing import Any, Sequence
+from typing import Any
 
 from deafbench.benchmark.models import ModelRunInfo, _validated_wavs
 from deafbench.benchmark.workspace import atomic_write_jsonl
