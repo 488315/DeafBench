@@ -8,10 +8,16 @@ addresses, money, and negation. It does not contain generated audio, model
 predictions, or benchmark scores.
 
 Each case starts with a clean control and declares one acoustic or behavioral
-stress condition. The supported families are additive noise at fixed SNR,
+stress condition. The predeclared families are additive noise at fixed SNR,
 noise-only interstitials, 8 kHz mu-law telephony, deterministic reverberation,
 long intra-phrase pauses, rate variation, overlapping speech, and low-bitrate
 codec round trips. Generated audio and run artifacts must remain untracked.
+
+The current in-process helpers implement additive noise, interstitial noise,
+telephony, reverberation, long pauses, and rate variation. Overlap requires a
+separately authorized speech signal, and codec cases require a recorded codec
+round trip. A runner must fail closed rather than score either case without
+that evidence.
 
 ## What to report
 
@@ -51,6 +57,6 @@ belongs in this repository.
 The frozen reference SHA-256 is
 `b47adac789092a1b8094c450340b178d64a06cccaf124893e8c4c7622ae73b61`.
 The loader in `deafbench.benchmark.stress_contract` rejects unsupported fields,
-stressors, SNR levels, and risk categories. Acoustic transforms live in small
-modules under `deafbench.benchmark`; the existing interstitial evaluator remains
-the authority for noise-only hallucination scoring.
+stressors, SNR levels, and risk categories. Implemented acoustic transforms
+live in small modules under `deafbench.benchmark`; the existing interstitial
+evaluator remains the authority for noise-only hallucination scoring.

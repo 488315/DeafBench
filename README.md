@@ -129,7 +129,8 @@ critical information loss and non-speech events that WER misses.
 
 [`accessibility-stress-v1`](benchmarks/accessibility-stress-v1/README.md) adds a
 byte-frozen 24-utterance reference set for paired clean and degraded runs. It
-covers fixed-SNR street, office, wind, breathing, keyboard, and rustling noise;
+predeclares fixed-SNR street, office, wind, breathing, keyboard, and rustling
+noise;
 noise-only interstitials; 8 kHz telephony; reverberation; long pauses; rate
 variation; overlap; and codec degradation. The evaluator keeps WER edits,
 deletion share, typed critical failures, interstitial hallucinations, caption
