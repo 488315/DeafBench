@@ -108,6 +108,30 @@ def test_recorder_command_returns_launcher_status(monkeypatch):
     assert main(["recorder"]) == 7
 
 
+def test_audit_command_forwards_nested_action(monkeypatch):
+    calls = []
+    monkeypatch.setattr("deafbench.cli._run_audit", calls.append)
+
+    main(["audit", "rehearse", "--repo-root", "."])
+
+    assert calls == [["rehearse", "--repo-root", "."]]
+
+
+def test_audit_command_returns_launcher_status(monkeypatch):
+    monkeypatch.setattr("deafbench.cli._run_audit", lambda _audit_args: 7)
+
+    assert main(["audit", "run"]) == 7
+
+
+def test_audit_help_is_owned_by_audit_cli(monkeypatch):
+    calls = []
+    monkeypatch.setattr("deafbench.cli._run_audit", calls.append)
+
+    main(["audit", "--help"])
+
+    assert calls == [["--help"]]
+
+
 def test_module_entrypoint_propagates_main_status(monkeypatch):
     monkeypatch.setattr("deafbench.cli.main", lambda _args=None: 7)
 
