@@ -24,7 +24,8 @@ SELF_SIGNED_NOTICE = (
     "identity; authenticity requires an independently trusted key fingerprint."
 )
 _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
-_REVISION = re.compile(r"[0-9a-f]{40}\Z")
+_MODEL_REVISION = re.compile(r"[0-9a-f]{40}\Z")
+_EVALUATOR_REVISION = re.compile(r"[0-9a-f]{40,64}\Z")
 _ENTITY_TYPE = re.compile(r"[A-Z][A-Z_]*\Z")
 _CONFIGURATION_FIELDS = frozenset(
     {
@@ -94,7 +95,7 @@ def _validate_payload(payload: object) -> dict[str, object]:
         raise ValueError("manifest identity or execution notice is invalid")
     if not isinstance(payload["dataset_count"], int) or payload["dataset_count"] <= 0:
         raise ValueError("manifest dataset count must be positive")
-    if _REVISION.fullmatch(str(payload["evaluator_version"])) is None:
+    if _EVALUATOR_REVISION.fullmatch(str(payload["evaluator_version"])) is None:
         raise ValueError("manifest evaluator version is invalid")
 
     models = payload["models"]
@@ -108,7 +109,7 @@ def _validate_payload(payload: object) -> dict[str, object]:
         if not isinstance(model_id, str) or not model_id or model_id in seen:
             raise ValueError("manifest model identifier is invalid or duplicated")
         seen.add(model_id)
-        if _REVISION.fullmatch(str(model["revision"])) is None:
+        if _MODEL_REVISION.fullmatch(str(model["revision"])) is None:
             raise ValueError("manifest model revision is invalid")
         if model["license_classification"] != "commercial_candidate":
             raise ValueError("manifest model is not a commercial candidate")
