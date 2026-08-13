@@ -128,6 +128,7 @@ def validate_result_manifest(payload: object) -> Mapping[str, Any]:
         isinstance(manifest["schema_version"], bool)
         or not isinstance(manifest["schema_version"], int)
         or manifest["schema_version"] != 1
+        or not isinstance(manifest["status"], str)
         or manifest["status"] not in _STATUS_LANES
     ):
         raise ResultManifestError("unsupported result manifest state")

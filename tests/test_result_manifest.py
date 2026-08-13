@@ -134,6 +134,7 @@ def test_result_manifest_is_byte_stable() -> None:
         (lambda payload: payload.update(schema_version=2), "unsupported"),
         (lambda payload: payload.update(schema_version=True), "unsupported"),
         (lambda payload: payload.update(status="draft"), "unsupported"),
+        (lambda payload: payload.update(status=[]), "unsupported"),
         (lambda payload: payload.update(claim_boundary=""), "claim_boundary"),
         (lambda payload: payload.update(evaluator_revision="main"), "evaluator revision"),
         (lambda payload: payload.update(decoding=[]), "decoding must be an object"),
