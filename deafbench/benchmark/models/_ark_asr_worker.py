@@ -136,7 +136,7 @@ def run_request(
     model = runtime.AutoModelForCausalLM.from_pretrained(
         str(snapshot_root),
         attn_implementation="sdpa",
-        torch_dtype=dtype,
+        dtype=dtype,
         **load_options,
     ).to(device)
     model.eval()

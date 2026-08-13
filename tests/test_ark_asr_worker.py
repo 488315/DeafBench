@@ -161,6 +161,8 @@ def test_worker_verifies_source_and_uses_official_generation_contract(
     assert [call[0] for call in load_calls] == ["processor", "tokenizer", "model"]
     assert all(call[2]["local_files_only"] is True for call in load_calls)
     assert all(call[2]["trust_remote_code"] is True for call in load_calls)
+    assert load_calls[2][2]["dtype"] == "float16"
+    assert "torch_dtype" not in load_calls[2][2]
     assert result["records"] == [
         {"id": "sample", "latency_ms": 250.0, "text": "recognized speech"}
     ]
