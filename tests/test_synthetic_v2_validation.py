@@ -34,6 +34,7 @@ class _Aligner:
 
 
 class _ASR:
+    adapter = "test-independent-asr"
     adapter_revision = "asr-test-revision"
 
     def __init__(self):
@@ -103,6 +104,7 @@ def test_validation_records_all_gate_and_validator_evidence(tmp_path: Path):
     assert sample["status"] == "accepted"
     assert len(sample["gates"]) == 10
     assert sample["independent_asr"]["text"].endswith("eight thirty p m")
+    assert sample["independent_asr"]["adapter"] == "test-independent-asr"
     assert report["validators"] == {
         "forced_aligner_revision": "aligner-test-revision",
         "independent_asr_revision": "asr-test-revision",

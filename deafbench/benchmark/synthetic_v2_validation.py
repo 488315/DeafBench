@@ -32,6 +32,14 @@ class IndependentASR(Protocol):
     def transcribe(self, audio_path: Path) -> str: ...
 
 
+def _adapter_identity(adapter: object) -> str:
+    """Return the adapter's declared identity, or its concrete implementation."""
+    declared = getattr(adapter, "adapter", None)
+    if isinstance(declared, str) and declared.strip():
+        return declared.strip()
+    return type(adapter).__name__
+
+
 def _jsonl_by_id(path: Path) -> dict[str, Mapping[str, Any]]:
     records: dict[str, Mapping[str, Any]] = {}
     for line in path.read_text(encoding="utf-8").splitlines():
@@ -66,6 +74,7 @@ def validate_replacement_candidates(
         for record in load_reference_records(corpus_dir / "references.jsonl")
     }
     generation = _jsonl_by_id(corpus_dir / "generation-manifest.jsonl")
+    independent_adapter = _adapter_identity(independent_asr)
     samples: list[dict[str, Any]] = []
     for sample_id in sample_ids:
         if sample_id not in references or sample_id not in generation:
@@ -118,7 +127,7 @@ def validate_replacement_candidates(
                 },
                 "independent_asr": {
                     "audio_sha256": alignment.audio_sha256,
-                    "adapter": "torchaudio-WAV2VEC2_ASR_BASE_960H",
+                    "adapter": independent_adapter,
                     "adapter_revision": independent_asr.adapter_revision,
                     "text": asr_text,
                     "role": "supporting evidence only",
