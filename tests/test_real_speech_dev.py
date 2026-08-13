@@ -1,6 +1,7 @@
 import hashlib
 import io
 import json
+from pathlib import Path
 import wave
 
 import numpy as np
@@ -13,6 +14,20 @@ from deafbench.leaderboard.dev_corpus import (
     load_dev_contract,
     materialize_dev_corpus,
 )
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_versioned_real_speech_dev_contract_is_valid():
+    corpus = REPO_ROOT / "benchmarks" / "real-speech-dev-v1"
+
+    contract = load_dev_contract(
+        corpus / "manifest.json", corpus / "references.jsonl"
+    )
+
+    assert len(contract.samples) == 100
+    assert contract.population_count == 2_703
 
 
 def _write_contract(tmp_path, *, split="validation", count=2):
