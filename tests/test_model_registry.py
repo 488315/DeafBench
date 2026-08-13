@@ -48,6 +48,12 @@ def test_packaged_model_registry_is_valid() -> None:
     assert model.intended_lane == "commercial_candidate"
     assert model.remote_code_required is False
 
+    distil = models_by_id["Systran/faster-distil-whisper-large-v3"]
+    assert distil.revision == "c3058b475261292e64a0412df1d2681c06260fab"
+    assert distil.spdx_license == "MIT"
+    assert distil.intended_lane == "commercial_candidate"
+    assert distil.remote_code_required is False
+
 
 def test_packaged_apache_license_matches_canonical_bytes() -> None:
     license_bytes = files("deafbench").joinpath(
