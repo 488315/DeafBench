@@ -59,6 +59,9 @@ jobs:
       - name: Check Python formatting and lint
         run: python -m ruff check .
 
+      - name: Compile Python sources
+        run: python -m compileall -q deafbench tests tools
+
       - name: Run low-level unit tests
         run: python -m pytest -m unit
 
