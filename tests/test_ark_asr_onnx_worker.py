@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+import builtins
 import json
 
 import pytest
@@ -33,6 +34,20 @@ def _backend(runtime, loaded):
             )
         ),
     )
+
+
+def test_backend_reports_missing_onnxruntime(monkeypatch) -> None:
+    original_import = builtins.__import__
+
+    def guarded_import(name, *args, **kwargs):
+        if name == "onnxruntime":
+            raise ModuleNotFoundError(name)
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+
+    with pytest.raises(RuntimeError, match=r"deafbench\[ark-onnx-asr\]"):
+        worker._load_backend()
 
 
 def test_worker_verifies_source_and_uses_official_contract(

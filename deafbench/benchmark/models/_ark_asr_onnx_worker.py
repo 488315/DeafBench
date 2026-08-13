@@ -35,6 +35,7 @@ class _Backend:
 
 def _load_backend() -> _Backend:
     try:
+        import onnxruntime  # noqa: F401
         import soundfile
     except ModuleNotFoundError as exc:
         raise RuntimeError(
