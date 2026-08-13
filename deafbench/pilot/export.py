@@ -122,7 +122,10 @@ def _corpus_manifest(result: dict[str, object], lane: str) -> str:
     ] if isinstance(corpora, list) else []
     if len(matches) != 1:
         raise ValueError("result lacks one audit corpus manifest")
-    return str(matches[0]["manifest_sha256"])
+    manifest_sha256 = matches[0].get("manifest_sha256")
+    if not isinstance(manifest_sha256, str):
+        raise ValueError("result corpus manifest lacks manifest_sha256")
+    return manifest_sha256
 
 
 def _safe_configuration(decoding: dict[str, object]) -> dict[str, object]:

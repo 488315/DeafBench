@@ -5,6 +5,7 @@ import pytest
 
 from deafbench.pilot.export import (
     PILOT_MODEL_IDS,
+    _corpus_manifest,
     create_customer_export,
 )
 from deafbench.pilot.export_scan import assert_export_safe
@@ -159,6 +160,13 @@ def test_customer_export_rejects_incomplete_model_set(tmp_path: Path) -> None:
             output_dir=tmp_path / "export",
             signing_key=tmp_path / "signing-key.pem",
         )
+
+
+def test_corpus_manifest_rejects_missing_digest() -> None:
+    result = {"corpora": [{"name": "synthetic-v2"}]}
+
+    with pytest.raises(ValueError, match="lacks manifest_sha256"):
+        _corpus_manifest(result, "synthetic-v2")
 
 
 def test_customer_export_rejects_revision_not_in_registry(tmp_path: Path) -> None:
