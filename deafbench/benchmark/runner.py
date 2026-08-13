@@ -97,6 +97,7 @@ def _load_cached_tts(audio_dir: Path) -> TTSInfo:
 def _load_validated_v2_tts(paths: RunPaths) -> TTSInfo | None:
     """Recognize an admitted v2 corpus without invoking a mutable TTS cache."""
     from deafbench.benchmark.synthetic import TTSInfo
+    from deafbench.benchmark.synthetic_v2_corpus import REPLACEMENT_REASONS
 
     generation_path = paths.dataset_dir / "generation-manifest.jsonl"
     quality_path = paths.dataset_dir / "quality-report.json"
@@ -150,6 +151,12 @@ def _load_validated_v2_tts(paths: RunPaths) -> TTSInfo | None:
         for record in records
         if record.get("replacement_reason") is not None
     }
+    unexpected_replacement_ids = replacement_ids - REPLACEMENT_REASONS.keys()
+    if unexpected_replacement_ids:
+        raise ValueError(
+            "Synthetic-v2 replacement IDs are outside the frozen allowance: "
+            f"{sorted(unexpected_replacement_ids)}"
+        )
     quality = json.loads(quality_path.read_text(encoding="utf-8"))
     samples = quality.get("samples")
     if not isinstance(samples, list):

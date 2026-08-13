@@ -270,10 +270,13 @@ def test_validated_v2_set_does_not_regenerate_synthetic_audio(tmp_path: Path) ->
             {
                 "id": sample_id,
                 "audio_sha256": hashlib.sha256(wav.read_bytes()).hexdigest(),
-                "replacement_reason": "test replacement",
+                "replacement_reason": (
+                    "test replacement" if sample_id == "core-001" else None
+                ),
             }
         )
-        accepted.append({"id": sample_id, "status": "accepted"})
+        if sample_id == "core-001":
+            accepted.append({"id": sample_id, "status": "accepted"})
     atomic_write_jsonl(references.parent / "generation-manifest.jsonl", generation)
     (references.parent / "freeze-manifest.json").write_text(
         json.dumps(
@@ -305,6 +308,69 @@ def test_validated_v2_set_does_not_regenerate_synthetic_audio(tmp_path: Path) ->
 
     metadata = json.loads(result.metadata.read_text(encoding="utf-8"))
     assert metadata["tts"]["engine"] == "validated-synthetic-v2"
+
+
+def test_validated_v2_rejects_replacement_outside_frozen_allowance(
+    tmp_path: Path,
+) -> None:
+    references = _write_dataset(
+        tmp_path,
+        human_complete=False,
+        dataset="synthetic-v2",
+    )
+    dataset = references.parent
+    audio_dir = dataset / "audio-synthetic"
+    generation = []
+    for sample_id in ("core-001", "core-002"):
+        wav = audio_dir / f"{sample_id}.wav"
+        _write_wav(wav)
+        generation.append(
+            {
+                "id": sample_id,
+                "audio_sha256": hashlib.sha256(wav.read_bytes()).hexdigest(),
+                "replacement_reason": "test replacement",
+            }
+        )
+    atomic_write_jsonl(dataset / "generation-manifest.jsonl", generation)
+    (dataset / "freeze-manifest.json").write_text(
+        json.dumps(
+            {
+                "artifacts": {
+                    "required": {
+                        "benchmarks/synthetic-v2/references.jsonl": hashlib.sha256(
+                            references.read_bytes()
+                        ).hexdigest()
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    (dataset / "quality-report.json").write_text(
+        json.dumps(
+            {
+                "samples": [
+                    {"id": "core-001", "status": "accepted"},
+                    {"id": "core-002", "status": "accepted"},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    called = False
+
+    def runner(*args: object, **kwargs: object) -> ModelRunInfo:
+        nonlocal called
+        called = True
+        return _fake_model_runner(*args, **kwargs)
+
+    with pytest.raises(ValueError, match="outside the frozen allowance"):
+        run_benchmark(
+            BenchmarkConfig(tmp_path, "synthetic-v2", "whisper"),
+            whisper_runner=runner,
+        )
+
+    assert called is False
 
 
 def test_validated_v2_rejects_changed_references_before_inference(tmp_path: Path) -> None:
