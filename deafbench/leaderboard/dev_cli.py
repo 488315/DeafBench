@@ -5,9 +5,10 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import sys
 from typing import Callable, Mapping, Sequence
 
-from .dev_corpus import materialize_dev_corpus
+from .dev_corpus import DevCorpusError, materialize_dev_corpus
 
 
 def main(
@@ -24,11 +25,15 @@ def main(
     args = parser.parse_args(argv)
 
     corpus = args.repo_root / "benchmarks" / "real-speech-dev-v1"
-    result = materializer(
-        corpus / "manifest.json",
-        corpus / "references.jsonl",
-        corpus / "audio",
-    )
+    try:
+        result = materializer(
+            corpus / "manifest.json",
+            corpus / "references.jsonl",
+            corpus / "audio",
+        )
+    except (DevCorpusError, OSError) as exc:
+        print(f"dev corpus error: {exc}", file=sys.stderr)
+        return 1
     print(json.dumps(result, sort_keys=True))
     return 0
 
