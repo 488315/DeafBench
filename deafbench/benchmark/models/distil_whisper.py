@@ -9,7 +9,8 @@ from deafbench.benchmark.models import ModelRunInfo
 from deafbench.benchmark.models.faster_whisper import _run_local_whisper
 
 
-DEFAULT_MODEL = "distil-large-v3"
+DEFAULT_MODEL = "Systran/faster-distil-whisper-large-v3"
+DEFAULT_MODEL_REVISION = "c3058b475261292e64a0412df1d2681c06260fab"
 
 
 def run_distil_whisper(
@@ -32,4 +33,5 @@ def run_distil_whisper(
             "condition_on_previous_text": False,
         },
         backend,
+        DEFAULT_MODEL_REVISION,
     )

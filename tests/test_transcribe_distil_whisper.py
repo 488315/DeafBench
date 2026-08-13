@@ -4,7 +4,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from deafbench.benchmark.models import ModelRunInfo
-from deafbench.benchmark.models.distil_whisper import run_distil_whisper
+from deafbench.benchmark.models.distil_whisper import (
+    DEFAULT_MODEL,
+    DEFAULT_MODEL_REVISION,
+    run_distil_whisper,
+)
 
 
 def test_distil_whisper_uses_distilled_inference_contract(
@@ -48,11 +52,27 @@ def test_distil_whisper_uses_distilled_inference_contract(
         backend=FakeBackend(),
     )
 
-    assert info == ModelRunInfo("distil-whisper", "distil-large-v3")
+    assert info == ModelRunInfo(
+        "distil-whisper",
+        DEFAULT_MODEL,
+        revision=DEFAULT_MODEL_REVISION,
+        decoding={
+            "beam_size": 5,
+            "compute_type": "int8",
+            "condition_on_previous_text": False,
+            "device": "cpu",
+            "language": "en",
+        },
+    )
     assert [json.loads(line) for line in output.read_text().splitlines()] == [
         {"id": "sample-001", "text": " Distilled caption."}
     ]
-    assert calls["model_id"] == "distil-large-v3"
+    assert calls["model_id"] == DEFAULT_MODEL
+    assert calls["model_kwargs"] == {
+        "compute_type": "int8",
+        "device": "cpu",
+        "revision": DEFAULT_MODEL_REVISION,
+    }
     assert calls["transcribe_kwargs"] == {
         "beam_size": 5,
         "language": "en",
