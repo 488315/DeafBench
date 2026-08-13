@@ -41,6 +41,7 @@ def test_test_extra_installs_collection_dependencies() -> None:
 
     test_dependencies = metadata["project"]["optional-dependencies"]["test"]
     assert "cryptography>=48.0,<49.0" in test_dependencies
+    assert "kaldialign==0.12.0" in test_dependencies
     assert "scipy>=1.15,<2.0" in test_dependencies
     assert "soundfile>=0.13,<1.0" in test_dependencies
 
