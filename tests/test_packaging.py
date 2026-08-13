@@ -7,6 +7,9 @@ import tomllib
 import pytest
 
 
+_PACKAGING_TIMEOUT_SECONDS = 300
+
+
 def test_wheel_discovery_excludes_nonruntime_trees() -> None:
     pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
     metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))
@@ -152,6 +155,7 @@ def test_benchmark_install_imports_whisperspeech_pipeline(tmp_path: Path) -> Non
         check=True,
         capture_output=True,
         text=True,
+        timeout=_PACKAGING_TIMEOUT_SECONDS,
     )
     environment_python = environment / (
         "Scripts/python.exe" if os.name == "nt" else "bin/python"
@@ -167,6 +171,7 @@ def test_benchmark_install_imports_whisperspeech_pipeline(tmp_path: Path) -> Non
         check=False,
         capture_output=True,
         text=True,
+        timeout=_PACKAGING_TIMEOUT_SECONDS,
     )
     assert installed.returncode == 0, installed.stderr
 
@@ -185,6 +190,7 @@ def test_benchmark_install_imports_whisperspeech_pipeline(tmp_path: Path) -> Non
         check=False,
         capture_output=True,
         text=True,
+        timeout=_PACKAGING_TIMEOUT_SECONDS,
     )
 
     assert completed.returncode == 0, completed.stderr
