@@ -147,6 +147,7 @@ def test_interstitial_scene_requires_two_non_silent_speech_anchors(
         ({"text": "Thanks for watching."}, False, True, 3),
         ({"text": "[thanks for watching]"}, False, True, 3),
         ({"text": "[street noise] hello"}, False, True, 1),
+        ({"text": "[你好 привет]"}, False, True, 2),
     ],
 )
 def test_interstitial_prediction_distinguishes_annotations_from_speech(

@@ -164,7 +164,7 @@ def build_interstitial_scene(
 
 
 _BRACKETED_EVENT = re.compile(r"\[([^\]\r\n]+)\]")
-_LEXICAL_TOKEN = re.compile(r"[A-Za-z0-9]+(?:['_-][A-Za-z0-9]+)*")
+_LEXICAL_TOKEN = re.compile(r"[^\W_]+(?:['_-][^\W_]+)*", re.UNICODE)
 _KNOWN_EVENT_LABELS = frozenset(
     profile.replace("-", " ") for profile in INTERSTITIAL_NOISE_PROFILES
 )
