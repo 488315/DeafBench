@@ -74,3 +74,4 @@ def test_ci_runs_tracked_customer_artifact_scan() -> None:
     assert "python tools/check_customer_artifacts.py" in workflow
     assert "--tracked" in workflow
     assert "github.event.pull_request.base.sha" in workflow
+    assert "fetch-depth: 0" in workflow
