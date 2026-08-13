@@ -6,7 +6,7 @@ import math
 from pathlib import Path
 from typing import Any, Mapping
 
-from deafbench.benchmark.interstitial import INTERSTITIAL_NOISE_PROFILES
+from deafbench.benchmark.noise import NOISE_PROFILES
 from deafbench.benchmark.workspace import load_reference_records
 
 
@@ -25,7 +25,6 @@ RISK_CATEGORIES = frozenset(
         "USERNAME",
     }
 )
-NOISE_PROFILES = frozenset((*INTERSTITIAL_NOISE_PROFILES, "wind"))
 SUPPORTED_SNR_DB = frozenset({-5.0, 0.0, 10.0, 20.0})
 
 _STRESSOR_FIELDS = {
