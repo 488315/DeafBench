@@ -44,7 +44,11 @@ def _write_contract(tmp_path, *, split="validation", count=2):
             "split": split,
             "license": "CC-BY-4.0",
         },
-        "selection": {"strategy": "ordered_prefix", "count": count},
+        "selection": {
+            "strategy": "sha256_id_lowest",
+            "count": count,
+            "population_count": 2,
+        },
         "official_evaluation_exclusions": [
             "hf-audio/open_asr_leaderboard:librispeech:test.clean",
             "hf-audio/open_asr_leaderboard:librispeech:test.other",
@@ -111,6 +115,15 @@ def test_load_dev_contract_rejects_incomplete_cohort(tmp_path):
         load_dev_contract(manifest, references, expected_count=2)
 
 
+def test_load_dev_contract_rejects_invalid_source_population(tmp_path):
+    manifest_path, references, manifest = _write_contract(tmp_path)
+    manifest["selection"]["population_count"] = 1
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(DevCorpusError, match="population count"):
+        load_dev_contract(manifest_path, references, expected_count=2)
+
+
 def _flac_bytes(frequency):
     time = np.arange(1600, dtype=np.float32) / 16_000
     audio = (0.1 * np.sin(2 * np.pi * frequency * time)).astype(np.float32)
@@ -169,7 +182,11 @@ def test_materialize_dev_corpus_writes_verified_48khz_audio(tmp_path):
     ("mutation", "message"),
     (
         (lambda rows: rows.__setitem__(0, {**rows[0], "text": "wrong"}), "text"),
-        (lambda rows: rows.pop(), "ended before"),
+        (lambda rows: rows.pop(), "population count"),
+        (
+            lambda rows: rows.__setitem__(1, {**rows[1], "id": rows[0]["id"]}),
+            "duplicate sample IDs",
+        ),
         (
             lambda rows: rows[0]["audio"].__setitem__("bytes", b"wrong"),
             "audio hash",

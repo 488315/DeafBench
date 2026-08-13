@@ -55,6 +55,7 @@ class DevCorpusContract:
     revision: str
     config: str
     split: str
+    population_count: int
     samples: tuple[DevSample, ...]
 
     @property
@@ -131,14 +132,23 @@ def load_dev_contract(
         raise DevCorpusError("development dataset license is unsupported")
 
     selection = _mapping(manifest["selection"], "selection")
-    _require_keys(selection, {"strategy", "count"}, "selection")
-    if selection["strategy"] != "ordered_prefix":
+    _require_keys(
+        selection, {"strategy", "count", "population_count"}, "selection"
+    )
+    if selection["strategy"] != "sha256_id_lowest":
         raise DevCorpusError("development cohort selection is unsupported")
     if (
         isinstance(selection["count"], bool)
         or selection["count"] != expected_count
     ):
         raise DevCorpusError("development cohort sample count is invalid")
+    population_count = selection["population_count"]
+    if (
+        isinstance(population_count, bool)
+        or not isinstance(population_count, int)
+        or population_count < expected_count
+    ):
+        raise DevCorpusError("development source population count is invalid")
 
     exclusions = manifest["official_evaluation_exclusions"]
     if not isinstance(exclusions, list) or not _OFFICIAL_TEST_EXCLUSIONS <= set(
@@ -182,6 +192,7 @@ def load_dev_contract(
         revision=DEV_DATASET_REVISION,
         config=_CONFIG,
         split=_SPLIT,
+        population_count=population_count,
         samples=tuple(samples),
     )
 
@@ -252,6 +263,25 @@ def _promote_materialization(staging: Path, destination: Path) -> None:
             shutil.rmtree(backup)
 
 
+def _select_source_rows(
+    rows: Iterable[Mapping[str, Any]], contract: DevCorpusContract
+) -> list[Mapping[str, Any]]:
+    population = list(rows)
+    if len(population) != contract.population_count:
+        raise DevCorpusError("development source population count changed")
+    if any(not isinstance(row.get("id"), str) for row in population):
+        raise DevCorpusError("development source sample ID is invalid")
+    if len({cast(str, row["id"]) for row in population}) != len(population):
+        raise DevCorpusError("development source contains duplicate sample IDs")
+    return sorted(
+        population,
+        key=lambda row: (
+            hashlib.sha256(cast(str, row["id"]).encode("utf-8")).hexdigest(),
+            cast(str, row["id"]),
+        ),
+    )[: len(contract.samples)]
+
+
 def materialize_dev_corpus(
     manifest_path: Path | str,
     references_path: Path | str,
@@ -264,7 +294,10 @@ def materialize_dev_corpus(
     contract = load_dev_contract(
         manifest_path, references_path, expected_count=expected_count
     )
-    rows = iter(source_rows if source_rows is not None else _pinned_source_rows(contract))
+    rows = _select_source_rows(
+        source_rows if source_rows is not None else _pinned_source_rows(contract),
+        contract,
+    )
     destination_path = Path(destination)
     destination_path.parent.mkdir(parents=True, exist_ok=True)
     staging = Path(
@@ -276,13 +309,7 @@ def materialize_dev_corpus(
     promoted = False
     audio_manifest: list[Mapping[str, Any]] = []
     try:
-        for expected in contract.samples:
-            try:
-                row = next(rows)
-            except StopIteration as exc:
-                raise DevCorpusError(
-                    "development source ended before the declared cohort"
-                ) from exc
+        for expected, row in zip(contract.samples, rows, strict=True):
             if row.get("id") != expected.sample_id:
                 raise DevCorpusError("development source sample order changed")
             if row.get("text") != expected.text:
