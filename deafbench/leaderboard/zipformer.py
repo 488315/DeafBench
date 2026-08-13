@@ -6,6 +6,17 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 
+_OFFICIAL_DATASET_SPLITS = frozenset(
+    {
+        ("ami_cleaned", "test"),
+        ("earnings22", "test"),
+        ("gigaspeech_cleaned", "test"),
+        ("librispeech", "test.clean"),
+        ("librispeech", "test.other"),
+        ("spgispeech", "test"),
+        ("voxpopuli_cleaned_aa", "test"),
+    }
+)
 @dataclass(frozen=True)
 class PinnedZipformerContract:
     """Resolve the public baseline without mutable Hugging Face revisions."""
@@ -15,10 +26,18 @@ class PinnedZipformerContract:
     model_id: str = "soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M"
     model_revision: str = "d410fb15a71cbf87ec5e0a860356563deb9d8f01"
 
+    def validate_dataset(self, dataset: str, split: str) -> None:
+        """Reject dataset selections outside the reviewed seven-set contract."""
+        if (dataset, split) not in _OFFICIAL_DATASET_SPLITS:
+            raise ValueError(
+                "unsupported official dataset/split: " f"{dataset}/{split}"
+            )
+
     def load_dataset(self, loader: Callable[..., Any], args: Any) -> Any:
         """Load one official split anonymously at the reviewed revision."""
         if args.dataset_path != self.dataset_id:
             raise ValueError(f"unsupported leaderboard dataset: {args.dataset_path}")
+        self.validate_dataset(args.dataset, args.split)
         return loader(
             self.dataset_id,
             args.dataset,

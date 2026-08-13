@@ -56,6 +56,23 @@ def test_zipformer_contract_pins_public_dataset_and_model_revisions():
     ]
 
 
+@pytest.mark.parametrize(
+    ("dataset", "split"),
+    (("librispeech", "validation"), ("common_voice", "test")),
+)
+def test_zipformer_contract_rejects_nonofficial_dataset_splits(dataset, split):
+    contract = PinnedZipformerContract()
+    arguments = SimpleNamespace(
+        dataset_path=contract.dataset_id,
+        dataset=dataset,
+        split=split,
+        streaming=False,
+    )
+
+    with pytest.raises(ValueError, match="unsupported official dataset/split"):
+        contract.load_dataset(lambda *args, **kwargs: None, arguments)
+
+
 def test_zipformer_runner_translates_pinned_nonstreaming_arguments():
     contract = PinnedZipformerContract()
     arguments = SimpleNamespace(
@@ -93,6 +110,13 @@ def test_zipformer_runner_rejects_cpu_execution():
     arguments = SimpleNamespace(device=-1)
 
     with pytest.raises(ValueError, match="requires a CUDA device"):
+        _runner_argv(arguments, PinnedZipformerContract())
+
+
+def test_zipformer_runner_rejects_nonofficial_dataset_split():
+    arguments = SimpleNamespace(dataset="librispeech", split="train", device=0)
+
+    with pytest.raises(ValueError, match="unsupported official dataset/split"):
         _runner_argv(arguments, PinnedZipformerContract())
 
 

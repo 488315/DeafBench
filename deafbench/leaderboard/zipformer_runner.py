@@ -43,6 +43,7 @@ def _runner_argv(
     """Translate DeafBench arguments into the reviewed Space CLI contract."""
     if args.device < 0:
         raise ValueError("the pinned Zipformer baseline requires a CUDA device")
+    contract.validate_dataset(args.dataset, args.split)
     runner_argv = [
         "--model_id",
         contract.model_id,
