@@ -151,8 +151,6 @@ class OfficialEvaluator:
                     "deafbench.leaderboard._official_worker",
                     "--checkout",
                     str(self.checkout),
-                    "--expected-revision",
-                    self.expected_revision,
                     action,
                 ],
                 input=json.dumps(payload),
