@@ -191,7 +191,9 @@ def test_customer_audit_results_create_aggregate_only_export(tmp_path: Path) -> 
     )
 
     exported_text = "\n".join(
-        path.read_text(encoding="utf-8") for path in output.iterdir()
+        path.read_text(encoding="utf-8")
+        for path in sorted(output.rglob("*"))
+        if path.is_file()
     )
     assert exported.sample_count == 1
     assert "sample-001" not in exported_text
