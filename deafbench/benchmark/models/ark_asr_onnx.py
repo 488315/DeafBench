@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 
@@ -58,6 +59,7 @@ def _validated_records(
             or not isinstance(text, str)
             or isinstance(latency, bool)
             or not isinstance(latency, (int, float))
+            or not math.isfinite(latency)
             or latency < 0
         ):
             raise ValueError("ARK-ASR ONNX worker returned an invalid prediction")

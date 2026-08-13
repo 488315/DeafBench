@@ -159,6 +159,8 @@ def test_registered_revision_accepts_matching_audit(monkeypatch) -> None:
         {"id": "sample-1", "latency_ms": 1.0, "text": 1},
         {"id": "sample-1", "latency_ms": True, "text": "ok"},
         {"id": "sample-1", "latency_ms": -1.0, "text": "ok"},
+        {"id": "sample-1", "latency_ms": float("nan"), "text": "ok"},
+        {"id": "sample-1", "latency_ms": float("inf"), "text": "ok"},
     ],
 )
 def test_worker_record_validation_rejects_invalid_records(record) -> None:
