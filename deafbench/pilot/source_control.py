@@ -13,6 +13,9 @@ _PRIVATE_KEY_SUFFIXES = {".key", ".pem", ".pfx", ".p12"}
 _BLOCKED_NAMES = ("transcript", "prediction", "customer-report", "case-artifact")
 _CASE_ID = re.compile(rb"case-[0-9a-f]{32}")
 _SECRET = re.compile(rb"(?i)(api[_-]?key|password|auth[_-]?token)\s*[:=]\s*\S+")
+_PRIVATE_KEY = re.compile(
+    rb"-----BEGIN (?:ENCRYPTED |RSA |EC |OPENSSH )?PRIVATE KEY-----"
+)
 
 
 @dataclass(frozen=True)
@@ -53,7 +56,9 @@ def scan_staged(repo: Path) -> tuple[StagedFinding, ...]:
         except subprocess.CalledProcessError:
             findings.append(StagedFinding(name, "index content could not be inspected"))
             continue
-        if _CASE_ID.search(content):
+        if _PRIVATE_KEY.search(content):
+            findings.append(StagedFinding(name, "private key artifact"))
+        elif _CASE_ID.search(content):
             findings.append(StagedFinding(name, "opaque customer case identifier"))
         elif _SECRET.search(content):
             findings.append(StagedFinding(name, "possible secret"))

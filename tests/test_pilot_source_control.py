@@ -58,6 +58,19 @@ def test_scanner_rejects_private_signing_key_files(tmp_path: Path) -> None:
     assert scan_staged(repo)[0].reason == "private key artifact"
 
 
+def test_scanner_rejects_renamed_private_key_content(tmp_path: Path) -> None:
+    repo = _repo(tmp_path / "repo")
+    header = "-----BEGIN " + "PRIVATE KEY-----"
+    footer = "-----END " + "PRIVATE KEY-----"
+    (repo / "notes.txt").write_text(
+        f"{header}\nprivate material\n{footer}\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", "notes.txt")
+
+    assert scan_staged(repo)[0].reason == "private key artifact"
+
+
 def test_scanner_uses_nested_repository_index(tmp_path: Path) -> None:
     outer = _repo(tmp_path / "outer")
     nested = _repo(outer / "nested")
