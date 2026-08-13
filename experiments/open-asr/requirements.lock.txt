@@ -29,7 +29,7 @@ intervaltree==3.2.1
 jinja2==3.1.6
 jiwer==3.1.0
 joblib==1.5.3
-k2 @ https://huggingface.co/csukuangfj/k2/resolve/main/ubuntu-cuda/1.24.4.dev20241029/k2-1.24.4.dev20241030+cuda12.4.torch2.4.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+k2 @ https://huggingface.co/csukuangfj/k2/resolve/f9222235425ce5eee567edda570c0abac4607ff0/ubuntu-cuda/1.24.4.dev20241029/k2-1.24.4.dev20241030+cuda12.4.torch2.4.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=fefea250b5fb642c135acb66b512fb742fe6fc6162d998a27fbff52cb1960b73
 kaldi-native-fbank==1.22.3
 kaldialign==0.12.0
 lazy-loader==0.5
