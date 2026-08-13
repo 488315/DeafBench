@@ -113,10 +113,10 @@ def test_load_authorization_rejects_unsafe_permission_envelopes(
 
 @pytest.mark.parametrize(
     ("payload", "message"),
-    (
+    [
         ("not-json", "unreadable"),
         ("[]", "must be an object"),
-    ),
+    ],
 )
 def test_load_authorization_rejects_unreadable_or_non_object_records(
     tmp_path: Path,
@@ -132,7 +132,7 @@ def test_load_authorization_rejects_unreadable_or_non_object_records(
 
 @pytest.mark.parametrize(
     ("field", "value", "message"),
-    (
+    [
         ("schema_version", 2, "schema version"),
         ("case_id", "customer-name", "case ID"),
         ("authorization_reference", " ", "nonempty text"),
@@ -140,7 +140,7 @@ def test_load_authorization_rejects_unreadable_or_non_object_records(
         ("planned_delivery_date", "tomorrow", "ISO date"),
         ("permitted_models", "Qwen/Qwen3-ASR-1.7B-hf", "nonempty unique"),
         ("permitted_models", [""], "nonempty unique"),
-    ),
+    ],
 )
 def test_load_authorization_rejects_malformed_field_values(
     tmp_path: Path,
