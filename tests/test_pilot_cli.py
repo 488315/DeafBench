@@ -82,6 +82,7 @@ def test_export_cli_requires_zero_custody_attestation(
     assert main(args, exporter=exporter) == 0
     assert json.loads(capsys.readouterr().out)["sample_count"] == 25
     assert len(captured["result_paths"]) == 3
+    assert len(captured["execution_attestation"].sha256) == 64
 
 
 def test_export_cli_fails_before_export_when_attestation_is_unsafe(
@@ -155,4 +156,5 @@ def test_audit_cli_evaluates_then_exports_local_case(
 
     assert [name for name, _ in calls] == ["audit", "export"]
     assert calls[1][1]["result_paths"] == list(result_paths)
+    assert len(calls[1][1]["execution_attestation"].sha256) == 64
     assert json.loads(capsys.readouterr().out)["sample_count"] == 4

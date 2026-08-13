@@ -7,6 +7,7 @@ import pytest
 from deafbench.benchmark.models import ModelRunInfo
 from deafbench.pilot.audit import PILOT_MODEL_RUNNERS, run_customer_audit
 from deafbench.pilot.export import create_customer_export
+from deafbench.pilot.zero_custody import ExecutionAttestation
 from deafbench.pilot.export_scan import assert_export_safe
 from deafbench.result_manifest import validate_result_manifest
 
@@ -144,6 +145,7 @@ def test_customer_audit_results_create_aggregate_only_export(tmp_path: Path) -> 
         result_paths=list(audit.result_paths),
         output_dir=output,
         signing_key=tmp_path / "signing-key.pem",
+        execution_attestation=ExecutionAttestation("customer_run", True, "d" * 64),
     )
 
     exported_text = "\n".join(

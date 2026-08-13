@@ -14,9 +14,11 @@ from deafbench.pilot.manifest import (
     SELF_SIGNED_NOTICE,
     verify_signed_manifest,
 )
+from deafbench.pilot.zero_custody import ExecutionAttestation
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+ATTESTATION = ExecutionAttestation("customer_run", True, "d" * 64)
 
 
 def _result_paths() -> list[Path]:
@@ -56,6 +58,7 @@ def test_customer_export_contains_only_three_model_aggregates(tmp_path: Path) ->
         result_paths=_result_paths(),
         output_dir=output,
         signing_key=tmp_path / "private" / "signing-key.pem",
+        execution_attestation=ATTESTATION,
     )
 
     manifest = json.loads((output / "manifest.json").read_text(encoding="utf-8"))
@@ -66,6 +69,7 @@ def test_customer_export_contains_only_three_model_aggregates(tmp_path: Path) ->
         PILOT_MODEL_IDS
     )
     assert manifest["execution_notice"] == EXECUTION_NOTICE
+    assert manifest["execution_attestation_sha256"] == ATTESTATION.sha256
     assert report.startswith(f"# Accessibility-Critical ASR Audit\n\n{EXECUTION_NOTICE}")
     assert SELF_SIGNED_NOTICE in report
     assert "core-" not in report
@@ -86,6 +90,7 @@ def test_customer_export_accepts_customer_audit_result_manifests(
         result_paths=_customer_result_paths(tmp_path / "results"),
         output_dir=tmp_path / "export",
         signing_key=tmp_path / "signing-key.pem",
+        execution_attestation=ATTESTATION,
     )
 
     assert result.model_count == 3
@@ -101,6 +106,7 @@ def test_customer_export_rejects_mixed_evaluation_tracks(tmp_path: Path) -> None
             result_paths=[_result_paths()[0], *customer[1:]],
             output_dir=tmp_path / "export",
             signing_key=tmp_path / "signing-key.pem",
+            execution_attestation=ATTESTATION,
         )
 
 
@@ -112,6 +118,7 @@ def test_customer_export_aggregates_critical_failures_by_type(tmp_path: Path) ->
         result_paths=_result_paths(),
         output_dir=output,
         signing_key=tmp_path / "signing-key.pem",
+        execution_attestation=ATTESTATION,
     )
 
     manifest = json.loads((output / "manifest.json").read_text(encoding="utf-8"))
@@ -138,12 +145,14 @@ def test_customer_export_is_stable_when_inputs_are_reordered(tmp_path: Path) -> 
         result_paths=_result_paths(),
         output_dir=first,
         signing_key=key,
+        execution_attestation=ATTESTATION,
     )
     create_customer_export(
         repo_root=REPO_ROOT,
         result_paths=list(reversed(_result_paths())),
         output_dir=second,
         signing_key=key,
+        execution_attestation=ATTESTATION,
     )
 
     assert (first / "manifest.json").read_bytes() == (
@@ -159,6 +168,7 @@ def test_customer_export_rejects_incomplete_model_set(tmp_path: Path) -> None:
             result_paths=_result_paths()[:2],
             output_dir=tmp_path / "export",
             signing_key=tmp_path / "signing-key.pem",
+            execution_attestation=ATTESTATION,
         )
 
 
@@ -181,6 +191,7 @@ def test_customer_export_rejects_revision_not_in_registry(tmp_path: Path) -> Non
             result_paths=[altered, *_result_paths()[1:]],
             output_dir=tmp_path / "export",
             signing_key=tmp_path / "signing-key.pem",
+            execution_attestation=ATTESTATION,
         )
 
 
@@ -208,6 +219,7 @@ def test_customer_export_requires_validated_result_manifests(
             result_paths=[altered, *_result_paths()[1:]],
             output_dir=tmp_path / "export",
             signing_key=tmp_path / "signing-key.pem",
+            execution_attestation=ATTESTATION,
         )
 
 
@@ -222,6 +234,7 @@ def test_customer_export_redacts_keyword_bias_values(tmp_path: Path) -> None:
         result_paths=customer,
         output_dir=tmp_path / "export",
         signing_key=tmp_path / "signing-key.pem",
+        execution_attestation=ATTESTATION,
     )
 
     manifest = (tmp_path / "export" / "manifest.json").read_text(
@@ -245,6 +258,7 @@ def test_customer_export_rejects_unsafe_configuration_values(tmp_path: Path) -> 
             result_paths=customer,
             output_dir=tmp_path / "export",
             signing_key=tmp_path / "signing-key.pem",
+            execution_attestation=ATTESTATION,
         )
 
 
@@ -258,4 +272,5 @@ def test_customer_export_does_not_overwrite_existing_directory(tmp_path: Path) -
             result_paths=_result_paths(),
             output_dir=output,
             signing_key=tmp_path / "signing-key.pem",
+            execution_attestation=ATTESTATION,
         )

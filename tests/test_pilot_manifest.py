@@ -16,6 +16,7 @@ def _payload() -> dict[str, object]:
     return {
         "schema_version": 1,
         "execution_notice": EXECUTION_NOTICE,
+        "execution_attestation_sha256": "d" * 64,
         "evaluator_version": "a" * 64,
         "sample_count": 25,
         "models": [

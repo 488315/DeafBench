@@ -52,12 +52,13 @@ def run_synthetic_rehearsal(
     with tempfile.TemporaryDirectory(prefix="deafbench-zero-custody-") as temporary:
         attestation = Path(temporary) / "execution-attestation.json"
         _synthetic_attestation(attestation)
-        load_execution_attestation(attestation)
+        execution_attestation = load_execution_attestation(attestation)
         exported: CustomerExportResult = create_customer_export(
             repo_root=repo,
             result_paths=[result_root / name for name in MODEL_RESULTS],
             output_dir=Path(output_dir),
             signing_key=Path(signing_key),
+            execution_attestation=execution_attestation,
         )
     return RehearsalResult(
         model_count=exported.model_count,

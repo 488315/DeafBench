@@ -30,6 +30,7 @@ def test_attestation_accepts_customer_run_zero_custody(tmp_path: Path) -> None:
 
     assert record.execution_mode == "customer_run"
     assert record.aggregate_only_export is True
+    assert len(record.sha256) == 64
 
 
 @pytest.mark.parametrize(

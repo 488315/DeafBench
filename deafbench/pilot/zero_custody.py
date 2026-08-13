@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -28,6 +29,7 @@ class ExecutionAttestation:
 
     execution_mode: str
     aggregate_only_export: bool
+    sha256: str
 
 
 def load_execution_attestation(path: Path) -> ExecutionAttestation:
@@ -60,4 +62,7 @@ def load_execution_attestation(path: Path) -> ExecutionAttestation:
     return ExecutionAttestation(
         execution_mode="customer_run",
         aggregate_only_export=True,
+        sha256=hashlib.sha256(
+            json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest(),
     )

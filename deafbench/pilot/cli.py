@@ -54,15 +54,16 @@ def main(
             signing_key=args.signing_key,
         )
     elif args.action == "export":
-        load_execution_attestation(args.attestation)
+        execution_attestation = load_execution_attestation(args.attestation)
         result = exporter(
             repo_root=args.repo_root,
             result_paths=args.result,
             output_dir=args.output_dir,
             signing_key=args.signing_key,
+            execution_attestation=execution_attestation,
         )
     else:
-        load_execution_attestation(args.attestation)
+        execution_attestation = load_execution_attestation(args.attestation)
         audit_result = audit_runner(
             repo_root=args.repo_root,
             case_root=args.case_root,
@@ -72,6 +73,7 @@ def main(
             result_paths=list(audit_result.result_paths),
             output_dir=args.output_dir,
             signing_key=args.signing_key,
+            execution_attestation=execution_attestation,
         )
     print(_result(result))
     return 0

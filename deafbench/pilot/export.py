@@ -17,6 +17,7 @@ from deafbench.pilot.manifest import (
     verify_signed_manifest,
     write_signed_manifest,
 )
+from deafbench.pilot.zero_custody import ExecutionAttestation
 from deafbench.result_manifest import validate_result_manifest
 
 
@@ -252,6 +253,7 @@ def create_customer_export(
     result_paths: list[Path],
     output_dir: Path,
     signing_key: Path,
+    execution_attestation: ExecutionAttestation,
 ) -> CustomerExportResult:
     """Create a verified aggregate-only export from local result manifests."""
 
@@ -313,6 +315,7 @@ def create_customer_export(
             payload={
                 "schema_version": 1,
                 "execution_notice": EXECUTION_NOTICE,
+                "execution_attestation_sha256": execution_attestation.sha256,
                 "evaluator_version": evaluator,
                 "sample_count": sample_count,
                 "models": ordered,
