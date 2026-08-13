@@ -74,15 +74,17 @@ def validate_case_root(
 ) -> Path:
     """Resolve an isolated case root or reject unsafe storage."""
     candidate = _resolved(root)
-    unsafe = tuple(unsafe_roots) if unsafe_roots is not None else (Path.home(),)
+    unsafe = tuple(unsafe_roots or ())
     clouds = (
         tuple(cloud_roots)
         if cloud_roots is not None
         else _environment_cloud_roots()
     )
 
-    if candidate == Path(candidate.anchor) or any(
-        _overlaps(candidate, path) for path in unsafe
+    if (
+        candidate == Path(candidate.anchor)
+        or candidate == _resolved(Path.home())
+        or any(_is_same_or_within(candidate, path) for path in unsafe)
     ):
         raise ValueError("Case root is an unsafe broad path")
     if any(_overlaps(candidate, path) for path in worktrees):
