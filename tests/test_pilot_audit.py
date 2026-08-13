@@ -6,6 +6,8 @@ import pytest
 
 from deafbench.benchmark.models import ModelRunInfo
 from deafbench.pilot.audit import PILOT_MODEL_RUNNERS, run_customer_audit
+from deafbench.pilot.export import create_customer_export
+from deafbench.pilot.export_scan import assert_export_safe
 from deafbench.result_manifest import validate_result_manifest
 
 
@@ -126,3 +128,28 @@ def test_customer_audit_rejects_case_inside_repository(tmp_path: Path) -> None:
             case_root=REPO_ROOT / "case-test",
             runners=_runners(),
         )
+
+
+def test_customer_audit_results_create_aggregate_only_export(tmp_path: Path) -> None:
+    case_root = _case(tmp_path)
+    audit = run_customer_audit(
+        repo_root=REPO_ROOT,
+        case_root=case_root,
+        runners=_runners(),
+    )
+
+    output = tmp_path / "export"
+    exported = create_customer_export(
+        repo_root=REPO_ROOT,
+        result_paths=list(audit.result_paths),
+        output_dir=output,
+        signing_key=tmp_path / "signing-key.pem",
+    )
+
+    exported_text = "\n".join(
+        path.read_text(encoding="utf-8") for path in output.iterdir()
+    )
+    assert exported.dataset_count == 1
+    assert "sample-001" not in exported_text
+    assert "Aurora Guest" not in exported_text
+    assert_export_safe(output)
