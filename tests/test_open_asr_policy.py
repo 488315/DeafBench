@@ -28,13 +28,33 @@ def test_evaluation_policy_keeps_official_tests_evaluation_only():
     assert policy.final_claim_eligible is False
 
 
-def test_evaluation_policy_fails_open_on_unknown_contamination(tmp_path):
+def test_evaluation_policy_fails_closed_on_unknown_contamination(tmp_path):
     policy = _policy_copy()
     policy["contamination_audit"]["final_claim_eligible"] = True
     path = tmp_path / "policy.json"
     path.write_text(json.dumps(policy), encoding="utf-8")
 
     with pytest.raises(EvaluationPolicyError, match="unknown contamination"):
+        verify_evaluation_policy(path)
+
+
+def test_evaluation_policy_rejects_invalid_contamination_status(tmp_path):
+    policy = _policy_copy()
+    policy["contamination_audit"]["status"] = "unreviewed"
+    path = tmp_path / "policy.json"
+    path.write_text(json.dumps(policy), encoding="utf-8")
+
+    with pytest.raises(EvaluationPolicyError, match="contamination audit status"):
+        verify_evaluation_policy(path)
+
+
+def test_evaluation_policy_rejects_unprotected_official_test_role(tmp_path):
+    policy = _policy_copy()
+    policy["data_partitions"]["official_public_test"] = "development"
+    path = tmp_path / "policy.json"
+    path.write_text(json.dumps(policy), encoding="utf-8")
+
+    with pytest.raises(EvaluationPolicyError, match="not protected"):
         verify_evaluation_policy(path)
 
 
