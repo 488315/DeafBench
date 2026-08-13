@@ -76,13 +76,19 @@ class _Model:
         assert isinstance(waveform, _Waveform)
         return (["emission"], None)
 
+    def state_dict(self):
+        tensor = SimpleNamespace(
+            detach=lambda: tensor,
+            cpu=lambda: tensor,
+            contiguous=lambda: tensor,
+            dtype="float32",
+            shape=(1,),
+            numpy=lambda: SimpleNamespace(tobytes=lambda: b"pinned-model"),
+        )
+        return {"weight": tensor}
 
-def _install_fake_alignment_runtime(monkeypatch, tmp_path, *, artifact=True):
-    checkpoint = tmp_path / "checkpoints" / "mms.pt"
-    checkpoint.parent.mkdir()
-    if artifact:
-        checkpoint.write_bytes(b"pinned-model")
 
+def _install_fake_alignment_runtime(monkeypatch, tmp_path):
     bundle = SimpleNamespace(
         _path="https://download.example/mms.pt",
         sample_rate=16_000,
@@ -132,8 +138,13 @@ def test_mms_aligner_records_artifact_and_aligns_reference(monkeypatch, tmp_path
     assert evidence.adapter_revision.startswith("torchaudio=2.9.1;model_sha256=")
 
 
-def test_mms_aligner_rejects_missing_model_artifact(monkeypatch, tmp_path):
-    _install_fake_alignment_runtime(monkeypatch, tmp_path, artifact=False)
+def test_mms_aligner_rejects_empty_model_state(monkeypatch, tmp_path):
+    bundle = _install_fake_alignment_runtime(monkeypatch, tmp_path)
+    bundle.get_model = lambda **kwargs: SimpleNamespace(
+        to=lambda device: SimpleNamespace(
+            eval=lambda: SimpleNamespace(state_dict=lambda: {})
+        )
+    )
 
-    with pytest.raises(RuntimeError, match="artifact is missing"):
+    with pytest.raises(RuntimeError, match="model state is empty"):
         MMSForcedAligner()

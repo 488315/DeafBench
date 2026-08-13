@@ -6,7 +6,6 @@ import hashlib
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
 
 from .quality import AlignmentEvidence
 from .spoken_reference import SpokenReference
@@ -47,11 +46,17 @@ def coverage_from_word_scores(
     }
 
 
-def _sha256(path: Path) -> str:
+def _model_sha256(model: Any) -> str:
     digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
+    state = model.state_dict()
+    if not state:
+        raise RuntimeError("MMS forced-alignment model state is empty")
+    for name, tensor in sorted(state.items()):
+        value = tensor.detach().cpu().contiguous()
+        digest.update(name.encode("utf-8"))
+        digest.update(str(value.dtype).encode("ascii"))
+        digest.update(str(tuple(value.shape)).encode("ascii"))
+        digest.update(value.numpy().tobytes())
     return digest.hexdigest()
 
 
@@ -71,13 +76,9 @@ class MMSForcedAligner:
         self._tokenizer = MMS_FA.get_tokenizer()
         self._aligner = MMS_FA.get_aligner()
 
-        filename = Path(urlparse(MMS_FA._path).path).name
-        artifact = Path(torch.hub.get_dir()) / "checkpoints" / filename
-        if not artifact.is_file():
-            raise RuntimeError("MMS forced-alignment model artifact is missing")
         self.adapter_revision = (
             f"torchaudio={torchaudio.__version__};"
-            f"model_sha256={_sha256(artifact)}"
+            f"model_sha256={_model_sha256(self._model)}"
         )
 
     def _word_scores(self, audio_path: Path, words: tuple[str, ...]) -> tuple[tuple[float, ...], ...]:
