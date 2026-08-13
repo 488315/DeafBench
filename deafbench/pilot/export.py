@@ -15,6 +15,7 @@ from deafbench.pilot.manifest import (
     verify_signed_manifest,
     write_signed_manifest,
 )
+from deafbench.result_manifest import validate_result_manifest
 
 
 PILOT_MODEL_IDS = (
@@ -193,7 +194,10 @@ def create_customer_export(
     if len(result_paths) != len(PILOT_MODEL_IDS):
         raise ValueError("export requires the exact three-model pilot set")
     registry = _registry_models(Path(repo_root))
-    loaded = [(_load_json(Path(path)), Path(path)) for path in result_paths]
+    loaded = [
+        (dict(validate_result_manifest(_load_json(Path(path)))), Path(path))
+        for path in result_paths
+    ]
     aggregates = [_aggregate_model(result, registry) for result, _ in loaded]
     by_id = {str(model["model_id"]): model for model in aggregates}
     paths_by_id = {

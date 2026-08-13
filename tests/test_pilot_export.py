@@ -125,6 +125,33 @@ def test_customer_export_rejects_revision_not_in_registry(tmp_path: Path) -> Non
         )
 
 
+@pytest.mark.parametrize(
+    ("mutation", "message"),
+    [
+        (lambda value: value.update(status="draft"), "unsupported result manifest"),
+        (
+            lambda value: value["corpora"][0].update(frozen=False),
+            "requires frozen corpora",
+        ),
+    ],
+)
+def test_customer_export_requires_validated_result_manifests(
+    tmp_path: Path, mutation, message: str
+) -> None:
+    value = json.loads(_result_paths()[0].read_text(encoding="utf-8"))
+    mutation(value)
+    altered = tmp_path / "altered.json"
+    altered.write_text(json.dumps(value), encoding="utf-8")
+
+    with pytest.raises(ValueError, match=message):
+        create_customer_export(
+            repo_root=REPO_ROOT,
+            result_paths=[altered, *_result_paths()[1:]],
+            output_dir=tmp_path / "export",
+            signing_key=tmp_path / "signing-key.pem",
+        )
+
+
 def test_customer_export_does_not_overwrite_existing_directory(tmp_path: Path) -> None:
     output = tmp_path / "export"
     output.mkdir()
