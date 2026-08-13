@@ -46,6 +46,16 @@ def test_test_extra_installs_collection_dependencies() -> None:
     assert "soundfile>=0.13,<1.0" in test_dependencies
 
 
+def test_coverage_tracks_isolated_evaluator_subprocesses() -> None:
+    pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+    metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+
+    assert metadata["tool"]["coverage"]["run"]["patch"] == ["subprocess"]
+    assert metadata["tool"]["coverage"]["report"]["omit"] == [
+        "deafbench/recorder/app.py"
+    ]
+
+
 def test_qwen_asr_extra_is_isolated_from_base_installation() -> None:
     pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
     metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))
