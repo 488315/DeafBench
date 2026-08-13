@@ -161,7 +161,7 @@ def test_result_manifest_is_byte_stable() -> None:
         ),
         (
             lambda payload: payload["evaluations"][0]["metrics"].pop("wer_percent"),
-            "metrics missing",
+            "metric fields",
         ),
         (
             lambda payload: payload["evaluations"][0].update(critical_failures={}),
@@ -195,3 +195,52 @@ def test_result_manifest_rejects_revision_or_lane_drift() -> None:
     lane["license_classification"] = "research_only"
     with pytest.raises(ResultManifestError, match="classification differs"):
         validate_result_manifest(lane)
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("wer_percent", True, "wer_percent"),
+        ("wer_percent", float("nan"), "wer_percent"),
+        ("strict_lexical_recall_percent", 101.0, "strict_lexical"),
+        ("canonical_semantic_recall_percent", -1.0, "canonical_semantic"),
+        ("substitutions", 1.5, "substitutions"),
+        ("insertions", -1, "insertions"),
+        ("local_rtfx", float("inf"), "local_rtfx"),
+        ("median_latency_ms", -1.0, "median_latency_ms"),
+        ("peak_vram_bytes", True, "peak_vram_bytes"),
+    ],
+)
+def test_result_manifest_rejects_invalid_metric_values(
+    field: str, value: object, message: str
+) -> None:
+    payload = deepcopy(_PAYLOAD)
+    payload["evaluations"][0]["metrics"][field] = value
+
+    with pytest.raises(ResultManifestError, match=message):
+        validate_result_manifest(payload)
+
+
+def test_result_manifest_rejects_extra_metric() -> None:
+    payload = deepcopy(_PAYLOAD)
+    payload["evaluations"][0]["metrics"]["unreviewed_score"] = 1
+
+    with pytest.raises(ResultManifestError, match="metric fields"):
+        validate_result_manifest(payload)
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [
+        "core-001",
+        {"id": "core-001", "term": "8:30", "entity_type": "TIME", "raw": "x"},
+        {"id": "", "term": "8:30", "entity_type": "TIME"},
+        {"id": "core-001", "term": "8:30", "entity_type": "UNKNOWN"},
+    ],
+)
+def test_result_manifest_rejects_invalid_critical_failure(failure: object) -> None:
+    payload = deepcopy(_PAYLOAD)
+    payload["evaluations"][0]["critical_failures"] = [failure]
+
+    with pytest.raises(ResultManifestError, match="critical failure"):
+        validate_result_manifest(payload)

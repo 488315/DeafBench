@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import json
+import math
 import re
+from numbers import Real
 from typing import Any, Mapping, Sequence
 
+from deafbench.critical_entities import ENTITY_TYPES
 from deafbench.model_registry import get_model_license
 
 
@@ -61,6 +64,43 @@ def _required(record: Mapping[str, Any], fields: set[str], label: str) -> None:
     missing = fields - record.keys()
     if missing:
         raise ResultManifestError(f"{label} missing: {', '.join(sorted(missing))}")
+
+
+def _validate_metrics(lane: str, metrics: Mapping[str, Any]) -> None:
+    expected = _LANE_METRICS[lane]
+    if set(metrics) != expected:
+        raise ResultManifestError(f"invalid {lane} metric fields")
+    count_fields = {"substitutions", "insertions", "deletions", "peak_vram_bytes"}
+    recall_fields = {
+        "strict_lexical_recall_percent",
+        "canonical_semantic_recall_percent",
+    }
+    for field, value in metrics.items():
+        if isinstance(value, bool) or not isinstance(value, Real):
+            raise ResultManifestError(f"invalid {field} metric")
+        if not math.isfinite(float(value)) or value < 0:
+            raise ResultManifestError(f"invalid {field} metric")
+        if field in count_fields and not isinstance(value, int):
+            raise ResultManifestError(f"invalid {field} metric")
+        if field in recall_fields and value > 100:
+            raise ResultManifestError(f"invalid {field} metric")
+
+
+def _validate_critical_failures(value: object) -> None:
+    if not isinstance(value, list):
+        raise ResultManifestError("critical_failures must be a list")
+    expected = {"id", "term", "entity_type"}
+    for item in value:
+        failure = _mapping(item, "critical failure")
+        if set(failure) != expected:
+            raise ResultManifestError("invalid critical failure fields")
+        if any(
+            not isinstance(failure[field], str) or not failure[field].strip()
+            for field in ("id", "term", "entity_type")
+        ):
+            raise ResultManifestError("critical failure fields must be nonempty strings")
+        if failure["entity_type"] not in ENTITY_TYPES | {"UNCLASSIFIED"}:
+            raise ResultManifestError("invalid critical failure entity_type")
 
 
 def validate_result_manifest(payload: object) -> Mapping[str, Any]:
@@ -137,9 +177,8 @@ def validate_result_manifest(payload: object) -> Mapping[str, Any]:
         if not isinstance(record["sample_count"], int) or record["sample_count"] <= 0:
             raise ResultManifestError(f"invalid sample count for evaluation lane: {lane}")
         metrics = _mapping(record["metrics"], "metrics")
-        _required(metrics, set(_LANE_METRICS[lane]), f"{lane} metrics")
-        if not isinstance(record["critical_failures"], list):
-            raise ResultManifestError("critical_failures must be a list")
+        _validate_metrics(lane, metrics)
+        _validate_critical_failures(record["critical_failures"])
     expected_lanes = _STATUS_LANES[str(manifest["status"])]
     if lanes != expected_lanes:
         if manifest["status"] == "smoke_complete":
