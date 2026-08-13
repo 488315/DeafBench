@@ -114,6 +114,28 @@ def test_interstitial_scene_rejects_silent_speech_anchor() -> None:
 
 
 @pytest.mark.parametrize(
+    ("speech_before", "speech_after"),
+    [
+        (np.zeros((4_800, 1)), np.full((4_800, 1), 0.1)),
+        (np.full((4_800, 1), 0.1), np.zeros((4_800, 1))),
+        (np.empty((0, 1)), np.full((4_800, 1), 0.1)),
+        (np.full((4_800, 1), 0.1), np.empty((0, 1))),
+    ],
+)
+def test_interstitial_scene_requires_two_non_silent_speech_anchors(
+    speech_before: np.ndarray,
+    speech_after: np.ndarray,
+) -> None:
+    with pytest.raises(ValueError, match="non-silent speech anchor"):
+        build_interstitial_scene(
+            speech_before,
+            speech_after,
+            profile="breathing",
+            snr_db=10.0,
+        )
+
+
+@pytest.mark.parametrize(
     ("prediction", "ignored", "hallucinated", "word_count"),
     [
         ({"text": ""}, True, False, 0),

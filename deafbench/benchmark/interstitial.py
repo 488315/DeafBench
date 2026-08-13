@@ -129,10 +129,13 @@ def build_interstitial_scene(
 
     before = _mono_float(speech_before)
     after = _mono_float(speech_after)
-    speech = np.concatenate((before[:, 0], after[:, 0]))
-    speech_rms = float(np.sqrt(np.mean(np.square(speech)))) if len(speech) else 0.0
-    if speech_rms <= 0.0:
+    anchor_rms = [
+        float(np.sqrt(np.mean(np.square(anchor)))) if len(anchor) else 0.0
+        for anchor in (before[:, 0], after[:, 0])
+    ]
+    if any(rms <= 0.0 for rms in anchor_rms):
         raise ValueError("SNR calibration requires a non-silent speech anchor")
+    speech_rms = float(np.sqrt(np.mean(np.square(np.concatenate((before[:, 0], after[:, 0]))))))
 
     noise_frames = round(sample_rate * duration_seconds)
     rng = np.random.default_rng(seed)
