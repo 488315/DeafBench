@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
+from time import perf_counter
 from typing import Any
 
 from deafbench.benchmark.models import ModelRunInfo
@@ -19,6 +21,7 @@ def run_distil_whisper(
     output: Path,
     model_id: str = DEFAULT_MODEL,
     backend: Any | None = None,
+    clock: Callable[[], float] = perf_counter,
 ) -> ModelRunInfo:
     """Transcribe a complete set with the distilled Whisper checkpoint."""
     return _run_local_whisper(
@@ -34,4 +37,5 @@ def run_distil_whisper(
         },
         backend,
         DEFAULT_MODEL_REVISION,
+        clock,
     )

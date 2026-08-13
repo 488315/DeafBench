@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+import math
+from collections.abc import Callable, Mapping
 from pathlib import Path
+from statistics import median
+from time import perf_counter
 from typing import Any
 
 from deafbench.benchmark.models import ModelRunInfo, _validated_wavs
@@ -36,6 +39,7 @@ def _run_local_whisper(
     transcribe_options: Mapping[str, object],
     backend: Any | None = None,
     model_revision: str | None = None,
+    clock: Callable[[], float] = perf_counter,
 ) -> ModelRunInfo:
     wav_paths = _validated_wavs(audio_dir, references)
     runtime = _load_backend() if backend is None else backend
@@ -46,10 +50,13 @@ def _run_local_whisper(
     if model_revision is not None:
         model_options["revision"] = model_revision
     model = runtime.WhisperModel(model_id, **model_options)
-    records: list[Mapping[str, str]] = []
+    records: list[Mapping[str, object]] = []
+    latencies_ms: list[float] = []
+    total_audio_seconds = 0.0
 
     for wav_path in wav_paths:
-        segments, _info = model.transcribe(
+        started = clock()
+        segments, transcription_info = model.transcribe(
             str(wav_path),
             **transcribe_options,
         )
@@ -62,7 +69,32 @@ def _run_local_whisper(
                     "expected text to be a string"
                 )
             text_parts.append(text)
-        records.append({"id": wav_path.stem, "text": "".join(text_parts)})
+        latency_ms = round((clock() - started) * 1_000.0, 6)
+        duration = getattr(transcription_info, "duration", None)
+        if (
+            isinstance(duration, bool)
+            or not isinstance(duration, (int, float))
+            or not math.isfinite(duration)
+            or duration <= 0
+        ):
+            raise ValueError(
+                f"Invalid {model_name} duration for {wav_path.name}: "
+                "expected a positive finite number"
+            )
+        if not math.isfinite(latency_ms) or latency_ms <= 0:
+            raise ValueError(
+                f"Invalid {model_name} latency for {wav_path.name}: "
+                "expected a positive finite number"
+            )
+        total_audio_seconds += duration
+        latencies_ms.append(latency_ms)
+        records.append(
+            {
+                "id": wav_path.stem,
+                "latency_ms": latency_ms,
+                "text": "".join(text_parts),
+            }
+        )
 
     atomic_write_jsonl(output, records)
     decoding = None
@@ -76,6 +108,12 @@ def _run_local_whisper(
         model_id,
         revision=model_revision,
         decoding=decoding,
+        performance={
+            "local_rtfx": total_audio_seconds
+            / (sum(latencies_ms) / 1_000.0),
+            "median_latency_ms": median(latencies_ms),
+            "peak_vram_bytes": 0,
+        },
     )
 
 
@@ -85,6 +123,7 @@ def run_faster_whisper(
     output: Path,
     model_id: str = DEFAULT_MODEL,
     backend: Any | None = None,
+    clock: Callable[[], float] = perf_counter,
 ) -> ModelRunInfo:
     """Transcribe a complete audio set with CPU INT8 Faster-Whisper."""
     return _run_local_whisper(
@@ -96,4 +135,5 @@ def run_faster_whisper(
         {"beam_size": 5, "language": "en"},
         backend,
         DEFAULT_MODEL_REVISION,
+        clock,
     )

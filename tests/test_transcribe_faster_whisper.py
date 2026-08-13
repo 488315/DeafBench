@@ -33,16 +33,18 @@ def test_faster_whisper_writes_complete_segment_transcript(
     references, audio_dir = _write_dataset(tmp_path)
     output = tmp_path / "predictions.jsonl"
     calls: dict[str, object] = {}
+    clock_values = iter((1.0, 1.5))
 
     @dataclass(frozen=True)
     class Segment:
         text: str
 
     class FakeModel:
-        def transcribe(self, path: str, **kwargs: object) -> tuple[object, None]:
+        def transcribe(self, path: str, **kwargs: object) -> tuple[object, object]:
             calls["path"] = path
             calls["transcribe_kwargs"] = kwargs
-            return iter((Segment(" Hello"), Segment(" world."))), None
+            info = type("Info", (), {"duration": 2.0})()
+            return iter((Segment(" Hello"), Segment(" world."))), info
 
     class FakeBackend:
         def WhisperModel(self, model_id: str, **kwargs: object) -> FakeModel:
@@ -55,6 +57,7 @@ def test_faster_whisper_writes_complete_segment_transcript(
         references,
         output,
         backend=FakeBackend(),
+        clock=lambda: next(clock_values),
     )
 
     assert info == ModelRunInfo(
@@ -67,9 +70,14 @@ def test_faster_whisper_writes_complete_segment_transcript(
             "device": "cpu",
             "language": "en",
         },
+        performance={
+            "local_rtfx": 4.0,
+            "median_latency_ms": 500.0,
+            "peak_vram_bytes": 0,
+        },
     )
     assert [json.loads(line) for line in output.read_text().splitlines()] == [
-        {"id": "sample-001", "text": " Hello world."}
+        {"id": "sample-001", "latency_ms": 500.0, "text": " Hello world."}
     ]
     assert calls["model_kwargs"] == {
         "device": "cpu",
@@ -124,6 +132,49 @@ def test_faster_whisper_failure_preserves_previous_output(
             references,
             output,
             backend=FakeBackend(),
+        )
+
+    assert output.read_text(encoding="utf-8") == "previous predictions\n"
+
+
+@pytest.mark.parametrize(
+    ("duration", "clock_values", "message"),
+    [
+        (None, (1.0, 1.5), "duration"),
+        (2.0, (1.0, 1.0), "latency"),
+    ],
+)
+def test_faster_whisper_rejects_invalid_performance_evidence(
+    tmp_path: Path,
+    duration: object,
+    clock_values: tuple[float, float],
+    message: str,
+) -> None:
+    references, audio_dir = _write_dataset(tmp_path)
+    output = tmp_path / "predictions.jsonl"
+    output.write_text("previous predictions\n", encoding="utf-8")
+    ticks = iter(clock_values)
+
+    @dataclass(frozen=True)
+    class Segment:
+        text: str = "caption"
+
+    class FakeModel:
+        def transcribe(self, *_args: object, **_kwargs: object) -> tuple[object, object]:
+            info = type("Info", (), {"duration": duration})()
+            return iter((Segment(),)), info
+
+    class FakeBackend:
+        def WhisperModel(self, *_args: object, **_kwargs: object) -> FakeModel:
+            return FakeModel()
+
+    with pytest.raises(ValueError, match=message):
+        run_faster_whisper(
+            audio_dir,
+            references,
+            output,
+            backend=FakeBackend(),
+            clock=lambda: next(ticks),
         )
 
     assert output.read_text(encoding="utf-8") == "previous predictions\n"
