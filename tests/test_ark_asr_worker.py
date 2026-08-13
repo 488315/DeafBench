@@ -201,6 +201,7 @@ def test_worker_chunks_audio_longer_than_official_limit(
     monkeypatch.setattr(worker, "load_remote_code_audit", lambda model_id: audit)
     monkeypatch.setattr(worker, "verify_audited_files", lambda audit, root: None)
     backend, _ = _backend()
+    read_starts: list[int] = []
     writes: list[tuple[str, int, str]] = []
     backend.soundfile.info = lambda path: SimpleNamespace(
         channels=1,
@@ -209,10 +210,11 @@ def test_worker_chunks_audio_longer_than_official_limit(
         samplerate=16_000,
         subtype="PCM_16",
     )
-    backend.soundfile.read = lambda path, **options: (
-        [0] * options["frames"],
-        16_000,
-    )
+    def read_chunk(path, **options):
+        read_starts.append(options["start"])
+        return [0] * options["frames"], 16_000
+
+    backend.soundfile.read = read_chunk
     backend.soundfile.write = lambda path, audio, sample_rate, *, subtype: writes.append(
         (path, len(audio), subtype)
     )
@@ -232,6 +234,7 @@ def test_worker_chunks_audio_longer_than_official_limit(
         (480_000, "PCM_16"),
         (160, "PCM_16"),
     ]
+    assert read_starts == [0, 480_000]
     assert result["records"] == [
         {
             "id": "sample",
