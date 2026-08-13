@@ -75,18 +75,38 @@ def _registry_models(repo_root: Path) -> dict[str, dict[str, object]]:
     }
 
 
-def _synthetic_evaluation(result: dict[str, object]) -> dict[str, object]:
+def _audit_evaluation(result: dict[str, object]) -> dict[str, object]:
     evaluations = result.get("evaluations")
     if not isinstance(evaluations, list):
         raise ValueError("result evaluations are invalid")
+    lane = (
+        "customer-audit"
+        if result.get("status") == "customer_audit_complete"
+        else "synthetic-v2"
+    )
     matches = [
         evaluation
         for evaluation in evaluations
-        if isinstance(evaluation, dict) and evaluation.get("lane") == "synthetic-v2"
+        if isinstance(evaluation, dict) and evaluation.get("lane") == lane
     ]
     if len(matches) != 1 or matches[0].get("scope") != "complete":
-        raise ValueError("result lacks one complete synthetic-v2 evaluation")
+        raise ValueError("result lacks one complete audit evaluation")
     return matches[0]
+
+
+def _corpus_manifest(result: dict[str, object], lane: str) -> str:
+    corpora = result.get("corpora")
+    expected_name = (
+        "customer-authorized-audio" if lane == "customer-audit" else "synthetic-v2"
+    )
+    matches = [
+        corpus
+        for corpus in corpora
+        if isinstance(corpus, dict) and corpus.get("name") == expected_name
+    ] if isinstance(corpora, list) else []
+    if len(matches) != 1:
+        raise ValueError("result lacks one audit corpus manifest")
+    return str(matches[0]["manifest_sha256"])
 
 
 def _aggregate_model(
@@ -107,7 +127,8 @@ def _aggregate_model(
     ):
         raise ValueError("result model is not pinned to a permitted registry entry")
 
-    evaluation = _synthetic_evaluation(result)
+    evaluation = _audit_evaluation(result)
+    lane = str(evaluation["lane"])
     metrics = evaluation.get("metrics")
     failures = evaluation.get("critical_failures")
     decoding = result.get("decoding")
@@ -146,6 +167,8 @@ def _aggregate_model(
         },
         "dataset_count": evaluation.get("sample_count"),
         "evaluator_version": result.get("evaluator_revision"),
+        "evaluation_track": lane,
+        "corpus_manifest": _corpus_manifest(result, lane),
     }
 
 
@@ -208,7 +231,11 @@ def create_customer_export(
     ordered = [by_id[model_id] for model_id in PILOT_MODEL_IDS]
     counts = {model.pop("dataset_count") for model in ordered}
     evaluators = {model.pop("evaluator_version") for model in ordered}
-    if len(counts) != 1 or len(evaluators) != 1:
+    tracks = {model.pop("evaluation_track") for model in ordered}
+    corpora = {model.pop("corpus_manifest") for model in ordered}
+    if len(tracks) != 1:
+        raise ValueError("model results do not share the same evaluation track")
+    if len(counts) != 1 or len(evaluators) != 1 or len(corpora) != 1:
         raise ValueError("model results do not share one dataset and evaluator")
     dataset_count = counts.pop()
     evaluator = evaluators.pop()

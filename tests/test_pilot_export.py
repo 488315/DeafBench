@@ -23,6 +23,26 @@ def _result_paths() -> list[Path]:
     ]
 
 
+def _customer_result_paths(tmp_path: Path) -> list[Path]:
+    tmp_path.mkdir(parents=True)
+    paths = []
+    for source in _result_paths():
+        value = json.loads(source.read_text(encoding="utf-8"))
+        value["status"] = "customer_audit_complete"
+        value["corpora"] = [
+            {
+                **value["corpora"][0],
+                "name": "customer-authorized-audio",
+            }
+        ]
+        value["evaluations"] = [value["evaluations"][0]]
+        value["evaluations"][0]["lane"] = "customer-audit"
+        destination = tmp_path / source.name
+        destination.write_text(json.dumps(value), encoding="utf-8")
+        paths.append(destination)
+    return paths
+
+
 def test_customer_export_contains_only_three_model_aggregates(tmp_path: Path) -> None:
     output = tmp_path / "export"
 
@@ -50,6 +70,32 @@ def test_customer_export_contains_only_three_model_aggregates(tmp_path: Path) ->
     )
     assert_export_safe(output)
     assert verify_signed_manifest(output / "manifest.json") is True
+
+
+def test_customer_export_accepts_customer_audit_result_manifests(
+    tmp_path: Path,
+) -> None:
+    result = create_customer_export(
+        repo_root=REPO_ROOT,
+        result_paths=_customer_result_paths(tmp_path / "results"),
+        output_dir=tmp_path / "export",
+        signing_key=tmp_path / "signing-key.pem",
+    )
+
+    assert result.model_count == 3
+    assert result.dataset_count == 25
+
+
+def test_customer_export_rejects_mixed_evaluation_tracks(tmp_path: Path) -> None:
+    customer = _customer_result_paths(tmp_path / "results")
+
+    with pytest.raises(ValueError, match="same evaluation track"):
+        create_customer_export(
+            repo_root=REPO_ROOT,
+            result_paths=[_result_paths()[0], *customer[1:]],
+            output_dir=tmp_path / "export",
+            signing_key=tmp_path / "signing-key.pem",
+        )
 
 
 def test_customer_export_aggregates_critical_failures_by_type(tmp_path: Path) -> None:
