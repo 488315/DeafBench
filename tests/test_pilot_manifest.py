@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -66,6 +67,27 @@ def test_manifest_is_signed_and_verifiable_with_embedded_public_key(
     assert key.exists()
     assert not (export / key.name).exists()
     assert verify_signed_manifest(manifest) is True
+
+
+def test_manifest_creates_private_key_with_restricted_mode(
+    monkeypatch, tmp_path: Path
+) -> None:
+    modes: list[int] = []
+    real_open = os.open
+
+    def recording_open(path, flags, mode=0o777):
+        modes.append(mode)
+        return real_open(path, flags, mode)
+
+    monkeypatch.setattr(os, "open", recording_open)
+
+    write_signed_manifest(
+        tmp_path / "export" / "manifest.json",
+        payload=_payload(),
+        key_path=tmp_path / "private-key.pem",
+    )
+
+    assert modes == [0o600]
 
 
 def test_manifest_verifies_against_out_of_band_key_fingerprint(
