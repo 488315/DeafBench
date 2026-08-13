@@ -122,6 +122,7 @@ def test_interstitial_scene_rejects_silent_speech_anchor() -> None:
         ({"text": "", "sounds": ["[rustling]"]}, False, False, 0),
         ({"text": "keyboard clicks"}, False, True, 2),
         ({"text": "Thanks for watching."}, False, True, 3),
+        ({"text": "[thanks for watching]"}, False, True, 3),
         ({"text": "[street noise] hello"}, False, True, 1),
     ],
 )

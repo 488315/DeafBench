@@ -158,8 +158,16 @@ def build_interstitial_scene(
     )
 
 
-_BRACKETED_EVENT = re.compile(r"\[[^\]\r\n]+\]")
+_BRACKETED_EVENT = re.compile(r"\[([^\]\r\n]+)\]")
 _LEXICAL_TOKEN = re.compile(r"[A-Za-z0-9]+(?:['_-][A-Za-z0-9]+)*")
+_KNOWN_EVENT_LABELS = frozenset(
+    profile.replace("-", " ") for profile in INTERSTITIAL_NOISE_PROFILES
+)
+
+
+def _remove_known_event_annotation(match: re.Match[str]) -> str:
+    label = " ".join(match.group(1).lower().replace("-", " ").split())
+    return " " if label in _KNOWN_EVENT_LABELS else match.group(0)
 
 
 def evaluate_interstitial_prediction(
@@ -176,7 +184,7 @@ def evaluate_interstitial_prediction(
     if not all(isinstance(sound, str) and sound.strip() for sound in sounds):
         raise ValueError("Interstitial prediction sounds must contain non-empty strings")
 
-    unannotated = _BRACKETED_EVENT.sub(" ", text)
+    unannotated = _BRACKETED_EVENT.sub(_remove_known_event_annotation, text)
     hallucinated_words = _LEXICAL_TOKEN.findall(unannotated)
     emitted_output = bool(text.strip() or sounds)
     return InterstitialResponse(
