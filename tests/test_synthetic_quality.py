@@ -27,10 +27,11 @@ def _alignment(
     *,
     coverage: float = 1.0,
     entity_coverage: float = 1.0,
+    audio_sha256: str = "",
 ) -> AlignmentEvidence:
     return AlignmentEvidence(
         reference_sha256=_reference_hash(),
-        audio_sha256="",
+        audio_sha256=audio_sha256,
         token_coverage=coverage,
         critical_entity_coverage={"8:30 PM": entity_coverage},
         coverage_score_threshold=0.25,
@@ -73,9 +74,11 @@ def _evaluate(path: Path, **overrides):
         "independent_asr_text": "The meeting starts at 8 30 p.m.",
     }
     arguments.update(overrides)
-    arguments["alignment"] = replace(
-        arguments["alignment"], audio_sha256=hashlib.sha256(path.read_bytes()).hexdigest()
-    )
+    if not arguments["alignment"].audio_sha256:
+        arguments["alignment"] = replace(
+            arguments["alignment"],
+            audio_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+        )
     return evaluate_synthetic_sample(path, **arguments)
 
 
@@ -167,6 +170,16 @@ def test_low_forced_alignment_coverage_is_quarantined(tmp_path: Path):
     _write_wav(wav)
 
     decision = _evaluate(wav, alignment=_alignment(coverage=0.8))
+
+    assert not decision.gate("forced_alignment_coverage").passed
+    assert decision.status == "quarantined"
+
+
+def test_mismatched_alignment_audio_hash_is_quarantined(tmp_path: Path):
+    wav = tmp_path / "alignment-hash.wav"
+    _write_wav(wav)
+
+    decision = _evaluate(wav, alignment=_alignment(audio_sha256="0" * 64))
 
     assert not decision.gate("forced_alignment_coverage").passed
     assert decision.status == "quarantined"
