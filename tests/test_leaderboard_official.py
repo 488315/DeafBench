@@ -9,6 +9,7 @@ from deafbench.leaderboard._official_worker import (
     _mean_wer_by_model,
     _public_manifest_rows,
 )
+from deafbench.leaderboard import _official_worker
 from deafbench.leaderboard.official import (
     OfficialEvaluator,
     OfficialEvaluatorError,
@@ -65,6 +66,26 @@ def test_evaluator_rejects_a_checkout_at_the_wrong_revision(tmp_path):
         evaluator.validate()
 
     assert revision != "0" * 40
+
+
+def test_worker_validates_checkout_before_reading_payload(tmp_path, monkeypatch):
+    checkout, _ = _commit_fake_evaluator(tmp_path)
+    monkeypatch.setattr(
+        _official_worker,
+        "_read_payload",
+        lambda: pytest.fail("worker read untrusted input before validation"),
+    )
+
+    with pytest.raises(OfficialEvaluatorError, match="revision"):
+        _official_worker.main(
+            [
+                "--checkout",
+                str(checkout),
+                "--expected-revision",
+                "0" * 40,
+                "normalize",
+            ]
+        )
 
 
 def test_evaluator_rejects_modified_tracked_source(tmp_path):
