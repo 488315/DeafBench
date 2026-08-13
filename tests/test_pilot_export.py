@@ -8,7 +8,11 @@ from deafbench.pilot.export import (
     create_customer_export,
 )
 from deafbench.pilot.export_scan import assert_export_safe
-from deafbench.pilot.manifest import EXECUTION_NOTICE, verify_signed_manifest
+from deafbench.pilot.manifest import (
+    EXECUTION_NOTICE,
+    SELF_SIGNED_NOTICE,
+    verify_signed_manifest,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -62,6 +66,7 @@ def test_customer_export_contains_only_three_model_aggregates(tmp_path: Path) ->
     )
     assert manifest["execution_notice"] == EXECUTION_NOTICE
     assert report.startswith(f"# Accessibility-Critical ASR Audit\n\n{EXECUTION_NOTICE}")
+    assert SELF_SIGNED_NOTICE in report
     assert "core-" not in report
     assert "Dr. Martinez" not in json.dumps(manifest)
     assert "alpha seven nine" not in json.dumps(manifest)

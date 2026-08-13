@@ -12,6 +12,7 @@ from pathlib import Path
 from deafbench.pilot.export_scan import assert_export_safe
 from deafbench.pilot.manifest import (
     EXECUTION_NOTICE,
+    SELF_SIGNED_NOTICE,
     verify_signed_manifest,
     write_signed_manifest,
 )
@@ -177,6 +178,8 @@ def _report(models: list[dict[str, object]], dataset_count: int) -> str:
         "# Accessibility-Critical ASR Audit",
         "",
         EXECUTION_NOTICE,
+        "",
+        SELF_SIGNED_NOTICE,
         "",
         f"Dataset count: {dataset_count}",
         "",

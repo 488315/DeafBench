@@ -19,6 +19,10 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import (
 
 
 EXECUTION_NOTICE = "Customer-executed; results depend on the customer environment."
+SELF_SIGNED_NOTICE = (
+    "The embedded self-signature detects changes but does not establish signer "
+    "identity; authenticity requires an independently trusted key fingerprint."
+)
 _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 _REVISION = re.compile(r"[0-9a-f]{40}\Z")
 _ENTITY_TYPE = re.compile(r"[A-Z][A-Z_]*\Z")
@@ -206,6 +210,8 @@ def write_signed_manifest(
         **validated,
         "signature": {
             "algorithm": "Ed25519",
+            "trust_model": "self_signed_integrity_only",
+            "key_fingerprint_sha256": hashlib.sha256(public_key).hexdigest(),
             "public_key_base64": base64.b64encode(public_key).decode("ascii"),
             "value_base64": base64.b64encode(signature).decode("ascii"),
         },
@@ -216,20 +222,37 @@ def write_signed_manifest(
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
-def verify_signed_manifest(path: Path) -> bool:
-    """Verify the manifest contract and its embedded Ed25519 signature."""
+def verify_signed_manifest(
+    path: Path, *, trusted_key_sha256: str | None = None
+) -> bool:
+    """Verify integrity and, when pinned separately, the signing key identity."""
 
     try:
         document = json.loads(Path(path).read_text(encoding="utf-8"))
         signature = document.pop("signature")
         payload = _validate_payload(document)
-        if set(signature) != {"algorithm", "public_key_base64", "value_base64"}:
+        if set(signature) != {
+            "algorithm",
+            "key_fingerprint_sha256",
+            "public_key_base64",
+            "trust_model",
+            "value_base64",
+        }:
             return False
-        if signature["algorithm"] != "Ed25519":
+        if (
+            signature["algorithm"] != "Ed25519"
+            or signature["trust_model"] != "self_signed_integrity_only"
+        ):
             return False
-        public_key = Ed25519PublicKey.from_public_bytes(
-            base64.b64decode(signature["public_key_base64"], validate=True)
+        public_bytes = base64.b64decode(
+            signature["public_key_base64"], validate=True
         )
+        fingerprint = hashlib.sha256(public_bytes).hexdigest()
+        if signature["key_fingerprint_sha256"] != fingerprint:
+            return False
+        if trusted_key_sha256 is not None and trusted_key_sha256 != fingerprint:
+            return False
+        public_key = Ed25519PublicKey.from_public_bytes(public_bytes)
         public_key.verify(
             base64.b64decode(signature["value_base64"], validate=True),
             _canonical(payload),

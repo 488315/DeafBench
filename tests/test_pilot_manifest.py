@@ -5,6 +5,7 @@ import pytest
 
 from deafbench.pilot.manifest import (
     EXECUTION_NOTICE,
+    SELF_SIGNED_NOTICE,
     verify_signed_manifest,
     write_signed_manifest,
 )
@@ -58,10 +59,45 @@ def test_manifest_is_signed_and_verifiable_with_embedded_public_key(
 
     document = json.loads(manifest.read_text(encoding="utf-8"))
     assert document["signature"]["algorithm"] == "Ed25519"
+    assert document["signature"]["trust_model"] == "self_signed_integrity_only"
+    assert len(document["signature"]["key_fingerprint_sha256"]) == 64
+    assert "does not establish signer identity" in SELF_SIGNED_NOTICE
     assert len(digest) == 64
     assert key.exists()
     assert not (export / key.name).exists()
     assert verify_signed_manifest(manifest) is True
+
+
+def test_manifest_verifies_against_out_of_band_key_fingerprint(
+    tmp_path: Path,
+) -> None:
+    manifest = tmp_path / "export" / "manifest.json"
+    write_signed_manifest(
+        manifest, payload=_payload(), key_path=tmp_path / "trusted-key.pem"
+    )
+    document = json.loads(manifest.read_text(encoding="utf-8"))
+    fingerprint = document["signature"]["key_fingerprint_sha256"]
+
+    assert verify_signed_manifest(manifest, trusted_key_sha256=fingerprint) is True
+    assert verify_signed_manifest(manifest, trusted_key_sha256="0" * 64) is False
+
+
+def test_embedded_key_replacement_does_not_satisfy_out_of_band_trust(
+    tmp_path: Path,
+) -> None:
+    manifest = tmp_path / "export" / "manifest.json"
+    write_signed_manifest(
+        manifest, payload=_payload(), key_path=tmp_path / "first-key.pem"
+    )
+    first = json.loads(manifest.read_text(encoding="utf-8"))
+    trusted = first["signature"]["key_fingerprint_sha256"]
+
+    write_signed_manifest(
+        manifest, payload=_payload(), key_path=tmp_path / "replacement-key.pem"
+    )
+
+    assert verify_signed_manifest(manifest) is True
+    assert verify_signed_manifest(manifest, trusted_key_sha256=trusted) is False
 
 
 def test_manifest_signature_rejects_tampering(tmp_path: Path) -> None:
