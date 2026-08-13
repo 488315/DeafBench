@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, TypeVar
@@ -31,9 +33,23 @@ class IncidentStop:
 
     def _write(self, state: dict[str, object]) -> None:
         self.state_path.parent.mkdir(parents=True, exist_ok=True)
-        self.state_path.write_text(
-            json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-        )
+        temporary_path: Path | None = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                delete=False,
+                dir=self.state_path.parent,
+                suffix=".tmp",
+            ) as stream:
+                temporary_path = Path(stream.name)
+                stream.write(json.dumps(state, indent=2, sort_keys=True) + "\n")
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(temporary_path, self.state_path)
+        finally:
+            if temporary_path is not None:
+                temporary_path.unlink(missing_ok=True)
 
     def run_gate(self, category: str, operation: Callable[[], T]) -> T:
         state = self._state()

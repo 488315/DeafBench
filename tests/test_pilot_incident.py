@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from deafbench.pilot import incident
 from deafbench.pilot.incident import IncidentStop, ProcessingBlocked
 
 
@@ -33,3 +34,23 @@ def test_processing_resumes_only_after_explicit_approval(tmp_path: Path) -> None
     stop.restore(approval_reference="approval-42", operator="operator")
 
     assert stop.run_gate("access", lambda: "resumed") == "resumed"
+
+
+def test_incident_state_preserves_prior_record_when_promotion_fails(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    stop = IncidentStop(tmp_path / "incident.json")
+    with pytest.raises(ProcessingBlocked):
+        stop.run_gate("integrity", lambda: 1 / 0)
+    original = stop.state_path.read_bytes()
+
+    def fail_replace(_source, _destination) -> None:
+        raise OSError("simulated promotion failure")
+
+    monkeypatch.setattr(incident.os, "replace", fail_replace)
+    with pytest.raises(OSError, match="promotion failure"):
+        stop.restore(approval_reference="approval-42", operator="operator")
+
+    assert stop.state_path.read_bytes() == original
+    assert not tuple(tmp_path.glob("*.tmp"))
