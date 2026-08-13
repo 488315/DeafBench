@@ -11,20 +11,22 @@ from deafbench.model_registry import get_model_license
 
 _SHA256 = re.compile(r"[0-9a-f]{64}")
 _REVISION = re.compile(r"[0-9a-f]{40,64}")
+_ACCESSIBILITY_METRICS = frozenset(
+    {
+        "wer_percent",
+        "strict_lexical_recall_percent",
+        "canonical_semantic_recall_percent",
+        "substitutions",
+        "insertions",
+        "deletions",
+        "local_rtfx",
+        "median_latency_ms",
+        "peak_vram_bytes",
+    }
+)
 _LANE_METRICS = {
-    "synthetic-v2": frozenset(
-        {
-            "wer_percent",
-            "strict_lexical_recall_percent",
-            "canonical_semantic_recall_percent",
-            "substitutions",
-            "insertions",
-            "deletions",
-            "local_rtfx",
-            "median_latency_ms",
-            "peak_vram_bytes",
-        }
-    ),
+    "synthetic-v2": _ACCESSIBILITY_METRICS,
+    "customer-audit": _ACCESSIBILITY_METRICS,
     "hugging-face-compatibility-smoke": frozenset(
         {
             "wer_percent",
@@ -36,6 +38,12 @@ _LANE_METRICS = {
             "peak_vram_bytes",
         }
     ),
+}
+_STATUS_LANES = {
+    "smoke_complete": frozenset(
+        {"synthetic-v2", "hugging-face-compatibility-smoke"}
+    ),
+    "customer_audit_complete": frozenset({"customer-audit"}),
 }
 
 
@@ -73,7 +81,7 @@ def validate_result_manifest(payload: object) -> Mapping[str, Any]:
         },
         "result manifest",
     )
-    if manifest["schema_version"] != 1 or manifest["status"] != "smoke_complete":
+    if manifest["schema_version"] != 1 or manifest["status"] not in _STATUS_LANES:
         raise ResultManifestError("unsupported result manifest state")
     if not isinstance(manifest["claim_boundary"], str) or not manifest[
         "claim_boundary"
@@ -121,7 +129,9 @@ def validate_result_manifest(payload: object) -> Mapping[str, Any]:
         if lane not in _LANE_METRICS or lane in lanes:
             raise ResultManifestError(f"invalid or duplicate evaluation lane: {lane}")
         lanes.add(lane)
-        expected_scope = "complete" if lane == "synthetic-v2" else "partial"
+        expected_scope = (
+            "partial" if lane == "hugging-face-compatibility-smoke" else "complete"
+        )
         if record["scope"] != expected_scope:
             raise ResultManifestError(f"invalid scope for evaluation lane: {lane}")
         if not isinstance(record["sample_count"], int) or record["sample_count"] <= 0:
@@ -130,8 +140,11 @@ def validate_result_manifest(payload: object) -> Mapping[str, Any]:
         _required(metrics, set(_LANE_METRICS[lane]), f"{lane} metrics")
         if not isinstance(record["critical_failures"], list):
             raise ResultManifestError("critical_failures must be a list")
-    if lanes != set(_LANE_METRICS):
-        raise ResultManifestError("both evaluation tracks are required")
+    expected_lanes = _STATUS_LANES[str(manifest["status"])]
+    if lanes != expected_lanes:
+        if manifest["status"] == "smoke_complete":
+            raise ResultManifestError("both evaluation tracks are required")
+        raise ResultManifestError("evaluation lanes do not match result state")
     return manifest
 
 

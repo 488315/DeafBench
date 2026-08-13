@@ -59,11 +59,49 @@ _PAYLOAD = {
 }
 
 
+def _customer_payload() -> dict:
+    payload = deepcopy(_PAYLOAD)
+    payload["status"] = "customer_audit_complete"
+    payload["corpora"] = [
+        {
+            "name": "customer-authorized-audio",
+            "manifest_sha256": "b" * 64,
+            "frozen": True,
+        }
+    ]
+    payload["evaluations"] = [deepcopy(payload["evaluations"][0])]
+    payload["evaluations"][0]["lane"] = "customer-audit"
+    payload["claim_boundary"] = "Customer-executed local audit."
+    return payload
+
+
 def test_result_manifest_requires_both_separate_tracks() -> None:
     payload = deepcopy(_PAYLOAD)
     payload["evaluations"].pop()
 
     with pytest.raises(ResultManifestError, match="both evaluation tracks"):
+        validate_result_manifest(payload)
+
+
+def test_result_manifest_accepts_complete_customer_audit() -> None:
+    assert validate_result_manifest(_customer_payload())["status"] == (
+        "customer_audit_complete"
+    )
+
+
+def test_customer_audit_manifest_rejects_extra_evaluation_lane() -> None:
+    payload = _customer_payload()
+    payload["evaluations"].append(deepcopy(_PAYLOAD["evaluations"][1]))
+
+    with pytest.raises(ResultManifestError, match="lanes do not match"):
+        validate_result_manifest(payload)
+
+
+def test_customer_audit_manifest_requires_complete_scope() -> None:
+    payload = _customer_payload()
+    payload["evaluations"][0]["scope"] = "partial"
+
+    with pytest.raises(ResultManifestError, match="invalid scope"):
         validate_result_manifest(payload)
 
 
