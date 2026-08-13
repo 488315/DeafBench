@@ -15,6 +15,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  package:
+    name: Clean wheel install
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.14"
+
+      - name: Build wheel
+        run: python -m pip wheel . --no-deps --wheel-dir dist
+
+      - name: Install wheel into an isolated environment
+        run: |
+          python -m venv .wheel-venv
+          .wheel-venv/bin/python -m pip install dist/deafbench-*.whl
+
+      - name: Verify isolated package and CLI
+        run: |
+          .wheel-venv/bin/python -I -c "import deafbench; from deafbench.cli import main"
+          .wheel-venv/bin/python -I -m deafbench --help
+
   test:
     name: Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
