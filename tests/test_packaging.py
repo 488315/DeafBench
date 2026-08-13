@@ -33,6 +33,10 @@ def test_benchmark_extra_installs_whisperspeech_runtime_dependencies() -> None:
         "webdataset>=1.0.2,<2.0.0"
         in metadata["project"]["optional-dependencies"]["benchmark"]
     )
+    assert (
+        "WhisperSpeech>=0.8.9"
+        in metadata["project"]["optional-dependencies"]["benchmark"]
+    )
 
 
 def test_test_extra_installs_collection_dependencies() -> None:
