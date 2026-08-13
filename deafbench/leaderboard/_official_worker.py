@@ -7,6 +7,8 @@ import json
 from pathlib import Path
 import sys
 
+from .official import OfficialEvaluator
+
 
 _RESULT_MARKER = "DEAFBENCH_OFFICIAL_RESULT="
 _PUBLIC_EXPECTED_ROWS = {
@@ -140,9 +142,14 @@ def _analyze(payload: dict) -> dict:
 def main(args: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--checkout", type=Path, required=True)
+    parser.add_argument("--expected-revision", required=True)
     parser.add_argument("action", choices=("analyze", "normalize", "score"))
     parsed = parser.parse_args(args)
 
+    OfficialEvaluator(
+        parsed.checkout,
+        expected_revision=parsed.expected_revision,
+    ).validate()
     sys.path.insert(0, str(parsed.checkout.resolve()))
     payload = _read_payload()
     actions = {
