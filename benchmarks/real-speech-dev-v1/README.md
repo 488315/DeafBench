@@ -18,4 +18,3 @@ This public read-speech cohort is not evidence of performance on Deaf or Hard of
 Hearing speech, dysarthric speech, accents, spontaneous conversation, or noisy
 captioning environments. Those claims require separate authorized datasets and
 subgroup reporting.
-
