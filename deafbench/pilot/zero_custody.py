@@ -41,7 +41,11 @@ def load_execution_attestation(path: Path) -> ExecutionAttestation:
         raise ValueError("zero-custody attestation is unreadable") from exc
     if not isinstance(value, dict) or set(value) != REQUIRED_FIELDS:
         raise ValueError("zero-custody attestation fields are incomplete or unsupported")
-    if value["schema_version"] != 1:
+    if (
+        not isinstance(value["schema_version"], int)
+        or isinstance(value["schema_version"], bool)
+        or value["schema_version"] != 1
+    ):
         raise ValueError("zero-custody attestation schema is unsupported")
     boolean_fields = REQUIRED_FIELDS - {"schema_version", "execution_mode"}
     if any(not isinstance(value[field], bool) for field in boolean_fields):

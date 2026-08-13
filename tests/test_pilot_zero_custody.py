@@ -76,9 +76,12 @@ def test_attestation_rejects_unreadable_content(tmp_path: Path, content: str) ->
         load_execution_attestation(path)
 
 
-def test_attestation_rejects_unsupported_schema(tmp_path: Path) -> None:
+@pytest.mark.parametrize("schema_version", [2, True])
+def test_attestation_rejects_unsupported_schema(
+    tmp_path: Path, schema_version: object
+) -> None:
     payload = _attestation()
-    payload["schema_version"] = 2
+    payload["schema_version"] = schema_version
 
     with pytest.raises(ValueError, match="schema"):
         load_execution_attestation(_write(tmp_path / "attestation.json", payload))
