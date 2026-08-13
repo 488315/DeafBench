@@ -17,7 +17,10 @@ from deafbench.pilot.manifest import (
     verify_signed_manifest,
     write_signed_manifest,
 )
-from deafbench.pilot.zero_custody import ExecutionAttestation
+from deafbench.pilot.zero_custody import (
+    ExecutionAttestation,
+    validate_execution_attestation,
+)
 from deafbench.result_manifest import validate_result_manifest
 
 
@@ -257,6 +260,7 @@ def create_customer_export(
 ) -> CustomerExportResult:
     """Create a verified aggregate-only export from local result manifests."""
 
+    execution_attestation = validate_execution_attestation(execution_attestation)
     destination = Path(output_dir)
     if destination.exists():
         raise FileExistsError("export directory must not already exist")

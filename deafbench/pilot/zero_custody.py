@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -30,6 +31,24 @@ class ExecutionAttestation:
     execution_mode: str
     aggregate_only_export: bool
     sha256: str
+
+
+_SHA256 = re.compile(r"[0-9a-f]{64}\Z")
+
+
+def validate_execution_attestation(
+    attestation: ExecutionAttestation,
+) -> ExecutionAttestation:
+    """Validate a loaded attestation again at a processing trust boundary."""
+    if (
+        not isinstance(attestation, ExecutionAttestation)
+        or attestation.execution_mode != "customer_run"
+        or attestation.aggregate_only_export is not True
+        or not isinstance(attestation.sha256, str)
+        or _SHA256.fullmatch(attestation.sha256) is None
+    ):
+        raise ValueError("zero-custody execution attestation is invalid")
+    return attestation
 
 
 def load_execution_attestation(path: Path) -> ExecutionAttestation:
@@ -63,10 +82,14 @@ def load_execution_attestation(path: Path) -> ExecutionAttestation:
     )
     if not safe:
         raise ValueError("zero-custody execution conditions are not satisfied")
-    return ExecutionAttestation(
-        execution_mode="customer_run",
-        aggregate_only_export=True,
-        sha256=hashlib.sha256(
-            json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
-        ).hexdigest(),
+    return validate_execution_attestation(
+        ExecutionAttestation(
+            execution_mode="customer_run",
+            aggregate_only_export=True,
+            sha256=hashlib.sha256(
+                json.dumps(value, sort_keys=True, separators=(",", ":")).encode(
+                    "utf-8"
+                )
+            ).hexdigest(),
+        )
     )

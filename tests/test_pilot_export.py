@@ -274,3 +274,25 @@ def test_customer_export_does_not_overwrite_existing_directory(tmp_path: Path) -
             signing_key=tmp_path / "signing-key.pem",
             execution_attestation=ATTESTATION,
         )
+
+
+@pytest.mark.parametrize(
+    "attestation",
+    [
+        ExecutionAttestation("vendor_run", True, "d" * 64),
+        ExecutionAttestation("customer_run", False, "d" * 64),
+        ExecutionAttestation("customer_run", True, "not-a-digest"),
+    ],
+)
+def test_customer_export_revalidates_execution_attestation(
+    tmp_path: Path,
+    attestation: ExecutionAttestation,
+) -> None:
+    with pytest.raises(ValueError, match="zero-custody"):
+        create_customer_export(
+            repo_root=REPO_ROOT,
+            result_paths=[],
+            output_dir=tmp_path / "export",
+            signing_key=tmp_path / "signing-key.pem",
+            execution_attestation=attestation,
+        )
