@@ -82,6 +82,20 @@ def _normalized_words(value: str) -> tuple[str, ...]:
     return tuple(re.findall(r"[a-z]+(?:'[a-z]+)?", value))
 
 
+def _untyped_ssml(value: str) -> str:
+    """Render untyped numeric text with the same per-digit speech as alignment."""
+    parts: list[str] = []
+    cursor = 0
+    for match in re.finditer(r"\d+", value):
+        parts.append(escape(value[cursor : match.start()]))
+        digits = match.group()
+        alias = " ".join(_DIGITS[int(digit)] for digit in digits)
+        parts.append(f'<sub alias="{escape(alias, quote=True)}">{digits}</sub>')
+        cursor = match.end()
+    parts.append(escape(value[cursor:]))
+    return "".join(parts)
+
+
 def _time_alias(term: str) -> tuple[str, ...]:
     match = re.fullmatch(
         r"\s*(\d{1,2}):([0-5]\d)\s*([ap])\.?\s*m\.?\s*",
@@ -148,7 +162,7 @@ def prepare_spoken_reference(
     for start, end, term, entity_type in spans:
         prefix = reference_text[cursor:start]
         words.extend(_normalized_words(prefix))
-        ssml_parts.append(escape(prefix))
+        ssml_parts.append(_untyped_ssml(prefix))
 
         alias_words = _spoken_alias(term, entity_type)
         range_start = len(words)
@@ -170,7 +184,7 @@ def prepare_spoken_reference(
 
     suffix = reference_text[cursor:]
     words.extend(_normalized_words(suffix))
-    ssml_parts.extend((escape(suffix), "</speak>"))
+    ssml_parts.extend((_untyped_ssml(suffix), "</speak>"))
     return SpokenReference(
         reference_sha256=hashlib.sha256(reference_text.encode("utf-8")).hexdigest(),
         words=tuple(words),

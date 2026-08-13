@@ -76,3 +76,30 @@ def test_spoken_reference_rejects_missing_or_overlapping_typed_terms():
         prepare_spoken_reference("hello", {"missing": "PROPER_NAME"})
     with pytest.raises(ValueError, match="overlap"):
         prepare_spoken_reference("abc", {"abc": "CODE", "bc": "CODE"})
+
+
+def test_spoken_reference_renders_untyped_numbers_as_individual_digits():
+    prepared = prepare_spoken_reference(
+        "Before 23, use A79 with dev_user after 45.",
+        {"A79": "CODE", "dev_user": "USERNAME"},
+    )
+
+    assert '<sub alias="two three">23</sub>' in prepared.ssml
+    assert '<sub alias="four five">45</sub>' in prepared.ssml
+    assert '<say-as interpret-as="telephone">A79</say-as>' in prepared.ssml
+    assert 'alias="dev underscore user"' in prepared.ssml
+    assert prepared.words == (
+        "before",
+        "two",
+        "three",
+        "use",
+        "seven",
+        "nine",
+        "with",
+        "dev",
+        "underscore",
+        "user",
+        "after",
+        "four",
+        "five",
+    )
