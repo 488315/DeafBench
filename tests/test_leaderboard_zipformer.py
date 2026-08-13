@@ -191,7 +191,12 @@ def test_zipformer_runner_rejects_modified_source(tmp_path, monkeypatch):
         )
 
 
-def test_zipformer_runner_rejects_ignored_python_source(tmp_path, monkeypatch):
+@pytest.mark.parametrize("ignored_name", ["shadow.py", "shadow.pyd", "cache.bin"])
+def test_zipformer_runner_rejects_ignored_checkout_content(
+    tmp_path,
+    monkeypatch,
+    ignored_name,
+):
     checkout = tmp_path / "source"
     required = checkout / "runner.py"
     checkout.mkdir()
@@ -200,7 +205,7 @@ def test_zipformer_runner_rejects_ignored_python_source(tmp_path, monkeypatch):
         (
             subprocess.CompletedProcess([], 0, stdout="abc123\n", stderr=""),
             subprocess.CompletedProcess([], 0, stdout="", stderr=""),
-            subprocess.CompletedProcess([], 0, stdout="shadow.py\n", stderr=""),
+            subprocess.CompletedProcess([], 0, stdout=f"{ignored_name}\n", stderr=""),
         )
     )
     monkeypatch.setattr(
@@ -209,7 +214,7 @@ def test_zipformer_runner_rejects_ignored_python_source(tmp_path, monkeypatch):
         lambda *args, **kwargs: next(responses),
     )
 
-    with pytest.raises(RuntimeError, match="ignored Python source files"):
+    with pytest.raises(RuntimeError, match="ignored checkout content"):
         zipformer_runner._require_source(
             checkout,
             "abc123",

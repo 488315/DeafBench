@@ -95,7 +95,7 @@ def _require_source(
     if status:
         raise RuntimeError(f"{label} source is modified: {checkout}")
     try:
-        ignored_python = subprocess.run(
+        ignored_content = subprocess.run(
             [
                 "git",
                 "-C",
@@ -104,8 +104,6 @@ def _require_source(
                 "--others",
                 "--ignored",
                 "--exclude-standard",
-                "--",
-                "*.py",
             ],
             check=True,
             capture_output=True,
@@ -113,8 +111,8 @@ def _require_source(
         ).stdout.strip()
     except (OSError, subprocess.CalledProcessError) as exc:
         raise RuntimeError(f"cannot verify ignored {label} source: {checkout}") from exc
-    if ignored_python:
-        raise RuntimeError(f"{label} has ignored Python source files: {checkout}")
+    if ignored_content:
+        raise RuntimeError(f"{label} has ignored checkout content: {checkout}")
 
 
 def run(args: argparse.Namespace) -> dict[str, float]:
