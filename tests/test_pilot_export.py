@@ -203,6 +203,43 @@ def test_customer_export_requires_validated_result_manifests(
         )
 
 
+def test_customer_export_redacts_keyword_bias_values(tmp_path: Path) -> None:
+    customer = _customer_result_paths(tmp_path / "results")
+    value = json.loads(customer[0].read_text(encoding="utf-8"))
+    value["decoding"]["keyword_biasing"] = "Aurora Guest"
+    customer[0].write_text(json.dumps(value), encoding="utf-8")
+
+    create_customer_export(
+        repo_root=REPO_ROOT,
+        result_paths=customer,
+        output_dir=tmp_path / "export",
+        signing_key=tmp_path / "signing-key.pem",
+    )
+
+    manifest = (tmp_path / "export" / "manifest.json").read_text(
+        encoding="utf-8"
+    )
+    assert "Aurora Guest" not in manifest
+    assert json.loads(manifest)["models"][0]["configuration"][
+        "keyword_biasing"
+    ] is True
+
+
+def test_customer_export_rejects_unsafe_configuration_values(tmp_path: Path) -> None:
+    customer = _customer_result_paths(tmp_path / "results")
+    value = json.loads(customer[0].read_text(encoding="utf-8"))
+    value["decoding"]["device"] = "customer-name"
+    customer[0].write_text(json.dumps(value), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="configuration value"):
+        create_customer_export(
+            repo_root=REPO_ROOT,
+            result_paths=customer,
+            output_dir=tmp_path / "export",
+            signing_key=tmp_path / "signing-key.pem",
+        )
+
+
 def test_customer_export_does_not_overwrite_existing_directory(tmp_path: Path) -> None:
     output = tmp_path / "export"
     output.mkdir()

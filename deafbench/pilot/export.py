@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import tempfile
 from collections import Counter
 from dataclasses import dataclass
@@ -37,6 +38,20 @@ _SAFE_CONFIGURATION = frozenset(
         "trust_remote_code",
     }
 )
+_SAFE_DEVICES = re.compile(r"(?:cpu|mps|cuda(?::[0-9]+)?)\Z")
+_SAFE_DTYPES = frozenset(
+    {
+        "bfloat16",
+        "float16",
+        "float32",
+        "int8",
+        "int8_float16",
+        "torch.bfloat16",
+        "torch.float16",
+        "torch.float32",
+    }
+)
+_SAFE_LANGUAGES = frozenset({"en", "English"})
 
 
 @dataclass(frozen=True)
@@ -110,6 +125,31 @@ def _corpus_manifest(result: dict[str, object], lane: str) -> str:
     return str(matches[0]["manifest_sha256"])
 
 
+def _safe_configuration(decoding: dict[str, object]) -> dict[str, object]:
+    exported: dict[str, object] = {}
+    for key in sorted(decoding):
+        if key not in _SAFE_CONFIGURATION:
+            continue
+        value = decoding[key]
+        if key == "keyword_biasing":
+            exported[key] = bool(value)
+        elif key == "device" and isinstance(value, str) and _SAFE_DEVICES.fullmatch(value):
+            exported[key] = value
+        elif key == "dtype" and value in _SAFE_DTYPES:
+            exported[key] = value
+        elif key == "language" and value in _SAFE_LANGUAGES:
+            exported[key] = value
+        elif key in {"batch_size", "max_new_tokens", "num_beams"} and (
+            isinstance(value, int) and not isinstance(value, bool) and 0 < value <= 65536
+        ):
+            exported[key] = value
+        elif key in {"timestamps", "trust_remote_code"} and isinstance(value, bool):
+            exported[key] = value
+        else:
+            raise ValueError(f"unsafe aggregate configuration value for {key}")
+    return exported
+
+
 def _aggregate_model(
     result: dict[str, object], registry: dict[str, dict[str, object]]
 ) -> dict[str, object]:
@@ -159,9 +199,7 @@ def _aggregate_model(
         "model_id": model_id,
         "revision": revision,
         "license_classification": "commercial_candidate",
-        "configuration": {
-            key: decoding[key] for key in sorted(decoding) if key in _SAFE_CONFIGURATION
-        },
+        "configuration": _safe_configuration(decoding),
         "aggregate_metrics": {
             **{key: metrics[key] for key in sorted(required_metrics)},
             "critical_failures_by_entity_type": dict(sorted(failure_counts.items())),
