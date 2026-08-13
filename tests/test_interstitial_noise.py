@@ -230,6 +230,33 @@ def test_interstitial_robustness_reports_hallucinations_by_snr() -> None:
 
 
 @pytest.mark.parametrize(
+    ("cases", "message"),
+    [
+        ([], "at least one case"),
+        (
+            [(InterstitialInterval(0, 1, "unknown", 10.0), {"text": ""})],
+            "unsupported noise profile",
+        ),
+        (
+            [
+                (
+                    InterstitialInterval(0, 1, "street-noise", float("nan")),
+                    {"text": ""},
+                )
+            ],
+            "SNR must be finite",
+        ),
+    ],
+)
+def test_interstitial_robustness_rejects_invalid_cases(
+    cases: list[tuple[InterstitialInterval, dict[str, object]]],
+    message: str,
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        summarize_interstitial_robustness(cases)
+
+
+@pytest.mark.parametrize(
     "prediction",
     [
         {"text": None},

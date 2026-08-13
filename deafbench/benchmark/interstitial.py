@@ -214,6 +214,14 @@ def summarize_interstitial_robustness(
     cases: Sequence[tuple[InterstitialInterval, Mapping[str, object]]],
 ) -> dict[str, Any]:
     """Aggregate ignore and hallucination rates overall and at each SNR."""
+    if not cases:
+        raise ValueError("Interstitial robustness requires at least one case")
+    for interval, _prediction in cases:
+        if interval.profile not in INTERSTITIAL_NOISE_PROFILES:
+            raise ValueError("Interstitial case has an unsupported noise profile")
+        if not math.isfinite(interval.snr_db):
+            raise ValueError("Interstitial case SNR must be finite")
+
     grouped: dict[float, list[InterstitialResponse]] = {}
     responses: list[InterstitialResponse] = []
     for interval, prediction in cases:
