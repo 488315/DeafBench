@@ -9,6 +9,18 @@ def test_sapi_rejects_rate_outside_platform_contract(rate: int):
         WindowsSapiGenerator(rate=rate)
 
 
+@pytest.mark.parametrize("rate", (True, 4.0))
+def test_sapi_rejects_non_integer_rate(rate: object) -> None:
+    with pytest.raises(ValueError, match="rate"):
+        WindowsSapiGenerator(rate=rate)  # type: ignore[arg-type]
+
+
 def test_sapi_rejects_sample_speech_rate_outside_platform_contract():
     with pytest.raises(ValueError, match="sample speech rates"):
         WindowsSapiGenerator(sample_speech_rates={"core-011": 11})
+
+
+@pytest.mark.parametrize("rate", (False, -3.0))
+def test_sapi_rejects_non_integer_sample_speech_rate(rate: object) -> None:
+    with pytest.raises(ValueError, match="sample speech rates"):
+        WindowsSapiGenerator(sample_speech_rates={"core-011": rate})  # type: ignore[dict-item]

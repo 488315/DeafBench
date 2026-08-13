@@ -62,11 +62,12 @@ class WindowsSapiGenerator:
         rate: int = 4,
         sample_speech_rates: Mapping[str, int] | None = None,
     ) -> None:
-        if not -10 <= rate <= 10:
+        if type(rate) is not int or not -10 <= rate <= 10:  # noqa: E721
             raise ValueError("Windows SAPI rate must be between -10 and 10")
         resolved_sample_speech_rates = dict(sample_speech_rates or {})
         if any(
-            not -10 <= value <= 10 for value in resolved_sample_speech_rates.values()
+            type(value) is not int or not -10 <= value <= 10  # noqa: E721
+            for value in resolved_sample_speech_rates.values()
         ):
             raise ValueError("Windows SAPI sample speech rates must be between -10 and 10")
         executable = shutil.which(powershell)
