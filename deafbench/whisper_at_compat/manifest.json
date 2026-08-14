@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "model_id": "YuanGongND/whisper-at",
+  "upstream_url": "https://github.com/YuanGongND/whisper-at.git",
+  "revision": "17d94d6acd53866390ce70f95afa13507dcb8aef",
+  "source_subdirectory": "package/whisper-at",
+  "patch_file": "setuptools-83.patch",
+  "source_files": {
+    "package/whisper-at/setup.py": {
+      "before_sha256": "85625b02a8b04b156aa4602653f15bb9470e118fde012575b6eb27fd2f157841",
+      "after_sha256": "7312c8e7654ba4f20d8f583c3b04955783f61e02af568ade26be8dd5ead16e7c"
+    },
+    "package/whisper-at/pyproject.toml": {
+      "before_sha256": "cff51c4c9e1471d8ea60a26adb705f7c7c08b65d22047d8177237dad5990ce7b",
+      "after_sha256": "c901730e2bba41f74dc0204638648a9aa1a8ec371a27b57ceec334097729d1c8"
+    },
+    "package/whisper-at/requirements.txt": {
+      "sha256": "1ac4d63c8ed415cc378781d560bf2de7f6a5b2fbbfc8de6fc8afc33d38ae3d76"
+    }
+  }
+}

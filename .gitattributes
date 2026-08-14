@@ -9,6 +9,7 @@ benchmarks/non-speech-v1/model-a-report.md -text whitespace=cr-at-eol
 benchmarks/non-speech-v1/*.jsonl -text whitespace=cr-at-eol
 deafbench/recorder/data/*.jsonl -text whitespace=cr-at-eol
 deafbench/licenses/*.txt -text
+deafbench/whisper_at_compat/*.patch text eol=lf whitespace=-blank-at-eol
 
 # Official-track evidence hashes Git blob bytes and must remain byte-stable.
 experiments/open-asr/evidence-manifest.json -text
