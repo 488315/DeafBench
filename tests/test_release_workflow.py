@@ -19,5 +19,7 @@ def test_manual_release_workflow_cannot_publish_to_pypi() -> None:
 
     assert triggers == {"release": {"types": ["published"]}, "workflow_dispatch": None}
     assert publish_job["if"] == (
-        "github.event_name == 'release' && github.event.action == 'published'"
+        "github.event_name == 'release' && github.event.action == 'published' "
+        "&& vars.DEAFBENCH_PYPI_PUBLISH == 'true'"
     )
+    assert publish_job["environment"]["name"] == "pypi"

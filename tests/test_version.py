@@ -12,3 +12,13 @@ def test_release_version_is_consistent() -> None:
 
     assert project["project"]["version"] == "0.2.0"
     assert deafbench.__version__ == "0.2.0"
+
+
+def test_package_links_to_public_project_surfaces() -> None:
+    project = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+
+    assert project["project"]["urls"] == {
+        "Homepage": "https://488315.github.io/#work",
+        "Repository": "https://github.com/488315/DeafBench",
+        "Issues": "https://github.com/488315/DeafBench/issues",
+    }

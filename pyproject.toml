@@ -13,6 +13,11 @@ dependencies = [
     "jiwer>=3.0.0,<4.0.0",
 ]
 
+[project.urls]
+Homepage = "https://488315.github.io/#work"
+Repository = "https://github.com/488315/DeafBench"
+Issues = "https://github.com/488315/DeafBench/issues"
+
 [project.optional-dependencies]
 benchmark = [
     "numpy>=1.26",
