@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased / v0.2.1
+## 2026-08-14 / v0.2.1
 
 ### Security
 
@@ -14,6 +14,16 @@
   hash-verified `pathlib` parser while preserving its pinned source, runtime
   requirements, adapter, license, and frozen evidence. Fresh Python 3.11
   environments now install it with setuptools 83 or newer.
+- Raised the ARK native and ONNX Transformers floor to 5.5.0 and validated the
+  exact floor without changing their pinned model revision. This fixes
+  CVE-2026-1839 (`GHSA-69w3-r845-3855`), CVE-2026-4372
+  (`GHSA-29pf-2h5f-8g72`), and CVE-2026-5241
+  (`GHSA-fgcw-684q-jj6r`) for DeafBench runtime dependencies.
+- Removed the unused Transformers package from the isolated Open ASR lock,
+  aligned Granite's declared runtime with its tested Transformers 5.13 range,
+  and made ARK snapshot resolution validate symlink targets and staged bytes.
+  These changes preserve the supported adapters instead of hiding an
+  incompatible model to satisfy dependency scanning.
 - Patched the installable Open ASR/Zipformer experiment environment from
   PyTorch 2.4.0 to 2.6.0, the first release containing the upstream fix for
   CVE-2025-32434 (`GHSA-53q9-r3pm-6pq6`). The vulnerable runtime could execute
@@ -30,11 +40,20 @@
   release below 2.6.0, uses mismatched Torch/TorchAudio versions, selects a
   `k2` wheel for a different Torch ABI, restores the global extra index, or
   removes the expected wheel hashes.
+- Recorded time-bounded dispositions for the low-severity development alerts
+  CVE-2025-3001 (`GHSA-qfhq-4f3w-5fph`) and CVE-2025-3000
+  (`GHSA-rrmf-rvhw-rf47`). The reviewed Granite NAR and Open ASR paths fail
+  closed after 2026-11-13 or when their source hashes, affected-API inventory,
+  upstream revisions, or Torch/TorchAudio/k2 ABI lock changes.
+- The two development Torch alerts remain open: the official Granite NAR stack
+  is pinned to Torch 2.9.1, while the Open ASR experiment uses the matched
+  Torch 2.6.0 CUDA 12.4 stack. DeafBench does not describe those alerts as
+  fixed and does not substitute an unvalidated binary-stack upgrade.
 
 This patch changes the reproducible runtime used for future Open ASR baseline
 executions. It does not alter or relabel the frozen v0.2.0 result artifacts,
-does not claim a Hugging Face verified leaderboard result, and does not publish
-v0.2.1 until the security PR and release validation are complete.
+does not claim a Hugging Face verified leaderboard result, and keeps the
+runtime Critical, High, and Medium Dependabot alert counts at zero.
 
 ## 2026-08-13 / v0.2.0
 

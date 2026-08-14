@@ -24,3 +24,14 @@ def test_package_links_to_public_project_surfaces() -> None:
         "Changelog": "https://github.com/488315/DeafBench/blob/main/CHANGELOG.md",
         "Issues": "https://github.com/488315/DeafBench/issues",
     }
+
+
+def test_changelog_declares_current_release() -> None:
+    changelog = (REPO_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+
+    assert "## 2026-08-14 / v0.2.1" in changelog
+    assert "GHSA-69w3-r845-3855" in changelog
+    assert "GHSA-29pf-2h5f-8g72" in changelog
+    assert "GHSA-fgcw-684q-jj6r" in changelog
+    assert "GHSA-qfhq-4f3w-5fph" in changelog
+    assert "GHSA-rrmf-rvhw-rf47" in changelog
