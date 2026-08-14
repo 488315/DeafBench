@@ -8,6 +8,29 @@
     "modeling_granite_speech_nar.py": "dd8cfd71523acf5a4220dd35566d56c60e29771fd1c4d30291f72edbb2e47171",
     "processing_granite_speech_nar.py": "47280a8d34eff709b98c6baa016873cb5a84ff1ec08d853a7de082e489e7c408"
   },
+  "external_lanes": [
+    {
+      "name": "open-asr-zipformer",
+      "runner_revision": "64c698c42932a54bc7a40a7f172d03c8c4838fe6",
+      "icefall_revision": "3f848bb6d0acc970c9b294a30ca0a04a7c9c78d1",
+      "compatible_stack": {
+        "torch": "2.6.0",
+        "torchaudio": "2.6.0",
+        "k2": "1.24.4.dev20250130+cuda12.4.torch2.6.0"
+      },
+      "reachability": {
+        "torch.lstm_cell": "absent_from_pinned_evaluation_path",
+        "torch.jit.script": "present_only_in_non_evaluation_tools"
+      },
+      "non_evaluation_affected_files": [
+        "egs/librispeech/ASR/zipformer/export-onnx.py",
+        "egs/librispeech/ASR/zipformer/export-onnx-streaming.py",
+        "egs/librispeech/ASR/zipformer/export-streaming-as-non-streaming-onnx.py",
+        "egs/librispeech/ASR/zipformer/export.py",
+        "egs/librispeech/ASR/zipformer/scaling_converter.py"
+      ]
+    }
+  ],
   "dispositions": [
     {
       "schema_version": 1,
