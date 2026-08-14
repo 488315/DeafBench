@@ -2,6 +2,7 @@ import math
 import re
 from typing import List, Dict, Any, Optional
 import jiwer
+from .asr_metrics import evaluate_conventional_asr
 from .parser import normalize_text
 from .critical_entities import ENTITY_TYPES, canonical_contains, strict_contains
 
@@ -409,11 +410,11 @@ def evaluate_dataset(aligned_data: List[Dict[str, Any]]) -> Dict[str, Any]:
     ref_texts = [item["reference"].get("text", "") for item in aligned_data]
     pred_texts = [item["prediction"].get("text", "") for item in aligned_data]
     
-    wer = calculate_wer(ref_texts, pred_texts)
+    conventional_asr = evaluate_conventional_asr(ref_texts, pred_texts)
     word_errors_by_sample = []
-    substitutions = 0
-    insertions = 0
-    deletions = 0
+    substitutions = conventional_asr["orthographic_substitutions"]
+    insertions = conventional_asr["orthographic_insertions"]
+    deletions = conventional_asr["orthographic_deletions"]
     
     total_critical = 0
     matched_critical = 0
@@ -458,9 +459,6 @@ def evaluate_dataset(aligned_data: List[Dict[str, Any]]) -> Dict[str, Any]:
         sample_errors = _word_error_counts(
             ref.get("text", ""), pred.get("text", "")
         )
-        substitutions += sample_errors["substitutions"]
-        insertions += sample_errors["insertions"]
-        deletions += sample_errors["deletions"]
         word_errors_by_sample.append({"id": sample_id, **sample_errors})
             
         # Non-speech
@@ -509,7 +507,9 @@ def evaluate_dataset(aligned_data: List[Dict[str, Any]]) -> Dict[str, Any]:
             
     return {
         "samples": len(aligned_data),
-        "wer": wer * 100.0,
+        "wer": conventional_asr["orthographic_wer"],
+        "cer": conventional_asr["orthographic_cer"],
+        **conventional_asr,
         "substitutions": substitutions,
         "insertions": insertions,
         "deletions": deletions,
