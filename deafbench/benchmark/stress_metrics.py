@@ -38,6 +38,7 @@ def _evaluate(
         "deletion_share_percent": metrics["deletions"] / edits * 100.0 if edits else 0.0,
         "strict_critical_recall": metrics["strict_critical_recall"],
         "canonical_critical_recall": metrics["canonical_critical_recall"],
+        "critical_failures": metrics["critical_failures"],
         "critical_failures_by_risk": dict(sorted(failure_counts.items())),
         "word_errors_by_sample": metrics["word_errors_by_sample"],
     }

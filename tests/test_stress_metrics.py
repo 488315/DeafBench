@@ -37,6 +37,18 @@ def test_stress_summary_keeps_clean_and_stressed_metrics_separate() -> None:
         "PROPER_NAME": 1,
         "TIME": 1,
     }
+    assert summary["stressed"]["critical_failures"] == [
+        {
+            "id": "stress-001",
+            "expected": "Priya Shah",
+            "predicted_text": "Meet Priya at PM",
+        },
+        {
+            "id": "stress-001",
+            "expected": "8:30 PM",
+            "predicted_text": "Meet Priya at PM",
+        },
+    ]
     assert summary["degradation"]["wer_points"] > 0.0
     assert summary["degradation"]["canonical_recall_points"] == -100.0
 
