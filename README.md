@@ -243,12 +243,24 @@ python -m pip install -U openai-whisper
 deafbench benchmark core-v1 --model whisper
 ```
 
-Whisper-AT is not currently installable in DeafBench's hardened setuptools
-83-or-newer environment. Its pinned upstream installer imports `pkg_resources`,
-which setuptools removed, and the previous workaround downgraded setuptools to
-a vulnerable release. The existing frozen Whisper-AT evidence and adapter stay
-available for review, but do not create new Whisper-AT runs until a compatible
-upstream packaging revision is pinned.
+Whisper-AT uses a pinned upstream commit whose installer imports the removed
+`pkg_resources` module. DeafBench keeps that source and its runtime requirements
+unchanged, verifies their hashes, and applies a packaged build-only patch that
+uses `pathlib` to read `requirements.txt` and requires setuptools 83 or newer.
+Install it from a DeafBench checkout with Python 3.11:
+
+```powershell
+python -m pip install ".[test]"
+python -m deafbench.whisper_at_compat
+python -c "import whisper_at"
+```
+
+Python 3.11 is required for this pinned Whisper-AT runtime because its exact
+`tiktoken==0.3.3` dependency does not publish wheels for every newer supported
+DeafBench interpreter. This restriction preserves the upstream dependency pin
+instead of silently changing model behavior. The patch manifest records the
+upstream commit and every before/after source hash in
+`deafbench/whisper_at_compat/manifest.json`.
 
 The `benchmark` extra installs WhisperSpeech and the audio dependencies used to
 build synthetic scenes. OpenAI Whisper is a separate inference backend, so
