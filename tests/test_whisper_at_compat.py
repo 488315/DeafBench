@@ -12,9 +12,9 @@ from deafbench.whisper_at_compat.source import prepare_source
 
 
 UPSTREAM_REVISION = "17d94d6acd53866390ce70f95afa13507dcb8aef"
-SETUP_SHA256 = "85625b02a8b04b156aa4602653f15bb9470e118fde012575b6eb27fd2f157841"
+SETUP_SHA256 = "def17ed810969995c06f5d54cc274f09b1a87f1af60009615b1bbf8be5901175"
 REQUIREMENTS_SHA256 = (
-    "1ac4d63c8ed415cc378781d560bf2de7f6a5b2fbbfc8de6fc8afc33d38ae3d76"
+    "40cd47e9e778044b3289509c593c9192e10d3d08e12021c1dc1fd63d359eea3a"
 )
 requires_upstream = pytest.mark.skipif(
     os.environ.get("DEAFBENCH_RUN_WHISPER_AT_INTEGRATION") != "1",
@@ -33,6 +33,8 @@ def pinned_source(tmp_path: Path) -> Path:
         [
             "git",
             "clone",
+            "--config",
+            "core.autocrlf=false",
             "--quiet",
             "https://github.com/YuanGongND/whisper-at.git",
             str(source),

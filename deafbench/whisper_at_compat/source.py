@@ -77,6 +77,8 @@ def install() -> None:
             [
                 "git",
                 "clone",
+                "--config",
+                "core.autocrlf=false",
                 "--quiet",
                 "--filter=blob:none",
                 manifest["upstream_url"],
