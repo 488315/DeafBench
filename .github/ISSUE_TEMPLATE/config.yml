@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/488315/DeafBench/security/advisories/new
+    about: Report vulnerabilities privately without customer data or secrets.
+  - name: Usage question
+    url: https://github.com/488315/DeafBench/discussions
+    about: Ask a sanitized question about installing or using DeafBench.
