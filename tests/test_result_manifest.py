@@ -1,5 +1,6 @@
 import json
 from copy import deepcopy
+from pathlib import Path
 
 import pytest
 
@@ -182,6 +183,19 @@ def test_result_manifest_is_byte_stable() -> None:
     reordered = json.loads(json.dumps(_PAYLOAD, sort_keys=True))
 
     assert canonical_result_bytes(_PAYLOAD) == canonical_result_bytes(reordered)
+
+
+def test_whisper_at_result_manifest_is_valid_and_byte_stable() -> None:
+    path = (
+        Path(__file__).parents[1]
+        / "experiments"
+        / "model-results"
+        / "whisper-at-medium-en.json"
+    )
+    raw = path.read_bytes()
+    payload = json.loads(raw)
+
+    assert canonical_result_bytes(payload) == raw
 
 
 @pytest.mark.parametrize(
