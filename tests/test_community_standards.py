@@ -27,23 +27,44 @@ def test_required_community_files_are_present() -> None:
 def test_issue_forms_fail_closed_for_sensitive_reports() -> None:
     config = yaml.safe_load((ISSUE_TEMPLATE / "config.yml").read_text(encoding="utf-8"))
     assert config["blank_issues_enabled"] is False
-    assert any("security/advisories/new" in link["url"] for link in config["contact_links"])
+    links = {link["name"]: link["url"] for link in config["contact_links"]}
+    assert links == {
+        "Security vulnerability": (
+            "https://github.com/488315/DeafBench/security/advisories/new"
+        ),
+        "Usage question": "https://github.com/488315/DeafBench/discussions",
+    }
 
-    for name in ("bug_report.yml", "feature_request.yml"):
+    expected_confirmations = {
+        "bug_report.yml": {
+            "safety": (
+                "I removed customer data, raw transcripts, secrets, and private "
+                "identifiers.",
+                "This is not a confidential security vulnerability.",
+            )
+        },
+        "feature_request.yml": {
+            "scope": (
+                "The request is about DeafBench's evaluation or audit workflow.",
+                "The request does not require publishing customer or regulated data.",
+            )
+        },
+    }
+
+    for name, expected_by_id in expected_confirmations.items():
         form = yaml.safe_load((ISSUE_TEMPLATE / name).read_text(encoding="utf-8"))
         assert form["name"]
         assert form["description"]
-        rendered = str(form).lower()
-        assert "customer" in rendered
-        assert "sensitive" in rendered or "secret" in rendered
-        required_checks = [
-            option
+        checkboxes = {
+            item["id"]: item["attributes"]["options"]
             for item in form["body"]
             if item["type"] == "checkboxes"
-            for option in item["attributes"]["options"]
-        ]
-        assert required_checks
-        assert all(option.get("required") is True for option in required_checks)
+        }
+        assert checkboxes.keys() == expected_by_id.keys()
+        for checkbox_id, expected_labels in expected_by_id.items():
+            options = checkboxes[checkbox_id]
+            assert tuple(option["label"] for option in options) == expected_labels
+            assert all(option.get("required") is True for option in options)
 
 
 def test_pull_request_template_preserves_review_gates() -> None:
