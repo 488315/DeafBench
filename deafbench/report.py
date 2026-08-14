@@ -34,7 +34,10 @@ def generate_markdown_report(metrics: Dict[str, Any], ref_file: str, pred_file: 
         "",
         "| Metric | Value |",
         "| --- | --- |",
-        f"| **Word Error Rate (WER)** | {metrics['wer']:.1f}% |",
+        f"| **Orthographic WER** | {metrics.get('orthographic_wer', metrics['wer']):.1f}% |",
+        f"| **Normalized WER** | {metrics.get('normalized_wer', metrics['wer']):.1f}% |",
+        f"| **Orthographic CER** | {metrics.get('orthographic_cer', metrics.get('cer', 0.0)):.1f}% |",
+        f"| **Normalized CER** | {metrics.get('normalized_cer', metrics.get('cer', 0.0)):.1f}% |",
         f"| **WER substitutions** | {metrics.get('substitutions', 0)} |",
         f"| **WER insertions** | {metrics.get('insertions', 0)} |",
         f"| **WER deletions** | {metrics.get('deletions', 0)} |",
@@ -60,6 +63,17 @@ def generate_markdown_report(metrics: Dict[str, Any], ref_file: str, pred_file: 
         lines.append(f"| **Median Latency** | {latency_sec:.2f}s ({metrics['median_latency_ms']:.0f} ms) |")
     else:
         lines.append("| **Median Latency** | N/A |")
+
+    normalization_policy = metrics.get("normalization_policy")
+    if normalization_policy:
+        lines.extend(
+            [
+                "",
+                f"Normalized ASR metrics use `{normalization_policy}`. "
+                "Orthographic WER and CER preserve case and punctuation; "
+                "the normalized view follows the separately disclosed policy.",
+            ]
+        )
 
     sample_errors = metrics.get("word_errors_by_sample", [])
     if sample_errors:
