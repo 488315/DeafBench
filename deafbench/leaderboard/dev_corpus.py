@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 import hashlib
 import io
@@ -13,7 +13,7 @@ from pathlib import Path
 import shutil
 import sys
 import tempfile
-from typing import Any, Mapping, cast
+from typing import Any, cast
 
 from deafbench.benchmark.workspace import (
     atomic_write_json,
@@ -32,6 +32,9 @@ _OFFICIAL_TEST_EXCLUSIONS = {
     "hf-audio/open_asr_leaderboard:librispeech:test.other",
 }
 _SHA256_LENGTH = 64
+_MISSING_DEPENDENCIES = (
+    'real-speech dependencies are missing; install "deafbench[real-speech-dev]"'
+)
 
 
 class DevCorpusError(ValueError):
@@ -205,9 +208,9 @@ def _pinned_source_rows(contract: DevCorpusContract) -> Iterable[Mapping[str, An
     try:
         from datasets import Audio, load_dataset
     except ModuleNotFoundError as exc:
-        raise DevCorpusError(
-            'real-speech dependencies are missing; install "deafbench[real-speech-dev]"'
-        ) from exc
+        if exc.name != "datasets":
+            raise
+        raise DevCorpusError(_MISSING_DEPENDENCIES) from exc
 
     dataset = load_dataset(
         contract.dataset_id,
@@ -228,9 +231,9 @@ def _decode_audio(encoded: bytes) -> bytes:
         import soundfile as sf
         from scipy.signal import resample_poly
     except ModuleNotFoundError as exc:
-        raise DevCorpusError(
-            'real-speech dependencies are missing; install "deafbench[real-speech-dev]"'
-        ) from exc
+        if exc.name not in {"numpy", "soundfile", "scipy", "scipy.signal"}:
+            raise
+        raise DevCorpusError(_MISSING_DEPENDENCIES) from exc
 
     try:
         audio, source_rate = sf.read(

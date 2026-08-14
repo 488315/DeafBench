@@ -1,4 +1,5 @@
 import hashlib
+import builtins
 import io
 import json
 from pathlib import Path
@@ -228,6 +229,28 @@ def test_pinned_source_rows_rejects_unsupported_python(monkeypatch, tmp_path):
     monkeypatch.setattr(dev_corpus.sys, "version_info", (3, 14))
 
     with pytest.raises(DevCorpusError, match="Python 3.11-3.13"):
+        _pinned_source_rows(contract)
+
+
+def test_pinned_source_rows_preserves_transitive_import_failure(
+    monkeypatch, tmp_path
+):
+    manifest, references, _ = _write_contract(tmp_path)
+    contract = load_dev_contract(manifest, references, expected_count=2)
+    monkeypatch.setattr(dev_corpus.sys, "version_info", (3, 13))
+    real_import = builtins.__import__
+
+    def missing_transitive(name, *args, **kwargs):
+        if name == "datasets":
+            raise ModuleNotFoundError(
+                "No module named 'unexpected_dependency'",
+                name="unexpected_dependency",
+            )
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", missing_transitive)
+
+    with pytest.raises(ModuleNotFoundError, match="unexpected_dependency"):
         _pinned_source_rows(contract)
 
 

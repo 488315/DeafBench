@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from deafbench.leaderboard.dev_cli import main
 from deafbench.leaderboard.dev_corpus import DevCorpusError
 
@@ -38,3 +40,14 @@ def test_materialize_command_reports_contract_failure_without_traceback(
     captured = capsys.readouterr()
     assert captured.out == ""
     assert captured.err == "dev corpus error: source revision changed\n"
+
+
+def test_materialize_command_preserves_unexpected_import_failure(tmp_path):
+    def materializer(_manifest, _references, _destination):
+        raise ModuleNotFoundError(
+            "No module named 'unexpected_dependency'",
+            name="unexpected_dependency",
+        )
+
+    with pytest.raises(ModuleNotFoundError, match="unexpected_dependency"):
+        main(["materialize", "--repo-root", str(tmp_path)], materializer)
