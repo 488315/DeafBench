@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 import subprocess
 
@@ -14,6 +15,10 @@ UPSTREAM_REVISION = "17d94d6acd53866390ce70f95afa13507dcb8aef"
 SETUP_SHA256 = "85625b02a8b04b156aa4602653f15bb9470e118fde012575b6eb27fd2f157841"
 REQUIREMENTS_SHA256 = (
     "1ac4d63c8ed415cc378781d560bf2de7f6a5b2fbbfc8de6fc8afc33d38ae3d76"
+)
+requires_upstream = pytest.mark.skipif(
+    os.environ.get("DEAFBENCH_RUN_WHISPER_AT_INTEGRATION") != "1",
+    reason="requires the pinned public Whisper-AT source",
 )
 
 
@@ -42,6 +47,7 @@ def pinned_source(tmp_path: Path) -> Path:
 
 
 @pytest.mark.integration
+@requires_upstream
 def test_prepare_source_preserves_runtime_requirements(pinned_source: Path) -> None:
     package = pinned_source / "package" / "whisper-at"
     requirements_before = package.joinpath("requirements.txt").read_bytes()
@@ -55,6 +61,7 @@ def test_prepare_source_preserves_runtime_requirements(pinned_source: Path) -> N
 
 
 @pytest.mark.integration
+@requires_upstream
 def test_prepare_source_rejects_modified_upstream(pinned_source: Path) -> None:
     setup = pinned_source / "package" / "whisper-at" / "setup.py"
     setup.write_text(setup.read_text(encoding="utf-8") + "\n# modified\n")
