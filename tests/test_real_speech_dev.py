@@ -72,6 +72,13 @@ def test_versioned_real_speech_dev_baseline_is_self_consistent():
     assert metrics["strict_critical_recall_percent"] is None
     assert metrics["canonical_critical_recall_percent"] is None
     assert metrics["local_rtfx"] is None
+    environment = result["environment"]
+    assert environment["materialization"] == {
+        "python": None,
+        "supported_python": ">=3.11,<3.14",
+        "recording_status": "not_captured",
+    }
+    assert environment["decoding"]["python"] == "3.14"
 
 
 def _write_contract(tmp_path, *, split="validation", count=2):

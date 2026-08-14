@@ -43,15 +43,23 @@
     "predictions_sha256": "86e63117ee355847310930f6f41fd63d90d67fa394b33d463edde266727dbc6a"
   },
   "environment": {
-    "operating_system": "Windows 11 10.0.29639",
-    "python": "3.14",
-    "processor": "local CPU"
+    "materialization": {
+      "python": null,
+      "supported_python": ">=3.11,<3.14",
+      "recording_status": "not_captured"
+    },
+    "decoding": {
+      "operating_system": "Windows 11 10.0.29639",
+      "python": "3.14",
+      "processor": "local CPU"
+    }
   },
   "limitations": [
     "This is a deterministic public development cohort, not an official Open ASR Leaderboard dataset or submission.",
     "The generated audio, predictions, and benchmark run are intentionally not committed.",
     "Critical-information recall is not applicable because this corpus has no typed critical-entity annotations.",
     "Latency, RTFx, and peak VRAM were not captured by this run and are not inferred.",
+    "The exact Python minor version used for corpus materialization was not captured; the materializer enforced Python 3.11 through 3.13.",
     "This public read-speech result is not evidence of DHH, dysarthric, accent, or noisy-environment performance."
   ]
 }
