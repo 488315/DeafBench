@@ -407,13 +407,15 @@ def evaluate_speaker_attribution(reference_item: Dict[str, Any], prediction_item
 
 
 def _is_sound_only_reference(reference: Dict[str, Any]) -> bool:
-    sounds = reference.get("sounds")
-    return (
-        not reference.get("text", "").strip()
-        and isinstance(sounds, list)
-        and bool(sounds)
-        and all(isinstance(sound, str) and sound.strip() for sound in sounds)
-    )
+    text = reference.get("text", "")
+    sounds = reference.get("sounds", [])
+    if not isinstance(text, str):
+        raise ValueError("reference text must be a string")
+    if not isinstance(sounds, list) or not all(
+        isinstance(sound, str) and sound.strip() for sound in sounds
+    ):
+        raise ValueError("reference sounds must be a list of non-empty strings")
+    return not text.strip() and bool(sounds)
 
 
 def evaluate_dataset(aligned_data: List[Dict[str, Any]]) -> Dict[str, Any]:
