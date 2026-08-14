@@ -12,6 +12,7 @@ from deafbench.dependency_security import (
     load_dependency_dispositions,
     validate_dependency_disposition,
     verify_dependency_disposition_snapshot,
+    verify_open_asr_dependency_disposition,
 )
 from deafbench.remote_code_audit import AuditedFile, RemoteCodeAudit
 
@@ -131,27 +132,21 @@ def test_disposition_audit_hashes_match_remote_code_audit() -> None:
 
 
 def test_open_asr_lane_binds_exact_abi_and_source_revisions() -> None:
-    payload = json.loads(
-        (_ROOT / "deafbench" / "dependency-risk-dispositions.json").read_text(
-            encoding="utf-8"
-        )
+    verify_open_asr_dependency_disposition(
+        _ROOT / "experiments" / "open-asr" / "requirements.lock.txt"
     )
-    lane = payload["external_lanes"][0]
 
-    assert lane["runner_revision"] == (
-        "64c698c42932a54bc7a40a7f172d03c8c4838fe6"
+
+def test_open_asr_lane_rejects_changed_runtime_lock(tmp_path: Path) -> None:
+    source = _ROOT / "experiments" / "open-asr" / "requirements.lock.txt"
+    changed = source.read_text(encoding="utf-8").replace(
+        "torch-2.6.0%2Bcu124", "torch-2.7.0%2Bcu124", 1
     )
-    assert lane["icefall_revision"] == (
-        "3f848bb6d0acc970c9b294a30ca0a04a7c9c78d1"
-    )
-    assert lane["compatible_stack"] == {
-        "torch": "2.6.0",
-        "torchaudio": "2.6.0",
-        "k2": "1.24.4.dev20250130+cuda12.4.torch2.6.0",
-    }
-    assert lane["reachability"]["torch.jit.script"] == (
-        "present_only_in_non_evaluation_tools"
-    )
+    lock_path = tmp_path / "requirements.lock.txt"
+    lock_path.write_text(changed, encoding="utf-8")
+
+    with pytest.raises(DependencyDispositionError, match="differs from runtime"):
+        verify_open_asr_dependency_disposition(lock_path)
 
 
 def _snapshot_audit(tmp_path: Path, source: str) -> RemoteCodeAudit:
