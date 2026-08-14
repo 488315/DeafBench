@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 import builtins
 import json
+from pathlib import Path
 
 import pytest
 
@@ -222,6 +223,29 @@ def test_layout_requires_runtime_files_and_metadata(tmp_path) -> None:
     second_runtime.mkdir()
     with pytest.raises(ValueError, match="omits model metadata"):
         worker._stage_official_layout(snapshot, second_runtime)
+
+
+def test_layout_links_resolved_hugging_face_assets(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    blob = tmp_path / "blobs" / "runtime_manifest.json"
+    blob.parent.mkdir()
+    blob.write_text('{"schema_version":1}', encoding="utf-8")
+    snapshot = tmp_path / "snapshot"
+    snapshot.mkdir()
+    source = snapshot / "runtime_manifest.json"
+    source.symlink_to(Path("../blobs/runtime_manifest.json"))
+    received: list[Path] = []
+
+    def link(resolved_source: Path, destination: Path) -> None:
+        received.append(resolved_source)
+        destination.write_bytes(resolved_source.read_bytes())
+
+    monkeypatch.setattr(worker.os, "link", link)
+    worker._link_file(source, tmp_path / "staged.json")
+
+    assert received == [blob.resolve()]
 
 
 def test_official_module_loader_executes_pinned_script(tmp_path) -> None:
