@@ -42,10 +42,25 @@ _LANE_METRICS = {
             "peak_vram_bytes",
         }
     ),
+    "non-speech-v1": _ACCESSIBILITY_METRICS
+    | frozenset(
+        {
+            "non_speech_recall_percent",
+            "matched_sound_events",
+            "total_sound_events",
+        }
+    ),
 }
 _STATUS_LANES = {
     "smoke_complete": frozenset(
         {"synthetic-v2", "hugging-face-compatibility-smoke"}
+    ),
+    "smoke_complete_with_non_speech": frozenset(
+        {
+            "synthetic-v2",
+            "hugging-face-compatibility-smoke",
+            "non-speech-v1",
+        }
     ),
     "customer_audit_complete": frozenset({"customer-audit"}),
 }
@@ -71,10 +86,18 @@ def _validate_metrics(lane: str, metrics: Mapping[str, Any]) -> None:
     expected = _LANE_METRICS[lane]
     if set(metrics) != expected:
         raise ResultManifestError(f"invalid {lane} metric fields")
-    count_fields = {"substitutions", "insertions", "deletions", "peak_vram_bytes"}
+    count_fields = {
+        "substitutions",
+        "insertions",
+        "deletions",
+        "peak_vram_bytes",
+        "matched_sound_events",
+        "total_sound_events",
+    }
     recall_fields = {
         "strict_lexical_recall_percent",
         "canonical_semantic_recall_percent",
+        "non_speech_recall_percent",
     }
     for field, value in metrics.items():
         if isinstance(value, bool) or not isinstance(value, Real):
@@ -87,6 +110,21 @@ def _validate_metrics(lane: str, metrics: Mapping[str, Any]) -> None:
             raise ResultManifestError(f"invalid {field} metric")
         if field in recall_fields and value > 100:
             raise ResultManifestError(f"invalid {field} metric")
+    if lane == "non-speech-v1":
+        matched = metrics["matched_sound_events"]
+        total = metrics["total_sound_events"]
+        expected_recall = matched / total * 100.0 if total else None
+        if (
+            total <= 0
+            or matched > total
+            or not math.isclose(
+                metrics["non_speech_recall_percent"],
+                expected_recall,
+                rel_tol=1e-9,
+                abs_tol=1e-9,
+            )
+        ):
+            raise ResultManifestError("inconsistent non-speech sound event counts")
 
 
 def _validate_critical_failures(value: object) -> None:

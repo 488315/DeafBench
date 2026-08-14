@@ -75,6 +75,41 @@ def _customer_payload() -> dict:
     return payload
 
 
+def _non_speech_payload() -> dict:
+    payload = deepcopy(_PAYLOAD)
+    payload["status"] = "smoke_complete_with_non_speech"
+    payload["corpora"].append(
+        {
+            "name": "non-speech-v1",
+            "manifest_sha256": "c" * 64,
+            "frozen": True,
+        }
+    )
+    payload["evaluations"].append(
+        {
+            "lane": "non-speech-v1",
+            "scope": "complete",
+            "sample_count": 12,
+            "metrics": {
+                "wer_percent": 1.0,
+                "strict_lexical_recall_percent": 95.0,
+                "canonical_semantic_recall_percent": 95.0,
+                "substitutions": 2,
+                "insertions": 0,
+                "deletions": 0,
+                "non_speech_recall_percent": 0.0,
+                "matched_sound_events": 0,
+                "total_sound_events": 19,
+                "local_rtfx": 4.0,
+                "median_latency_ms": 5.0,
+                "peak_vram_bytes": 6,
+            },
+            "critical_failures": [],
+        }
+    )
+    return payload
+
+
 def test_result_manifest_requires_both_separate_tracks() -> None:
     payload = deepcopy(_PAYLOAD)
     payload["evaluations"].pop()
@@ -87,6 +122,28 @@ def test_result_manifest_accepts_complete_customer_audit() -> None:
     assert validate_result_manifest(_customer_payload())["status"] == (
         "customer_audit_complete"
     )
+
+
+def test_result_manifest_accepts_separate_non_speech_evidence() -> None:
+    assert validate_result_manifest(_non_speech_payload())["status"] == (
+        "smoke_complete_with_non_speech"
+    )
+
+
+def test_non_speech_result_requires_all_three_evaluation_lanes() -> None:
+    payload = _non_speech_payload()
+    payload["evaluations"].pop(0)
+
+    with pytest.raises(ResultManifestError, match="lanes do not match"):
+        validate_result_manifest(payload)
+
+
+def test_non_speech_result_rejects_inconsistent_sound_counts() -> None:
+    payload = _non_speech_payload()
+    payload["evaluations"][2]["metrics"]["matched_sound_events"] = 20
+
+    with pytest.raises(ResultManifestError, match="sound event counts"):
+        validate_result_manifest(payload)
 
 
 def test_customer_audit_manifest_rejects_extra_evaluation_lane() -> None:
