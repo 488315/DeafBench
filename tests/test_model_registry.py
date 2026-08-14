@@ -60,6 +60,12 @@ def test_packaged_model_registry_is_valid() -> None:
     assert whisper_at.intended_lane == "commercial_candidate"
     assert whisper_at.remote_code_required is False
 
+    ark = models_by_id["AutoArk-AI/ARK-ASR-0.6B"]
+    assert "transformers>=5.5.0,<6" in ark.supported_runtimes
+
+    ark_onnx = models_by_id["AutoArk-AI/ark-asr-0.6b-int8-onnx"]
+    assert "transformers>=5.5.0,<6" in ark_onnx.supported_runtimes
+
 
 def test_packaged_apache_license_matches_canonical_bytes() -> None:
     license_bytes = files("deafbench").joinpath(
