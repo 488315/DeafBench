@@ -176,13 +176,16 @@ def _open_asr_stack(lock_path: Path) -> dict[str, str]:
     }
 
 
-def verify_open_asr_dependency_disposition(lock_path: Path) -> None:
+def verify_open_asr_dependency_disposition(
+    lock_path: Path, *, today: date | None = None
+) -> None:
     """Bind the recorded Open-ASR risk to live runner and lock authorities."""
     from deafbench.leaderboard.zipformer_runner import (
         ICEFALL_REVISION,
         ZIPFORMER_RUNNER_REVISION,
     )
 
+    load_dependency_dispositions(today=today)
     payload = _load_registry()
     expected = {
         "name": "open-asr-zipformer",

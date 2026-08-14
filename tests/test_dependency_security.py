@@ -149,6 +149,16 @@ def test_open_asr_lane_rejects_changed_runtime_lock(tmp_path: Path) -> None:
         verify_open_asr_dependency_disposition(lock_path)
 
 
+def test_open_asr_lane_rejects_expired_review() -> None:
+    lock_path = _ROOT / "experiments" / "open-asr" / "requirements.lock.txt"
+
+    with pytest.raises(DependencyDispositionError, match="expired"):
+        verify_open_asr_dependency_disposition(
+            lock_path,
+            today=date(2026, 11, 14),
+        )
+
+
 def _snapshot_audit(tmp_path: Path, source: str) -> RemoteCodeAudit:
     source_path = tmp_path / "modeling.py"
     source_path.write_text(source, encoding="utf-8")
