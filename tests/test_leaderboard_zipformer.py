@@ -264,8 +264,8 @@ def test_zipformer_runner_executes_reviewed_upstream_contract(
     captured = {}
     monkeypatch.setattr(
         zipformer_runner,
-        "load_dependency_dispositions",
-        lambda: captured.setdefault("dependency_dispositions", True),
+        "verify_open_asr_dependency_disposition",
+        lambda path: captured.setdefault("dependency_lock", path),
     )
     runner_module = SimpleNamespace(
         data_utils=SimpleNamespace(load_data=None),
@@ -350,7 +350,7 @@ def test_zipformer_runner_executes_reviewed_upstream_contract(
     )
     assert captured["device"] == 0
     assert captured["policy"] == tmp_path / "evaluation-policy.json"
-    assert captured["dependency_dispositions"] is True
+    assert captured["dependency_lock"] == zipformer_runner.OPEN_ASR_REQUIREMENTS_LOCK
     assert captured["parsed"] == captured["argv"]
     assert runner_module.data_utils.load_data is not None
     assert runner_module.snapshot_download is not None
@@ -362,8 +362,8 @@ def test_zipformer_runner_restores_process_state_after_failure(
 ):
     monkeypatch.setattr(
         zipformer_runner,
-        "load_dependency_dispositions",
-        lambda: None,
+        "verify_open_asr_dependency_disposition",
+        lambda path: None,
     )
     runner_module = SimpleNamespace(
         data_utils=SimpleNamespace(load_data=None),

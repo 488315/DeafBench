@@ -22,28 +22,22 @@ _ADVISORIES = {
     15: ("GHSA-qfhq-4f3w-5fph", "CVE-2025-3001", ("torch.lstm_cell",)),
     16: ("GHSA-rrmf-rvhw-rf47", "CVE-2025-3000", ("torch.jit.script",)),
 }
-_OPEN_ASR_LANE = {
-    "name": "open-asr-zipformer",
-    "runner_revision": "64c698c42932a54bc7a40a7f172d03c8c4838fe6",
-    "icefall_revision": "3f848bb6d0acc970c9b294a30ca0a04a7c9c78d1",
-    "compatible_stack": {
-        "torch": "2.6.0",
-        "torchaudio": "2.6.0",
-        "k2": "1.24.4.dev20250130+cuda12.4.torch2.6.0",
-    },
-    "reachability": {
-        "torch.lstm_cell": "absent_from_pinned_evaluation_path",
-        "torch.jit.script": "present_only_in_non_evaluation_tools",
-    },
-    "non_evaluation_affected_files": [
-        "egs/librispeech/ASR/zipformer/export-onnx.py",
-        "egs/librispeech/ASR/zipformer/export-onnx-streaming.py",
-        "egs/librispeech/ASR/zipformer/export-streaming-as-non-streaming-onnx.py",
-        "egs/librispeech/ASR/zipformer/export.py",
-        "egs/librispeech/ASR/zipformer/scaling_converter.py",
-    ],
+_OPEN_ASR_REACHABILITY = {
+    "torch.lstm_cell": "absent_from_pinned_evaluation_path",
+    "torch.jit.script": "present_only_in_non_evaluation_tools",
 }
+_OPEN_ASR_AFFECTED_FILES = [
+    "egs/librispeech/ASR/zipformer/export-onnx.py",
+    "egs/librispeech/ASR/zipformer/export-onnx-streaming.py",
+    "egs/librispeech/ASR/zipformer/export-streaming-as-non-streaming-onnx.py",
+    "egs/librispeech/ASR/zipformer/export.py",
+    "egs/librispeech/ASR/zipformer/scaling_converter.py",
+]
 _SHA256 = re.compile(r"[0-9a-f]{64}")
+_LOCK_VERSION = re.compile(
+    r"(?m)^(?P<package>torch|torchaudio|k2) @ .*?/"
+    r"(?P=package)-(?P<version>\d[^/]+?)-cp\d"
+)
 
 
 class DependencyDispositionError(ValueError):
@@ -153,16 +147,56 @@ def _validate_reviewed_hashes(payload: Mapping[str, Any]) -> None:
         raise DependencyDispositionError("reviewed source differs from remote-code audit")
 
 
-def _validate_external_lanes(payload: Mapping[str, Any]) -> None:
+def _external_lane(payload: Mapping[str, Any]) -> Mapping[str, Any]:
     lanes = payload.get("external_lanes")
-    if lanes != [_OPEN_ASR_LANE]:
+    if (
+        not isinstance(lanes, Sequence)
+        or isinstance(lanes, (str, bytes))
+        or len(lanes) != 1
+    ):
         raise DependencyDispositionError("invalid external dependency lane")
+    return _mapping(lanes[0], "external dependency lane")
 
 
-def load_dependency_dispositions(
-    *, today: date | None = None
-) -> tuple[DependencyDisposition, ...]:
-    """Load all packaged dispositions and reject omissions or duplicate alerts."""
+def _open_asr_stack(lock_path: Path) -> dict[str, str]:
+    try:
+        lock_text = lock_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise DependencyDispositionError("Open-ASR lock is unavailable") from exc
+    versions = {
+        match.group("package"): match.group("version").replace("%2B", "+")
+        for match in _LOCK_VERSION.finditer(lock_text)
+    }
+    if set(versions) != {"torch", "torchaudio", "k2"}:
+        raise DependencyDispositionError("Open-ASR ABI stack is incomplete")
+    return {
+        "torch": versions["torch"].split("+", maxsplit=1)[0],
+        "torchaudio": versions["torchaudio"].split("+", maxsplit=1)[0],
+        "k2": versions["k2"],
+    }
+
+
+def verify_open_asr_dependency_disposition(lock_path: Path) -> None:
+    """Bind the recorded Open-ASR risk to live runner and lock authorities."""
+    from deafbench.leaderboard.zipformer_runner import (
+        ICEFALL_REVISION,
+        ZIPFORMER_RUNNER_REVISION,
+    )
+
+    payload = _load_registry()
+    expected = {
+        "name": "open-asr-zipformer",
+        "runner_revision": ZIPFORMER_RUNNER_REVISION,
+        "icefall_revision": ICEFALL_REVISION,
+        "compatible_stack": _open_asr_stack(lock_path),
+        "reachability": _OPEN_ASR_REACHABILITY,
+        "non_evaluation_affected_files": _OPEN_ASR_AFFECTED_FILES,
+    }
+    if _external_lane(payload) != expected:
+        raise DependencyDispositionError("Open-ASR disposition differs from runtime")
+
+
+def _load_registry() -> Mapping[str, Any]:
     resource = files("deafbench").joinpath("dependency-risk-dispositions.json")
     try:
         payload = json.loads(resource.read_text(encoding="utf-8"))
@@ -171,8 +205,16 @@ def load_dependency_dispositions(
     root = _mapping(payload, "registry")
     if root.get("schema_version") != 1:
         raise DependencyDispositionError("unsupported disposition registry schema")
+    return root
+
+
+def load_dependency_dispositions(
+    *, today: date | None = None
+) -> tuple[DependencyDisposition, ...]:
+    """Load all packaged dispositions and reject omissions or duplicate alerts."""
+    root = _load_registry()
     _validate_reviewed_hashes(root)
-    _validate_external_lanes(root)
+    _external_lane(root)
     records = root.get("dispositions")
     if not isinstance(records, Sequence) or isinstance(records, (str, bytes)):
         raise DependencyDispositionError("invalid disposition collection")
