@@ -40,7 +40,7 @@ claim. The exact upstream revisions, commands, and evidence are in
 
 ## Models that work with DeafBench
 
-The models below have working adapters in this repository. The seven newer
+The models below have working adapters in this repository. The eight newer
 adapters have completed a 25-sample synthetic-v2 run and a two-row public
 real-speech smoke run, with byte-stable local result manifests under
 `experiments/model-results`. A smoke run proves that the pinned adapter executes
@@ -52,7 +52,7 @@ score.
 | `whisper` | OpenAI Whisper `turbo` | Core v1 and non-speech v1 reports | Runtime model; review upstream terms |
 | `whisper-at` | Whisper-AT `medium.en` | Adapter and benchmark workflow | Research integration; review upstream terms |
 | `faster-whisper` | `Systran/faster-whisper-small.en` | Frozen Core v1 baseline | Runtime model; review upstream terms |
-| `distil-whisper` | `distil-whisper/distil-large-v3` | Adapter and local runner | Runtime model; review upstream terms |
+| `distil-whisper` | `Systran/faster-distil-whisper-large-v3` | Synthetic-v2 plus real-speech smoke | Commercial candidate, MIT |
 | `qwen3-asr-0.6b` | `Qwen/Qwen3-ASR-0.6B-hf` | Synthetic-v2 plus real-speech smoke | Commercial candidate, Apache-2.0 |
 | `qwen3-asr-1.7b` | `Qwen/Qwen3-ASR-1.7B-hf` | Synthetic-v2 plus real-speech smoke | Commercial candidate, Apache-2.0 |
 | `parakeet-tdt-0.6b-v2` | `nvidia/parakeet-tdt-0.6b-v2` | Synthetic-v2 plus real-speech smoke | Commercial candidate, CC-BY-4.0 attribution required |
@@ -78,6 +78,7 @@ quality. Core v1 and Non-speech v1 are earlier, separately frozen benchmarks.
 
 | Model | WER | Strict lexical recall | Canonical semantic recall | Local RTFx | Peak VRAM |
 | --- | ---: | ---: | ---: | ---: | ---: |
+| Distil-Whisper large-v3 | 23.8% | 66.1% | 91.9% | 0.80 | CPU |
 | Qwen3-ASR 0.6B | 26.6% | 67.7% | 90.3% | 10.47 | 1.52 GiB |
 | Qwen3-ASR 1.7B | 21.0% | 67.7% | 91.9% | 9.89 | 3.86 GiB |
 | Parakeet TDT 0.6B v2 | 22.7% | 64.5% | 91.9% | 71.23 | 4.67 GiB |
@@ -90,6 +91,7 @@ quality. Core v1 and Non-speech v1 are earlier, separately frozen benchmarks.
 
 | Model | WER | Local RTFx | Peak VRAM |
 | --- | ---: | ---: | ---: |
+| Distil-Whisper large-v3 | 1.73% | 3.27 | CPU |
 | Qwen3-ASR 0.6B | 2.31% | 12.27 | 1.72 GiB |
 | Qwen3-ASR 1.7B | 1.16% | 12.43 | 4.05 GiB |
 | Parakeet TDT 0.6B v2 | 2.31% | 91.85 | 4.67 GiB |
@@ -99,9 +101,10 @@ quality. Core v1 and Non-speech v1 are earlier, separately frozen benchmarks.
 | ARK-ASR 0.6B INT8 ONNX | 2.89% | 3.01 | CPU |
 
 The byte-stable evidence for both tables is in
-[`experiments/model-results`](experiments/model-results). These are local RTX
-4070 measurements except for the CPU ONNX row. The two-row smoke results are
-not the seven-dataset macro-average and are not Hugging Face verified.
+[`experiments/model-results`](experiments/model-results). GPU rows are local RTX
+4070 measurements, and CPU rows are labeled separately. The two-row smoke
+results are not the seven-dataset macro-average and are not Hugging Face
+verified.
 
 ### Earlier model evidence
 
@@ -111,7 +114,6 @@ not the seven-dataset macro-average and are not Hugging Face verified.
 | OpenAI Whisper `turbo` | Non-speech v1, 12 samples | 2.0% WER; 95.0% legacy critical-information recall; 0.0% non-speech recall |
 | Faster-Whisper `small.en` | Frozen Core v1 synthetic baseline, 25 samples | 26.2% WER; 69.4% strict lexical recall; 90.3% canonical semantic recall |
 | Whisper-AT `medium.en` | Adapter and benchmark workflow | No completed result committed |
-| Distil-Whisper `large-v3` | Adapter and local runner | No completed result committed |
 
 The OpenAI Whisper reports are
 [`benchmarks/core-v1/model-a-report.md`](benchmarks/core-v1/model-a-report.md)
@@ -259,15 +261,15 @@ python -m pip install -e ".[benchmark,local-models]"
 # CPU-friendly INT8 baseline; downloads small.en on first use.
 python -m deafbench benchmark core-v1 --model faster-whisper --audio-source synthetic --repo-root .
 
-# Distilled comparison; downloads distil-large-v3 on first use.
-deafbench benchmark core-v1 --model distil-whisper
+# Distilled comparison; downloads the pinned CTranslate2 repository on first use.
+deafbench benchmark synthetic-v2 --model distil-whisper --audio-source existing --repo-root .
 ```
 
 Both default to CPU INT8 so they work without an NVIDIA GPU. Faster-Whisper
-uses `small.en`; Distil-Whisper uses the upstream-documented
-`distil-large-v3` checkpoint with previous-text conditioning disabled. The
-Faster-Whisper runtime decodes audio through PyAV, so these two models do not
-need a separate system FFmpeg installation.
+uses `small.en`; Distil-Whisper pins
+`Systran/faster-distil-whisper-large-v3` with previous-text conditioning
+disabled. The Faster-Whisper runtime decodes audio through PyAV, so these two
+models do not need a separate system FFmpeg installation.
 
 With the default `--audio-source auto` policy, DeafBench selects one complete
 source for the whole run:
