@@ -126,8 +126,36 @@ def test_load_dev_contract_accepts_pinned_validation_cohort(tmp_path):
 
 
 @pytest.mark.parametrize(
+    ("contents", "message"),
+    (
+        ("[]", "manifest must be an object"),
+        ("{not-json", "manifest is unreadable"),
+    ),
+)
+def test_load_dev_contract_rejects_unreadable_manifest(
+    tmp_path, contents, message
+):
+    manifest, references, _ = _write_contract(tmp_path)
+    manifest.write_text(contents, encoding="utf-8")
+
+    with pytest.raises(DevCorpusError, match=message):
+        load_dev_contract(manifest, references, expected_count=2)
+
+
+def test_load_dev_contract_rejects_manifest_schema_drift(tmp_path):
+    manifest_path, references, manifest = _write_contract(tmp_path)
+    manifest.pop("purpose")
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(DevCorpusError, match="fields do not match"):
+        load_dev_contract(manifest_path, references, expected_count=2)
+
+
+@pytest.mark.parametrize(
     ("field", "value", "message"),
     (
+        ("dataset_id", "other/dataset", "dataset ID"),
+        ("config", "other", "config"),
         ("split", "test", "validation split"),
         ("revision", "0" * 40, "revision"),
         ("license", "unknown", "license"),
@@ -174,6 +202,22 @@ def test_load_dev_contract_rejects_invalid_source_population(tmp_path):
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
     with pytest.raises(DevCorpusError, match="population count"):
+        load_dev_contract(manifest_path, references, expected_count=2)
+
+
+def test_load_dev_contract_rejects_invalid_source_audio_hash(tmp_path):
+    manifest_path, references, manifest = _write_contract(tmp_path)
+    rows = [json.loads(line) for line in references.read_text().splitlines()]
+    rows[0]["source_audio_sha256"] = "not-a-sha256"
+    references.write_text(
+        "".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8"
+    )
+    manifest["references_sha256"] = hashlib.sha256(
+        references.read_bytes()
+    ).hexdigest()
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(DevCorpusError, match="audio hash is invalid"):
         load_dev_contract(manifest_path, references, expected_count=2)
 
 
@@ -234,6 +278,10 @@ def test_materialize_dev_corpus_writes_verified_48khz_audio(tmp_path):
 @pytest.mark.parametrize(
     ("mutation", "message"),
     (
+        (
+            lambda rows: rows[0].__setitem__("id", 1),
+            "sample ID is invalid",
+        ),
         (lambda rows: rows.__setitem__(0, {**rows[0], "text": "wrong"}), "text"),
         (lambda rows: rows.pop(), "population count"),
         (
@@ -243,6 +291,10 @@ def test_materialize_dev_corpus_writes_verified_48khz_audio(tmp_path):
         (
             lambda rows: rows[0]["audio"].__setitem__("bytes", b"wrong"),
             "audio hash",
+        ),
+        (
+            lambda rows: rows[0].__setitem__("audio", None),
+            "audio payload",
         ),
     ),
 )
@@ -266,3 +318,42 @@ def test_materialize_dev_corpus_rejects_source_drift_without_replacing_output(
         )
 
     assert marker.read_text(encoding="utf-8") == "preserve"
+
+
+def test_materialize_dev_corpus_rejects_source_order_drift(tmp_path):
+    manifest, references, source_rows = _write_materialization_contract(tmp_path)
+    source_rows[0]["id"] = "zzz"
+
+    with pytest.raises(DevCorpusError, match="sample order changed"):
+        materialize_dev_corpus(
+            manifest,
+            references,
+            tmp_path / "audio",
+            source_rows=source_rows,
+            expected_count=2,
+        )
+
+
+def test_materialize_dev_corpus_rejects_unreadable_audio(tmp_path):
+    manifest, references, source_rows = _write_materialization_contract(tmp_path)
+    invalid_audio = b"not-a-readable-audio-container"
+    source_rows[0]["audio"]["bytes"] = invalid_audio
+    rows = [json.loads(line) for line in references.read_text().splitlines()]
+    rows[0]["source_audio_sha256"] = hashlib.sha256(invalid_audio).hexdigest()
+    references.write_text(
+        "".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8"
+    )
+    contract = json.loads(manifest.read_text(encoding="utf-8"))
+    contract["references_sha256"] = hashlib.sha256(
+        references.read_bytes()
+    ).hexdigest()
+    manifest.write_text(json.dumps(contract), encoding="utf-8")
+
+    with pytest.raises(DevCorpusError, match="audio is unreadable"):
+        materialize_dev_corpus(
+            manifest,
+            references,
+            tmp_path / "audio",
+            source_rows=source_rows,
+            expected_count=2,
+        )
