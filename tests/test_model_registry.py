@@ -99,6 +99,32 @@ def test_registry_requires_exact_upstream_model_url() -> None:
         validate_model_registry(_registry(model))
 
 
+def test_registry_accepts_exact_github_repository_url() -> None:
+    model = deepcopy(_MODEL)
+    model["upstream_url"] = "https://github.com/example/model"
+
+    validated = validate_model_registry(_registry(model))
+
+    assert validated[0].upstream_url == "https://github.com/example/model"
+
+
+@pytest.mark.parametrize(
+    "upstream_url",
+    [
+        "http://github.com/example/model",
+        "https://github.com/example/model/",
+        "https://github.com/example/other",
+        "https://evil.example/example/model",
+    ],
+)
+def test_registry_rejects_inexact_github_repository_url(upstream_url) -> None:
+    model = deepcopy(_MODEL)
+    model["upstream_url"] = upstream_url
+
+    with pytest.raises(ModelRegistryError, match="invalid upstream_url"):
+        validate_model_registry(_registry(model))
+
+
 def test_unknown_model_fails_closed() -> None:
     with pytest.raises(ModelRegistryError, match="missing license metadata"):
         get_model_license("unknown/model")
