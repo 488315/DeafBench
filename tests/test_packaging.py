@@ -53,10 +53,23 @@ def test_whisper_at_ci_exercises_exact_setuptools_floor() -> None:
     constraint = root.joinpath(
         ".github/build-constraints/whisper-at-setuptools83.txt"
     ).read_text(encoding="utf-8")
+    job_start = workflow.index("  whisper-at:\n")
+    job_end = workflow.index("\n  package:\n", job_start)
+    whisper_at_job = workflow[job_start:job_end]
+
+    floor_start = whisper_at_job.index(
+        "      - name: Verify setuptools 83 isolated build\n"
+    )
+    normal_start = whisper_at_job.index(
+        "      - name: Install pinned Whisper-AT source normally\n"
+    )
+    floor_step = whisper_at_job[floor_start:normal_start]
+    normal_step = whisper_at_job[normal_start:]
 
     assert constraint.strip() == "setuptools==83.0.0"
-    assert "PIP_BUILD_CONSTRAINT" in workflow
-    assert "Install pinned Whisper-AT source normally" in workflow
+    assert "PIP_BUILD_CONSTRAINT" in floor_step
+    assert "run: python -m deafbench.whisper_at_compat" in floor_step
+    assert "run: python -m deafbench.whisper_at_compat" in normal_step
 
 
 def test_wheel_discovery_excludes_nonruntime_trees() -> None:
