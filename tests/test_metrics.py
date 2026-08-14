@@ -375,18 +375,40 @@ def test_evaluate_dataset_preserves_sound_only_accessibility_scoring():
     assert metrics["word_errors_by_sample"] == []
 
 
-@pytest.mark.parametrize(
-    "reference",
-    [
-        {"id": "bad-1", "text": "...", "critical": [], "sounds": []},
-        {"id": "bad-1", "text": "", "critical": [], "sounds": [""]},
-    ],
-)
-def test_evaluate_dataset_rejects_malformed_nonlexical_references(reference):
-    refs = [reference]
+def test_evaluate_dataset_rejects_empty_normalized_reference():
+    refs = [{"id": "bad-1", "text": "...", "critical": [], "sounds": []}]
     preds = [{"id": "bad-1", "text": "hallucination"}]
 
     with pytest.raises(ValueError, match="empty after ASR normalization"):
+        evaluate_dataset(align_records(refs, preds))
+
+
+@pytest.mark.parametrize(
+    ("reference", "message"),
+    [
+        (
+            {"id": "bad-1", "text": "hello", "critical": [], "sounds": "alarm"},
+            "reference sounds",
+        ),
+        (
+            {"id": "bad-1", "text": "hello", "critical": [], "sounds": [""]},
+            "reference sounds",
+        ),
+        (
+            {"id": "bad-1", "text": "", "critical": [], "sounds": [""]},
+            "reference sounds",
+        ),
+        (
+            {"id": "bad-1", "text": 1, "critical": [], "sounds": []},
+            "reference text",
+        ),
+    ],
+)
+def test_evaluate_dataset_rejects_malformed_reference_labels(reference, message):
+    refs = [reference]
+    preds = [{"id": "bad-1", "text": "hello"}]
+
+    with pytest.raises(ValueError, match=message):
         evaluate_dataset(align_records(refs, preds))
 
 
