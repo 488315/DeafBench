@@ -7,15 +7,15 @@
   "patch_file": "setuptools-83.patch",
   "source_files": {
     "package/whisper-at/setup.py": {
-      "before_sha256": "85625b02a8b04b156aa4602653f15bb9470e118fde012575b6eb27fd2f157841",
-      "after_sha256": "7312c8e7654ba4f20d8f583c3b04955783f61e02af568ade26be8dd5ead16e7c"
+      "before_sha256": "def17ed810969995c06f5d54cc274f09b1a87f1af60009615b1bbf8be5901175",
+      "after_sha256": "e7b6cd94340b5a3c016bac22d970a4d877fb604e5d2f66dfc0d996781d0ad6b1"
     },
     "package/whisper-at/pyproject.toml": {
-      "before_sha256": "cff51c4c9e1471d8ea60a26adb705f7c7c08b65d22047d8177237dad5990ce7b",
-      "after_sha256": "c901730e2bba41f74dc0204638648a9aa1a8ec371a27b57ceec334097729d1c8"
+      "before_sha256": "90a775a66bd245a033476d10a90eb2bceeb932ce62099d2d62e3fd82bf6d6e58",
+      "after_sha256": "e946869226098508e7a126be34f43e7d2f98bccc01a28f35f2827433091f12fa"
     },
     "package/whisper-at/requirements.txt": {
-      "sha256": "1ac4d63c8ed415cc378781d560bf2de7f6a5b2fbbfc8de6fc8afc33d38ae3d76"
+      "sha256": "40cd47e9e778044b3289509c593c9192e10d3d08e12021c1dc1fd63d359eea3a"
     }
   }
 }
