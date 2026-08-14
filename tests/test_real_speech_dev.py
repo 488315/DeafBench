@@ -11,9 +11,11 @@ import soundfile as sf
 from deafbench.leaderboard.dev_corpus import (
     DEV_DATASET_REVISION,
     DevCorpusError,
+    _pinned_source_rows,
     load_dev_contract,
     materialize_dev_corpus,
 )
+from deafbench.leaderboard import dev_corpus
 from deafbench.leaderboard.official import OPEN_ASR_EVALUATOR_REVISION
 
 
@@ -142,12 +144,29 @@ def test_load_dev_contract_rejects_unreadable_manifest(
         load_dev_contract(manifest, references, expected_count=2)
 
 
+def test_load_dev_contract_rejects_manifest_directory(tmp_path):
+    _, references, _ = _write_contract(tmp_path)
+
+    with pytest.raises(DevCorpusError, match="manifest is unreadable"):
+        load_dev_contract(tmp_path, references, expected_count=2)
+
+
 def test_load_dev_contract_rejects_manifest_schema_drift(tmp_path):
     manifest_path, references, manifest = _write_contract(tmp_path)
     manifest.pop("purpose")
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
     with pytest.raises(DevCorpusError, match="fields do not match"):
+        load_dev_contract(manifest_path, references, expected_count=2)
+
+
+@pytest.mark.parametrize("field", ("source", "selection"))
+def test_load_dev_contract_rejects_non_object_sections(tmp_path, field):
+    manifest_path, references, manifest = _write_contract(tmp_path)
+    manifest[field] = []
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(DevCorpusError, match=f"{field} must be an object"):
         load_dev_contract(manifest_path, references, expected_count=2)
 
 
@@ -178,6 +197,38 @@ def test_load_dev_contract_rejects_reference_hash_mismatch(tmp_path):
 
     with pytest.raises(DevCorpusError, match="reference hash"):
         load_dev_contract(manifest, references, expected_count=2)
+
+
+def test_load_dev_contract_rejects_unreadable_references(tmp_path):
+    manifest_path, references, manifest = _write_contract(tmp_path)
+    references.unlink()
+    references.mkdir()
+    manifest["references_sha256"] = hashlib.sha256(b"").hexdigest()
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(DevCorpusError, match="references are unreadable"):
+        load_dev_contract(manifest_path, references, expected_count=2)
+
+
+def test_load_dev_contract_rejects_invalid_reference_json(tmp_path):
+    manifest_path, references, manifest = _write_contract(tmp_path)
+    references.write_text("{not-json\n", encoding="utf-8")
+    manifest["references_sha256"] = hashlib.sha256(
+        references.read_bytes()
+    ).hexdigest()
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(DevCorpusError, match="references are invalid"):
+        load_dev_contract(manifest_path, references, expected_count=2)
+
+
+def test_pinned_source_rows_rejects_unsupported_python(monkeypatch, tmp_path):
+    manifest, references, _ = _write_contract(tmp_path)
+    contract = load_dev_contract(manifest, references, expected_count=2)
+    monkeypatch.setattr(dev_corpus.sys, "version_info", (3, 14))
+
+    with pytest.raises(DevCorpusError, match="Python 3.11-3.13"):
+        _pinned_source_rows(contract)
 
 
 def test_load_dev_contract_requires_official_test_exclusions(tmp_path):
