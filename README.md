@@ -349,13 +349,19 @@ DeafBench v0.1
 
 Samples: 3
 
-WER                         8.4%
-Critical Information       91.2%
-Non-Speech Information     62.5%
-Speaker Attribution        87.0%
-Median Latency             1.4s
+Orthographic WER            33.3%
+Normalized WER              28.6%
+Orthographic CER            21.6%
+Normalized CER              20.2%
+Normalization policy      deafbench-asr-normalization-v1
+Strict Critical Information      50.0%
+Canonical Critical Information   50.0%
+WER edits (S/I/D)         3/0/4
+Non-Speech Information      50.0%
+Speaker Attribution        100.0%
+Median Latency               1.1s
 
-⚠ 2 critical-information failures detected
+[!] 3 critical-information failures detected
 ```
 
 **2. Generate a Markdown evaluation report:**
