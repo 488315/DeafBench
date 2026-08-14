@@ -14,6 +14,22 @@ def _escape_markdown_table_cell(value: Any) -> str:
     )
 
 
+def conventional_metric_rows(metrics: Dict[str, Any]) -> list[tuple[str, float | None]]:
+    """Return only conventional measurements supported by the payload."""
+    if "normalization_policy" not in metrics:
+        return [("WER (legacy payload)", metrics.get("wer"))]
+    return [
+        ("Orthographic WER", metrics.get("orthographic_wer")),
+        ("Normalized WER", metrics.get("normalized_wer")),
+        ("Orthographic CER", metrics.get("orthographic_cer")),
+        ("Normalized CER", metrics.get("normalized_cer")),
+    ]
+
+
+def _format_percent(value: float | None) -> str:
+    return "N/A" if value is None else f"{value:.1f}%"
+
+
 def generate_markdown_report(
     metrics: Dict[str, Any],
     ref_file: str,
@@ -41,16 +57,18 @@ def generate_markdown_report(
         "",
         "| Metric | Value |",
         "| --- | --- |",
-        f"| **Orthographic WER** | {metrics.get('orthographic_wer', metrics['wer']):.1f}% |",
-        f"| **Normalized WER** | {metrics.get('normalized_wer', metrics['wer']):.1f}% |",
-        f"| **Orthographic CER** | {metrics.get('orthographic_cer', metrics.get('cer', 0.0)):.1f}% |",
-        f"| **Normalized CER** | {metrics.get('normalized_cer', metrics.get('cer', 0.0)):.1f}% |",
+    ]
+    lines.extend(
+        f"| **{label}** | {_format_percent(value)} |"
+        for label, value in conventional_metric_rows(metrics)
+    )
+    lines.extend([
         f"| **WER substitutions** | {metrics.get('substitutions', 0)} |",
         f"| **WER insertions** | {metrics.get('insertions', 0)} |",
         f"| **WER deletions** | {metrics.get('deletions', 0)} |",
         f"| **Strict lexical critical recall** | {strict_recall:.1f}% ({strict_matched}/{metrics['total_critical']}) |",
         f"| **Canonical semantic critical recall** | {canonical_recall:.1f}% ({canonical_matched}/{metrics['total_critical']}) |",
-    ]
+    ])
 
     if metrics.get("non_speech_recall") is not None:
         lines.append(
