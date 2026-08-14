@@ -7,8 +7,12 @@ from pathlib import Path
 
 import pytest
 
+import deafbench.dependency_security as dependency_security
 from deafbench.dependency_security import (
     DependencyDispositionError,
+    _external_lane,
+    _open_asr_stack,
+    _validate_reviewed_hashes,
     load_dependency_dispositions,
     validate_dependency_disposition,
     verify_dependency_disposition_snapshot,
@@ -67,13 +71,28 @@ def test_disposition_rejects_expired_review() -> None:
         )
 
 
+def test_disposition_rejects_non_mapping_record() -> None:
+    with pytest.raises(DependencyDispositionError, match="record"):
+        validate_dependency_disposition([])
+
+
 @pytest.mark.parametrize(
     ("path", "value", "message"),
     [
+        (("schema_version",), 2, "schema"),
+        (("alert_number",), 99, "alert"),
+        (("package",), "torchaudio", "package or manifest"),
         (("status",), "fixed", "status"),
         (("dependency_scope",), "runtime", "scope"),
+        (("installed_version",), "2.10.0", "installed version"),
+        (("advisory", "ghsa"), "GHSA-invalid", "advisory"),
+        (("reviewed_utc",), 20260813, "reviewed_utc"),
+        (("reviewed_utc",), "not-a-date", "reviewed_utc"),
         (("reachability", "first_party"), True, "reachability"),
+        (("model", "id"), "different/model", "model"),
         (("model", "revision"), "0" * 40, "revision"),
+        (("model", "audit_resource"), "other.json", "audit resource"),
+        (("compatible_stack", "torch"), "2.10.0", "compatible stack"),
         (("review_by",), "2026-11-14", "deadline"),
     ],
 )
@@ -88,6 +107,65 @@ def test_disposition_rejects_changed_security_boundary(
 
     with pytest.raises(DependencyDispositionError, match=message):
         validate_dependency_disposition(payload, today=date(2026, 8, 13))
+
+
+def test_open_asr_stack_rejects_unavailable_lock(tmp_path: Path) -> None:
+    with pytest.raises(DependencyDispositionError, match="unavailable"):
+        _open_asr_stack(tmp_path / "missing.lock")
+
+
+def test_open_asr_stack_rejects_incomplete_abi_lock(tmp_path: Path) -> None:
+    lock_path = tmp_path / "requirements.lock.txt"
+    lock_path.write_text(
+        "torch @ https://example.invalid/torch-2.6.0%2Bcu124-cp311.whl\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(DependencyDispositionError, match="incomplete"):
+        _open_asr_stack(lock_path)
+
+
+def test_registry_rejects_missing_reviewed_hashes() -> None:
+    with pytest.raises(DependencyDispositionError, match="source hashes"):
+        _validate_reviewed_hashes({"reviewed_source_sha256": {}})
+
+
+def test_registry_rejects_missing_external_lane() -> None:
+    with pytest.raises(DependencyDispositionError, match="external"):
+        _external_lane({})
+
+
+@pytest.mark.parametrize(
+    ("records", "message"),
+    [
+        (None, "collection"),
+        ([_DISPOSITION], "incomplete"),
+        ([_DISPOSITION, _DISPOSITION], "duplicate"),
+    ],
+)
+def test_registry_rejects_incomplete_disposition_sets(
+    monkeypatch: pytest.MonkeyPatch,
+    records: object,
+    message: str,
+) -> None:
+    monkeypatch.setattr(
+        dependency_security,
+        "_load_registry",
+        lambda: {"dispositions": deepcopy(records)},
+    )
+    monkeypatch.setattr(
+        dependency_security,
+        "_validate_reviewed_hashes",
+        lambda payload: None,
+    )
+    monkeypatch.setattr(
+        dependency_security,
+        "_external_lane",
+        lambda payload: {},
+    )
+
+    with pytest.raises(DependencyDispositionError, match=message):
+        load_dependency_dispositions(today=date(2026, 8, 13))
 
 
 def test_granite_nar_stack_matches_disposition() -> None:
