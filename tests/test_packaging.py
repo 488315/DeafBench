@@ -37,6 +37,15 @@ def test_project_uses_spdx_license_metadata() -> None:
     assert metadata["project"]["license-files"] == ["LICENSE"]
 
 
+def test_whisper_at_docs_do_not_downgrade_setuptools() -> None:
+    readme = (Path(__file__).resolve().parents[1] / "README.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'pip install "setuptools<81"' not in readme
+    assert "Whisper-AT is not currently installable" in readme
+
+
 def test_wheel_discovery_excludes_nonruntime_trees() -> None:
     pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
     metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))

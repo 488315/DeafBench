@@ -241,18 +241,19 @@ python -m pip install "deafbench[benchmark]"
 # Core v1 with OpenAI Whisper
 python -m pip install -U openai-whisper
 deafbench benchmark core-v1 --model whisper
-
-# Non-speech v1 with Whisper-AT on Windows
-python -m pip install numba numpy torch tqdm more-itertools tiktoken==0.13.0
-python -m pip install "setuptools<81"
-python -m pip install --no-build-isolation --no-deps "whisper-at @ git+https://github.com/YuanGongND/whisper-at.git@17d94d6acd53866390ce70f95afa13507dcb8aef#subdirectory=package/whisper-at"
-deafbench benchmark non-speech-v1 --model whisper-at
 ```
 
+Whisper-AT is not currently installable in DeafBench's hardened setuptools
+83-or-newer environment. Its pinned upstream installer imports `pkg_resources`,
+which setuptools removed, and the previous workaround downgraded setuptools to
+a vulnerable release. The existing frozen Whisper-AT evidence and adapter stay
+available for review, but do not create new Whisper-AT runs until a compatible
+upstream packaging revision is pinned.
+
 The `benchmark` extra installs WhisperSpeech and the audio dependencies used to
-build synthetic scenes. OpenAI Whisper and Whisper-AT are separate inference
-backends, so install the backend shown immediately before its benchmark command.
-The extra does not install either inference backend.
+build synthetic scenes. OpenAI Whisper is a separate inference backend, so
+install it before its benchmark command. The extra does not install inference
+backends.
 
 Two additional local models use the Faster-Whisper runtime. For existing human
 audio, install the local-model extra. Synthetic runs also need the benchmark
