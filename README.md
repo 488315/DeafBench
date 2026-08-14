@@ -269,7 +269,7 @@ python -m pip install -e ".[benchmark,local-models]"
 python -m deafbench benchmark core-v1 --model faster-whisper --audio-source synthetic --repo-root .
 
 # Distilled comparison; downloads the pinned CTranslate2 repository on first use.
-deafbench benchmark synthetic-v2 --model distil-whisper --audio-source existing --repo-root .
+deafbench benchmark synthetic-v2 --model distil-whisper --audio-source synthetic --repo-root .
 ```
 
 Both default to CPU INT8 so they work without an NVIDIA GPU. Faster-Whisper
