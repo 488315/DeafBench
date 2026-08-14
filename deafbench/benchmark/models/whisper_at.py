@@ -190,6 +190,7 @@ def run_whisper_at(
     _validate_time_resolution(at_time_res)
     wav_paths = _validated_wavs(audio_dir, references)
     if backend is None:
+        runtime = _load_backend()
         import torch
 
         get_model_license(UPSTREAM_MODEL_ID)
@@ -197,7 +198,6 @@ def run_whisper_at(
             os.getenv("XDG_CACHE_HOME", str(Path.home() / ".cache"))
         ) / "whisper"
         _prepare_pinned_checkpoints(cache_root)
-        runtime = _load_backend()
         device = "cuda" if torch.cuda.is_available() else "cpu"
         if device == "cuda":
             torch.cuda.reset_peak_memory_stats()
