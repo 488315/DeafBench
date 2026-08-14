@@ -49,6 +49,8 @@ def test_normalized_metrics_reject_empty_normalized_references() -> None:
         ([], [], "at least one"),
         (["one"], [], "same length"),
         (["one"], [1], "strings"),
+        ("one", ["one"], "sequences of strings"),
+        (["one"], "one", "sequences of strings"),
     ],
 )
 def test_conventional_metrics_reject_invalid_corpora(
