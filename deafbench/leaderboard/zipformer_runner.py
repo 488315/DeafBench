@@ -11,6 +11,8 @@ import subprocess
 import sys
 import time
 
+from deafbench.dependency_security import load_dependency_dispositions
+
 from .official import open_asr_evaluator
 from .policy import verify_evaluation_policy
 from .zipformer import PinnedZipformerContract
@@ -117,6 +119,7 @@ def _require_source(
 
 def run(args: argparse.Namespace) -> dict[str, float]:
     """Execute one pinned dataset/split using the official Space runner."""
+    load_dependency_dispositions()
     runner_repo = Path(args.runner_repo).resolve()
     evaluator_repo = Path(args.official_repo).resolve()
     icefall_repo = Path(args.icefall_repo).resolve()

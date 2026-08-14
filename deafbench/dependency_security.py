@@ -22,6 +22,27 @@ _ADVISORIES = {
     15: ("GHSA-qfhq-4f3w-5fph", "CVE-2025-3001", ("torch.lstm_cell",)),
     16: ("GHSA-rrmf-rvhw-rf47", "CVE-2025-3000", ("torch.jit.script",)),
 }
+_OPEN_ASR_LANE = {
+    "name": "open-asr-zipformer",
+    "runner_revision": "64c698c42932a54bc7a40a7f172d03c8c4838fe6",
+    "icefall_revision": "3f848bb6d0acc970c9b294a30ca0a04a7c9c78d1",
+    "compatible_stack": {
+        "torch": "2.6.0",
+        "torchaudio": "2.6.0",
+        "k2": "1.24.4.dev20250130+cuda12.4.torch2.6.0",
+    },
+    "reachability": {
+        "torch.lstm_cell": "absent_from_pinned_evaluation_path",
+        "torch.jit.script": "present_only_in_non_evaluation_tools",
+    },
+    "non_evaluation_affected_files": [
+        "egs/librispeech/ASR/zipformer/export-onnx.py",
+        "egs/librispeech/ASR/zipformer/export-onnx-streaming.py",
+        "egs/librispeech/ASR/zipformer/export-streaming-as-non-streaming-onnx.py",
+        "egs/librispeech/ASR/zipformer/export.py",
+        "egs/librispeech/ASR/zipformer/scaling_converter.py",
+    ],
+}
 _SHA256 = re.compile(r"[0-9a-f]{64}")
 
 
@@ -132,6 +153,12 @@ def _validate_reviewed_hashes(payload: Mapping[str, Any]) -> None:
         raise DependencyDispositionError("reviewed source differs from remote-code audit")
 
 
+def _validate_external_lanes(payload: Mapping[str, Any]) -> None:
+    lanes = payload.get("external_lanes")
+    if lanes != [_OPEN_ASR_LANE]:
+        raise DependencyDispositionError("invalid external dependency lane")
+
+
 def load_dependency_dispositions(
     *, today: date | None = None
 ) -> tuple[DependencyDisposition, ...]:
@@ -145,6 +172,7 @@ def load_dependency_dispositions(
     if root.get("schema_version") != 1:
         raise DependencyDispositionError("unsupported disposition registry schema")
     _validate_reviewed_hashes(root)
+    _validate_external_lanes(root)
     records = root.get("dispositions")
     if not isinstance(records, Sequence) or isinstance(records, (str, bytes)):
         raise DependencyDispositionError("invalid disposition collection")

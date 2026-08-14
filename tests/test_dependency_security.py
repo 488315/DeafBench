@@ -130,6 +130,30 @@ def test_disposition_audit_hashes_match_remote_code_audit() -> None:
     }
 
 
+def test_open_asr_lane_binds_exact_abi_and_source_revisions() -> None:
+    payload = json.loads(
+        (_ROOT / "deafbench" / "dependency-risk-dispositions.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    lane = payload["external_lanes"][0]
+
+    assert lane["runner_revision"] == (
+        "64c698c42932a54bc7a40a7f172d03c8c4838fe6"
+    )
+    assert lane["icefall_revision"] == (
+        "3f848bb6d0acc970c9b294a30ca0a04a7c9c78d1"
+    )
+    assert lane["compatible_stack"] == {
+        "torch": "2.6.0",
+        "torchaudio": "2.6.0",
+        "k2": "1.24.4.dev20250130+cuda12.4.torch2.6.0",
+    }
+    assert lane["reachability"]["torch.jit.script"] == (
+        "present_only_in_non_evaluation_tools"
+    )
+
+
 def _snapshot_audit(tmp_path: Path, source: str) -> RemoteCodeAudit:
     source_path = tmp_path / "modeling.py"
     source_path.write_text(source, encoding="utf-8")
