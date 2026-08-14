@@ -47,6 +47,18 @@ def test_whisper_at_docs_do_not_downgrade_setuptools() -> None:
     assert "setuptools 83 or newer" in readme
 
 
+def test_whisper_at_ci_exercises_exact_setuptools_floor() -> None:
+    root = Path(__file__).resolve().parents[1]
+    workflow = root.joinpath(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    constraint = root.joinpath(
+        ".github/build-constraints/whisper-at-setuptools83.txt"
+    ).read_text(encoding="utf-8")
+
+    assert constraint.strip() == "setuptools==83.0.0"
+    assert "PIP_BUILD_CONSTRAINT" in workflow
+    assert "Install pinned Whisper-AT source normally" in workflow
+
+
 def test_wheel_discovery_excludes_nonruntime_trees() -> None:
     pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
     metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))

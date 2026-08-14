@@ -37,7 +37,13 @@ jobs:
           python -m pip install --upgrade pip "setuptools==83.0.0"
           python -m pip install ".[test]"
 
-      - name: Install pinned Whisper-AT source
+      - name: Verify setuptools 83 isolated build
+        env:
+          PIP_BUILD_CONSTRAINT: >-
+            ${{ github.workspace }}\.github\build-constraints\whisper-at-setuptools83.txt
+        run: python -m deafbench.whisper_at_compat
+
+      - name: Install pinned Whisper-AT source normally
         run: python -m deafbench.whisper_at_compat
 
       - name: Verify backend import and adapter discovery
