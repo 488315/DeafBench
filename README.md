@@ -329,7 +329,11 @@ Reports keep critical-information scoring in two separate views. Strict lexical
 recall measures the expected surface form; canonical semantic recall applies
 only the normalization allowed by an entity's explicit type, such as TIME or
 DIGIT_SEQUENCE. Reports also include per-sample WER and aggregate substitution,
-insertion, and deletion counts.
+insertion, and deletion counts. Conventional transcription output now names
+orthographic and normalized WER and CER separately and records the normalization
+policy. The exact aggregation, normalization, RTFx, and leaderboard boundaries
+are documented in
+[`docs/asr-evaluation-methodology.md`](docs/asr-evaluation-methodology.md).
 
 ### Usage
 
