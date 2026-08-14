@@ -199,8 +199,8 @@ def _open_asr_stack(lock_path: Path) -> dict[str, str]:
     if set(versions) != {"torch", "torchaudio", "k2"}:
         raise DependencyDispositionError("Open-ASR ABI stack is incomplete")
     return {
-        "torch": versions["torch"].split("+", maxsplit=1)[0],
-        "torchaudio": versions["torchaudio"].split("+", maxsplit=1)[0],
+        "torch": versions["torch"],
+        "torchaudio": versions["torchaudio"],
         "k2": versions["k2"],
     }
 
