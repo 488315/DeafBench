@@ -66,6 +66,9 @@ def test_packaged_model_registry_is_valid() -> None:
     ark_onnx = models_by_id["AutoArk-AI/ark-asr-0.6b-int8-onnx"]
     assert "transformers>=5.5.0,<6" in ark_onnx.supported_runtimes
 
+    granite = models_by_id["ibm-granite/granite-speech-4.1-2b"]
+    assert "transformers>=5.13.0,<6" in granite.supported_runtimes
+
 
 def test_packaged_apache_license_matches_canonical_bytes() -> None:
     license_bytes = files("deafbench").joinpath(
