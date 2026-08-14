@@ -501,6 +501,17 @@ Supported generated events are `[alarm]`, `[door closes]`, `[phone rings]`, `[kn
 
 ---
 
+## Contributing and security
+
+Start with [`CONTRIBUTING.md`](CONTRIBUTING.md) before changing an evaluator,
+adapter, benchmark, or customer-run audit boundary. Use
+[`SECURITY.md`](SECURITY.md) and GitHub's
+[private security-advisory interface](https://github.com/488315/DeafBench/security/advisories/new)
+for suspected vulnerabilities; do not put customer audio, transcripts,
+credentials, or other sensitive content in a public issue.
+
+---
+
 ## Citation
 
 GitHub can generate a citation from [`CITATION.cff`](CITATION.cff). The file
