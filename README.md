@@ -368,14 +368,10 @@ The helper uses Whisper `turbo` in English and writes predictions into the selec
 
 Model B uses [Whisper-AT](https://github.com/YuanGongND/whisper-at) to keep speech recognition and audio-event tagging in one run. DeafBench stores the ASR transcript in `text`, mapped benchmark sound events in `sounds`, and the original Whisper-AT AudioSet labels in `audio_tags`. Keeping sound labels out of `text` means environmental-sound scoring does not change the speech WER.
 
-Whisper-AT documents this Windows installation workaround:
-
-```powershell
-python -m pip install numba numpy torch tqdm more-itertools tiktoken==0.3.3
-python -m pip install --no-deps whisper-at
-```
-
-Whisper-AT also requires `ffmpeg`. Check the upstream Whisper-AT README if its installation requirements change.
+Install Whisper-AT with the exact revision and dependency versions in the
+[automated benchmark workflow](#automated-benchmark-workflow) above. Do not
+replace that command with an unpinned PyPI installation when reproducing the
+recorded evidence. Whisper-AT also requires `ffmpeg` on `PATH`.
 
 Generate Model B predictions for both current benchmarks:
 
