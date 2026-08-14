@@ -7,7 +7,8 @@
 
 [Website](https://488315.github.io/products/deafbench/) ·
 [Latest release](https://github.com/488315/DeafBench/releases/latest) ·
-[PyPI](https://pypi.org/project/deafbench/)
+[PyPI](https://pypi.org/project/deafbench/) ·
+[Hugging Face benchmark metadata](https://huggingface.co/datasets/kvjones0243/deafbench-synthetic-v2)
 
 I wrote DeafBench because I am Deaf, I use cochlear implants, and the normal
 ASR score does not always describe whether captions are useful to me. Word
