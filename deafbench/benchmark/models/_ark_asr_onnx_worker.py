@@ -70,6 +70,7 @@ def _validated_wav_paths(payload: Mapping[str, Any]) -> tuple[Path, ...]:
 
 
 def _link_file(source: Path, destination: Path) -> None:
+    source = source.resolve(strict=True)
     try:
         os.link(source, destination)
     except OSError:
