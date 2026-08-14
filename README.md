@@ -150,6 +150,43 @@ cd DeafBench
 pip install -e .
 ```
 
+### Customer-run accessibility audit
+
+The founding-pilot workflow runs on the customer's authorized computer. Raw
+audio, transcripts, filenames, paths, and critical-information values are not
+customer-export artifacts. Install the signing dependency and inspect the
+supported local actions:
+
+```powershell
+python -m pip install "deafbench[zero-custody-pilot]"
+deafbench audit --help
+```
+
+Run the synthetic rehearsal before evaluating authorized, non-sensitive
+audio:
+
+```powershell
+deafbench audit rehearse `
+  --repo-root . `
+  --output-dir .\rehearsal-export `
+  --signing-key C:\secure-local-path\deafbench-signing-key.pem
+```
+
+The customer-local evaluation and aggregate export are one command:
+
+```powershell
+deafbench audit run `
+  --repo-root . `
+  --case-root C:\customer-controlled\deafbench-case `
+  --attestation C:\customer-controlled\execution-attestation.json `
+  --output-dir C:\customer-controlled\deafbench-export `
+  --signing-key C:\secure-local-path\deafbench-signing-key.pem
+```
+
+The signing key and all customer artifacts stay on the customer's computer.
+The export is labelled customer-executed and environment-dependent; it is not
+a certification or a Hugging Face leaderboard result.
+
 ### Automated benchmark workflow
 
 Install the default synthetic-audio runtime, then run a complete benchmark:

@@ -78,6 +78,13 @@ def _run_benchmark(benchmark_args: list[str]) -> int:
     return benchmark_main(benchmark_args)
 
 
+def _run_audit(audit_args: list[str]) -> int:
+    """Lazy-load and run the customer-local audit workflow."""
+    from .pilot.cli import main as audit_main
+
+    return audit_main(audit_args, prog="deafbench audit")
+
+
 def _build_recorder_args(parsed: argparse.Namespace) -> list[str]:
     recorder_args = ["--dataset", parsed.dataset]
     for option, value in (
@@ -91,6 +98,10 @@ def _build_recorder_args(parsed: argparse.Namespace) -> list[str]:
 
 
 def main(args: Optional[List[str]] = None) -> int | None:
+    arguments = list(args) if args is not None else sys.argv[1:]
+    if arguments[:1] == ["audit"]:
+        return _run_audit(arguments[1:])
+
     parser = argparse.ArgumentParser(
         prog="deafbench",
         description="DeafBench: Accessibility-focused evaluation for AI captions and ASR systems."
@@ -147,9 +158,14 @@ def main(args: Optional[List[str]] = None) -> int | None:
     benchmark_parser.add_argument("--scene-profile", default="default-v1")
     benchmark_parser.add_argument("--seed", type=int, default=42)
 
+    subparsers.add_parser(
+        "audit",
+        help="Run or verify a customer-local zero-custody audit.",
+    )
+
     add_leaderboard_parser(subparsers)
     
-    parsed = parser.parse_args(args)
+    parsed = parser.parse_args(arguments)
 
     if parsed.command == "recorder":
         return _run_recorder(_build_recorder_args(parsed))

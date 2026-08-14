@@ -20,11 +20,12 @@ def _result(value: object) -> str:
 def main(
     argv: Sequence[str] | None = None,
     *,
+    prog: str = "python -m deafbench.pilot.cli",
     rehearsal_runner: Callable[..., RehearsalResult] = run_synthetic_rehearsal,
     audit_runner: Callable[..., CustomerAuditResult] = run_customer_audit,
     exporter: Callable[..., CustomerExportResult] = create_customer_export,
 ) -> int:
-    parser = argparse.ArgumentParser(prog="python -m deafbench.pilot.cli")
+    parser = argparse.ArgumentParser(prog=prog)
     actions = parser.add_subparsers(dest="action", required=True)
 
     rehearse = actions.add_parser("rehearse")
@@ -39,12 +40,13 @@ def main(
     export.add_argument("--output-dir", type=Path, required=True)
     export.add_argument("--signing-key", type=Path, required=True)
 
-    audit = actions.add_parser("audit")
-    audit.add_argument("--repo-root", type=Path, required=True)
-    audit.add_argument("--case-root", type=Path, required=True)
-    audit.add_argument("--attestation", type=Path, required=True)
-    audit.add_argument("--output-dir", type=Path, required=True)
-    audit.add_argument("--signing-key", type=Path, required=True)
+    for name in ("run", "audit"):
+        audit = actions.add_parser(name)
+        audit.add_argument("--repo-root", type=Path, required=True)
+        audit.add_argument("--case-root", type=Path, required=True)
+        audit.add_argument("--attestation", type=Path, required=True)
+        audit.add_argument("--output-dir", type=Path, required=True)
+        audit.add_argument("--signing-key", type=Path, required=True)
 
     args = parser.parse_args(argv)
     if args.action == "rehearse":

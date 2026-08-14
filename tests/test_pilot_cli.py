@@ -122,7 +122,9 @@ def test_export_cli_fails_before_export_when_attestation_is_unsafe(
     assert called is False
 
 
+@pytest.mark.parametrize("action", ["run", "audit"])
 def test_audit_cli_evaluates_then_exports_local_case(
+    action: str,
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     calls = []
@@ -138,7 +140,7 @@ def test_audit_cli_evaluates_then_exports_local_case(
 
     assert main(
         [
-            "audit",
+            action,
             "--repo-root",
             str(tmp_path / "repo"),
             "--case-root",
