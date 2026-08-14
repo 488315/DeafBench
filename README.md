@@ -43,17 +43,21 @@ the commercial foundation without separate permission.
 
 ## Install and run in 30 seconds
 
-Install the current PyPI release and compare the included reference captions
-with one prediction file:
+Install the current PyPI release, download the two public example files from
+the matching `v0.2.1` tag, and compare them:
 
 ```bash
 python -m pip install deafbench
-deafbench compare examples/references.jsonl examples/model-a.jsonl
+curl -LO https://raw.githubusercontent.com/488315/DeafBench/v0.2.1/examples/references.jsonl
+curl -LO https://raw.githubusercontent.com/488315/DeafBench/v0.2.1/examples/model-a.jsonl
+deafbench compare references.jsonl model-a.jsonl
 ```
 
-The command reports orthographic and normalized WER/CER, strict and canonical
+The published v0.2.1 command reports its legacy WER label together with
 critical-information recall, edit counts, non-speech information, speaker
-attribution, and latency. Read the
+attribution, and latency. The current `main` branch adds separately named
+orthographic and normalized WER/CER fields for the next release; installing
+v0.2.1 from PyPI does not expose those new fields. Read the
 [`ASR evaluation methodology`](docs/asr-evaluation-methodology.md) for the
 normalization and aggregation contract, or continue to the separately labeled
 [model results](#results-for-all-integrated-models) and
