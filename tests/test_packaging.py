@@ -12,6 +12,15 @@ from packaging.version import Version
 _PACKAGING_TIMEOUT_SECONDS = 300
 
 
+def _workflow_job(name: str, next_name: str) -> str:
+    workflow = (
+        Path(__file__).resolve().parents[1] / ".github/workflows/ci.yml"
+    ).read_text(encoding="utf-8")
+    job_start = workflow.index(f"  {name}:\n")
+    job_end = workflow.index(f"\n  {next_name}:\n", job_start)
+    return workflow[job_start:job_end]
+
+
 def test_build_backend_requires_patched_setuptools() -> None:
     pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
     metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))
@@ -49,13 +58,10 @@ def test_whisper_at_docs_do_not_downgrade_setuptools() -> None:
 
 def test_whisper_at_ci_exercises_exact_setuptools_floor() -> None:
     root = Path(__file__).resolve().parents[1]
-    workflow = root.joinpath(".github/workflows/ci.yml").read_text(encoding="utf-8")
     constraint = root.joinpath(
         ".github/build-constraints/whisper-at-setuptools83.txt"
     ).read_text(encoding="utf-8")
-    job_start = workflow.index("  whisper-at:\n")
-    job_end = workflow.index("\n  ark-transformers:\n", job_start)
-    whisper_at_job = workflow[job_start:job_end]
+    whisper_at_job = _workflow_job("whisper-at", "ark-transformers")
 
     floor_start = whisper_at_job.index(
         "      - name: Verify setuptools 83 isolated build\n"
@@ -77,12 +83,7 @@ def test_whisper_at_ci_exercises_exact_setuptools_floor() -> None:
 
 
 def test_ark_ci_exercises_secure_transformers_floor() -> None:
-    workflow = (
-        Path(__file__).resolve().parents[1] / ".github/workflows/ci.yml"
-    ).read_text(encoding="utf-8")
-    job_start = workflow.index("  ark-transformers:\n")
-    job_end = workflow.index("\n  package:\n", job_start)
-    ark_job = workflow[job_start:job_end]
+    ark_job = _workflow_job("ark-transformers", "package")
 
     assert 'python -m pip install "transformers[torch]==5.5.0"' in ark_job
     assert 'python -m pip install ".[ark-onnx-asr,test]"' in ark_job
