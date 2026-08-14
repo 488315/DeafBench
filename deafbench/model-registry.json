@@ -179,6 +179,50 @@
       "notice_files": []
     },
     {
+      "model_id": "YuanGongND/whisper-at",
+      "revision": "17d94d6acd53866390ce70f95afa13507dcb8aef",
+      "upstream_url": "https://github.com/YuanGongND/whisper-at",
+      "spdx_license": "BSD-2-Clause",
+      "commercial_use": "commercial_permitted",
+      "attribution_requirements": [
+        "Retain the BSD-2-Clause copyright notice, conditions, and disclaimer in source redistributions and reproduce them in binary-distribution documentation or other materials."
+      ],
+      "redistribution_restrictions": [
+        "Retain or reproduce the BSD-2-Clause notice, conditions, and disclaimer as required by the distribution form."
+      ],
+      "remote_code_required": false,
+      "supported_languages": ["en"],
+      "parameter_count": 789589519,
+      "expected_weight_size_bytes": 1630947314,
+      "tested_peak_vram_bytes": null,
+      "supported_runtimes": ["whisper-at==0.5", "torch"],
+      "intended_lane": "commercial_candidate",
+      "license_files": ["licenses/BSD-2-Clause-Whisper-AT.txt"],
+      "notice_files": []
+    },
+    {
+      "model_id": "Systran/faster-distil-whisper-large-v3",
+      "revision": "c3058b475261292e64a0412df1d2681c06260fab",
+      "upstream_url": "https://huggingface.co/Systran/faster-distil-whisper-large-v3",
+      "spdx_license": "MIT",
+      "commercial_use": "commercial_permitted",
+      "attribution_requirements": [
+        "Include the MIT copyright and permission notice in substantial copies or distributions of the model."
+      ],
+      "redistribution_restrictions": [
+        "Include the MIT copyright and permission notice with substantial copies or distributions."
+      ],
+      "remote_code_required": false,
+      "supported_languages": ["en"],
+      "parameter_count": 756000000,
+      "expected_weight_size_bytes": 1516482645,
+      "tested_peak_vram_bytes": null,
+      "supported_runtimes": ["faster-whisper>=1.2.1,<2.0.0"],
+      "intended_lane": "commercial_candidate",
+      "license_files": ["licenses/MIT-Whisper.txt"],
+      "notice_files": []
+    },
+    {
       "model_id": "soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M",
       "revision": "d410fb15a71cbf87ec5e0a860356563deb9d8f01",
       "upstream_url": "https://huggingface.co/soundsgoodai/Zipformer-cr-ctc-transducer-XL-290M",

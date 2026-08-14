@@ -40,19 +40,22 @@ claim. The exact upstream revisions, commands, and evidence are in
 
 ## Models that work with DeafBench
 
-The models below have working adapters in this repository. The seven newer
-adapters have completed a 25-sample synthetic-v2 run and a two-row public
-real-speech smoke run, with byte-stable local result manifests under
-`experiments/model-results`. A smoke run proves that the pinned adapter executes
-and produces a valid result; it does not prove model quality or a leaderboard
-score.
+The models below have working adapters in this repository. Nine newer adapters
+have recorded local observations for a 25-sample synthetic-v2 run and a two-row
+public real-speech smoke run. Their byte-stable metadata manifests are under
+`experiments/model-results`, but the sample-level predictions and run artifacts
+are not published in this checkout, so these values cannot be independently
+recomputed from the repository alone. A smoke observation shows that the pinned
+adapter executed in the recorded environment; it does not prove model quality
+or a leaderboard score. OpenAI Whisper `turbo` remains legacy report evidence
+only and does not have one of these newer manifests.
 
 | DeafBench model name | Pinned model | Current evidence | License lane |
 | --- | --- | --- | --- |
 | `whisper` | OpenAI Whisper `turbo` | Core v1 and non-speech v1 reports | Runtime model; review upstream terms |
-| `whisper-at` | Whisper-AT `medium.en` | Adapter and benchmark workflow | Research integration; review upstream terms |
+| `whisper-at` | Whisper-AT `medium.en` | Synthetic-v2, real-speech smoke, and non-speech-v1 | Commercial candidate, BSD-2-Clause |
 | `faster-whisper` | `Systran/faster-whisper-small.en` | Frozen Core v1 baseline | Runtime model; review upstream terms |
-| `distil-whisper` | `distil-whisper/distil-large-v3` | Adapter and local runner | Runtime model; review upstream terms |
+| `distil-whisper` | `Systran/faster-distil-whisper-large-v3` | Synthetic-v2 plus real-speech smoke | Commercial candidate, MIT |
 | `qwen3-asr-0.6b` | `Qwen/Qwen3-ASR-0.6B-hf` | Synthetic-v2 plus real-speech smoke | Commercial candidate, Apache-2.0 |
 | `qwen3-asr-1.7b` | `Qwen/Qwen3-ASR-1.7B-hf` | Synthetic-v2 plus real-speech smoke | Commercial candidate, Apache-2.0 |
 | `parakeet-tdt-0.6b-v2` | `nvidia/parakeet-tdt-0.6b-v2` | Synthetic-v2 plus real-speech smoke | Commercial candidate, CC-BY-4.0 attribution required |
@@ -78,6 +81,8 @@ quality. Core v1 and Non-speech v1 are earlier, separately frozen benchmarks.
 
 | Model | WER | Strict lexical recall | Canonical semantic recall | Local RTFx | Peak VRAM |
 | --- | ---: | ---: | ---: | ---: | ---: |
+| Distil-Whisper large-v3 | 23.8% | 66.1% | 91.9% | 0.80 | CPU |
+| Whisper-AT `medium.en` | 26.2% | 67.7% | 96.8% | 7.34 | 4.46 GiB |
 | Qwen3-ASR 0.6B | 26.6% | 67.7% | 90.3% | 10.47 | 1.52 GiB |
 | Qwen3-ASR 1.7B | 21.0% | 67.7% | 91.9% | 9.89 | 3.86 GiB |
 | Parakeet TDT 0.6B v2 | 22.7% | 64.5% | 91.9% | 71.23 | 4.67 GiB |
@@ -90,6 +95,8 @@ quality. Core v1 and Non-speech v1 are earlier, separately frozen benchmarks.
 
 | Model | WER | Local RTFx | Peak VRAM |
 | --- | ---: | ---: | ---: |
+| Distil-Whisper large-v3 | 1.73% | 3.27 | CPU |
+| Whisper-AT `medium.en` | 1.73% | 11.19 | 4.46 GiB |
 | Qwen3-ASR 0.6B | 2.31% | 12.27 | 1.72 GiB |
 | Qwen3-ASR 1.7B | 1.16% | 12.43 | 4.05 GiB |
 | Parakeet TDT 0.6B v2 | 2.31% | 91.85 | 4.67 GiB |
@@ -98,10 +105,12 @@ quality. Core v1 and Non-speech v1 are earlier, separately frozen benchmarks.
 | ARK-ASR 0.6B | 2.89% | 7.49 | 2.29 GiB |
 | ARK-ASR 0.6B INT8 ONNX | 2.89% | 3.01 | CPU |
 
-The byte-stable evidence for both tables is in
-[`experiments/model-results`](experiments/model-results). These are local RTX
-4070 measurements except for the CPU ONNX row. The two-row smoke results are
-not the seven-dataset macro-average and are not Hugging Face verified.
+The byte-stable metadata records for both tables are in
+[`experiments/model-results`](experiments/model-results). They are recorded
+local observations, not independently recomputable evidence, because their
+sample-level artifacts are not in this checkout. GPU rows are local RTX 4070
+measurements, and CPU rows are labeled separately. The two-row smoke results
+are not the seven-dataset macro-average and are not Hugging Face verified.
 
 ### Earlier model evidence
 
@@ -110,8 +119,7 @@ not the seven-dataset macro-average and are not Hugging Face verified.
 | OpenAI Whisper `turbo` | Core v1, 25 samples | 23.4% WER; 88.7% legacy critical-information recall |
 | OpenAI Whisper `turbo` | Non-speech v1, 12 samples | 2.0% WER; 95.0% legacy critical-information recall; 0.0% non-speech recall |
 | Faster-Whisper `small.en` | Frozen Core v1 synthetic baseline, 25 samples | 26.2% WER; 69.4% strict lexical recall; 90.3% canonical semantic recall |
-| Whisper-AT `medium.en` | Adapter and benchmark workflow | No completed result committed |
-| Distil-Whisper `large-v3` | Adapter and local runner | No completed result committed |
+| Whisper-AT `medium.en` | Non-speech v1, 12 samples | 2.0% WER; 95.0% strict and canonical critical recall; 0 of 19 expected sound events matched |
 
 The OpenAI Whisper reports are
 [`benchmarks/core-v1/model-a-report.md`](benchmarks/core-v1/model-a-report.md)
@@ -235,8 +243,9 @@ python -m pip install -U openai-whisper
 deafbench benchmark core-v1 --model whisper
 
 # Non-speech v1 with Whisper-AT on Windows
-python -m pip install numba numpy torch tqdm more-itertools tiktoken==0.3.3
-python -m pip install --no-deps whisper-at
+python -m pip install numba numpy torch tqdm more-itertools tiktoken==0.13.0
+python -m pip install "setuptools<81"
+python -m pip install --no-build-isolation --no-deps "whisper-at @ git+https://github.com/YuanGongND/whisper-at.git@17d94d6acd53866390ce70f95afa13507dcb8aef#subdirectory=package/whisper-at"
 deafbench benchmark non-speech-v1 --model whisper-at
 ```
 
@@ -259,15 +268,15 @@ python -m pip install -e ".[benchmark,local-models]"
 # CPU-friendly INT8 baseline; downloads small.en on first use.
 python -m deafbench benchmark core-v1 --model faster-whisper --audio-source synthetic --repo-root .
 
-# Distilled comparison; downloads distil-large-v3 on first use.
-deafbench benchmark core-v1 --model distil-whisper
+# Distilled comparison; downloads the pinned CTranslate2 repository on first use.
+deafbench benchmark synthetic-v2 --model distil-whisper --audio-source synthetic --repo-root .
 ```
 
 Both default to CPU INT8 so they work without an NVIDIA GPU. Faster-Whisper
-uses `small.en`; Distil-Whisper uses the upstream-documented
-`distil-large-v3` checkpoint with previous-text conditioning disabled. The
-Faster-Whisper runtime decodes audio through PyAV, so these two models do not
-need a separate system FFmpeg installation.
+uses `small.en`; Distil-Whisper pins
+`Systran/faster-distil-whisper-large-v3` with previous-text conditioning
+disabled. The Faster-Whisper runtime decodes audio through PyAV, so these two
+models do not need a separate system FFmpeg installation.
 
 With the default `--audio-source auto` policy, DeafBench selects one complete
 source for the whole run:
@@ -359,14 +368,10 @@ The helper uses Whisper `turbo` in English and writes predictions into the selec
 
 Model B uses [Whisper-AT](https://github.com/YuanGongND/whisper-at) to keep speech recognition and audio-event tagging in one run. DeafBench stores the ASR transcript in `text`, mapped benchmark sound events in `sounds`, and the original Whisper-AT AudioSet labels in `audio_tags`. Keeping sound labels out of `text` means environmental-sound scoring does not change the speech WER.
 
-Whisper-AT documents this Windows installation workaround:
-
-```powershell
-python -m pip install numba numpy torch tqdm more-itertools tiktoken==0.3.3
-python -m pip install --no-deps whisper-at
-```
-
-Whisper-AT also requires `ffmpeg`. Check the upstream Whisper-AT README if its installation requirements change.
+Install Whisper-AT with the exact revision and dependency versions in the
+[automated benchmark workflow](#automated-benchmark-workflow) above. Do not
+replace that command with an unpinned PyPI installation when reproducing the
+recorded evidence. Whisper-AT also requires `ffmpeg` on `PATH`.
 
 Generate Model B predictions for both current benchmarks:
 

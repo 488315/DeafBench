@@ -13,15 +13,11 @@
     }
   ],
   "decoding": {
-    "attn_implementation": "sdpa",
-    "audio_max_seconds": 30.0,
-    "device": "cuda",
-    "do_sample": false,
-    "dtype": "torch.float16",
-    "long_audio_strategy": "contiguous_30_second_chunks_without_overlap",
-    "max_new_tokens": 256,
-    "prompt": "Please transcribe this audio.",
-    "trust_remote_code": true
+    "beam_size": 5,
+    "compute_type": "int8",
+    "condition_on_previous_text": false,
+    "device": "cpu",
+    "language": "en"
   },
   "evaluations": [
     {
@@ -32,24 +28,19 @@
           "term": "192 dot 168 dot 1 dot 25"
         },
         {
-          "entity_type": "CODE",
-          "id": "core-010",
-          "term": "503"
-        },
-        {
           "entity_type": "UNCLASSIFIED",
-          "id": "core-013",
-          "term": "authentication failed"
-        },
-        {
-          "entity_type": "UNCLASSIFIED",
-          "id": "core-013",
-          "term": "three incorrect login attempts"
+          "id": "core-014",
+          "term": "Unreal Engine"
         },
         {
           "entity_type": "UNCLASSIFIED",
           "id": "core-018",
           "term": "security update"
+        },
+        {
+          "entity_type": "SSID",
+          "id": "core-019",
+          "term": "Office Guest"
         },
         {
           "entity_type": "CODE",
@@ -58,21 +49,21 @@
         }
       ],
       "evidence": {
-        "predictions_sha256": "ec6dd881ee67fb0ec33f76801566c930e9306b2bdf18935fa4123626a14a6e7a",
-        "report_sha256": "bc4fbcb760d7b30377e8ec51efd97747b4ef2eb1cb8ebb39eaad2da88078efda",
-        "run_metadata_sha256": "32d61f62091fba7d21d2be21f74de55b6dc1a8eb385592a7d1f72679849ec3a5"
+        "predictions_sha256": "b72851fe51156e69216de5abed799df1c68995eb3f8cc849314c6ce42f5a10b9",
+        "report_sha256": "86e8cd66880ebd8a99010454d5758115d1978986ab74481e28a4c51847586500",
+        "run_metadata_sha256": "85c6247b1ce9b5e0ea9853e00c30028b3a5ff2d98520674235246bd3f2b420c9"
       },
       "lane": "synthetic-v2",
       "metrics": {
-        "canonical_semantic_recall_percent": 90.3,
-        "deletions": 11,
-        "insertions": 27,
-        "local_rtfx": 14.845918964767062,
-        "median_latency_ms": 241.864075,
-        "peak_vram_bytes": 2361342464,
+        "canonical_semantic_recall_percent": 91.9,
+        "deletions": 28,
+        "insertions": 5,
+        "local_rtfx": 0.7950968696657275,
+        "median_latency_ms": 7045.378,
+        "peak_vram_bytes": 0,
         "strict_lexical_recall_percent": 66.1,
-        "substitutions": 48,
-        "wer_percent": 30.1
+        "substitutions": 35,
+        "wer_percent": 23.8
       },
       "sample_count": 25,
       "scope": "complete"
@@ -82,28 +73,28 @@
       "evidence": {
         "dataset_revision": "b6bdcd0beb34f8975dc659796176d88f43aff502",
         "official_evaluator_revision": "9585fc39bff55697a2ec1c5f13921b18812bfde8",
-        "official_manifest_sha256": "6015332d89f97be3dfd69d74defc45bede735d64dee0934336c37a115eb86448",
-        "predictions_sha256": "1701075e060e5c5ff08ee02b87800136ece11859c335ec364d30581cded2f0d9"
+        "official_manifest_sha256": "a585c8278f0c3462506688badcc204a39fc683bda883b11bb8b586635f7a069b",
+        "predictions_sha256": "b18fdcabf97c8de980bca5c2582460fc03a9891cc67ee0bc51e133cb2beae5d1"
       },
       "lane": "hugging-face-compatibility-smoke",
       "metrics": {
         "deletions": 0,
-        "insertions": 1,
-        "local_rtfx": 7.4855,
-        "median_latency_ms": 4599.886727,
-        "peak_vram_bytes": 2460302848,
-        "substitutions": 4,
-        "wer_percent": 2.89
+        "insertions": 0,
+        "local_rtfx": 3.269670625018443,
+        "median_latency_ms": 10530.877,
+        "peak_vram_bytes": 0,
+        "substitutions": 3,
+        "wer_percent": 1.7341040462427744
       },
       "sample_count": 2,
       "scope": "partial"
     }
   ],
-  "evaluator_revision": "f9e917b92ffa753090206d8f0c57f0f6b927fc09",
+  "evaluator_revision": "6f5b294c07a2d7b37094336cec8e01011556850b",
   "license_classification": "commercial_candidate",
   "model": {
-    "model_id": "AutoArk-AI/ARK-ASR-0.6B",
-    "revision": "45776b56d58cdfb2e2eb632f7e110f38684633e0"
+    "model_id": "Systran/faster-distil-whisper-large-v3",
+    "revision": "c3058b475261292e64a0412df1d2681c06260fab"
   },
   "schema_version": 1,
   "status": "smoke_complete",

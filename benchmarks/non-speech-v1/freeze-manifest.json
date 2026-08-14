@@ -1,0 +1,24 @@
+{
+  "artifacts": {
+    "required": {
+      "benchmarks/non-speech-v1/audio/ns-001.wav": "3fa5c58164edb7f60f539155e159381565e645e9335eb31ba8e901463901f482",
+      "benchmarks/non-speech-v1/audio/ns-002.wav": "fded2820b7f81006d7d0fe7ef7939ef5f000096369e1877e7b1329a460b773c6",
+      "benchmarks/non-speech-v1/audio/ns-003.wav": "061254f2b24c786a8bd026e2a09967dbcbf86390e9f4493d5d4eb0f42103f37c",
+      "benchmarks/non-speech-v1/audio/ns-004.wav": "5ce376d6f572936e0697b9e788a78517a5f711d587bd05d53f3f60e3d6854113",
+      "benchmarks/non-speech-v1/audio/ns-005.wav": "a9aa12a68f0c7228e5a74219c0c13d75b3a3c04a5ee3473f45a80f245d787351",
+      "benchmarks/non-speech-v1/audio/ns-006.wav": "b1251023932a499e58f8c73a60e3bab0644f939ad4a861c18c6cb47b4234af6f",
+      "benchmarks/non-speech-v1/audio/ns-007.wav": "d00082fd5bbe9e3836c891ab7a2546aa8661e624d4bb5baa6ef6a4a0a719a88f",
+      "benchmarks/non-speech-v1/audio/ns-008.wav": "fdf1b2039af6c654e88d06b3ae740d1a24a356c6277748eaf495b4b0d633b93c",
+      "benchmarks/non-speech-v1/audio/ns-009.wav": "325a631383eab73775859e7e140340370f829759cb02d1363e6d4d3b3a7787f8",
+      "benchmarks/non-speech-v1/audio/ns-010.wav": "9b40ddea846054048898ad471b1668a4fa0cd4d0e0400fd5a70b681f11e4f891",
+      "benchmarks/non-speech-v1/audio/ns-011.wav": "f9cfd9e687c71c5a170764b0e54499f0d8ab9504c227be43c4085e4ebe0e3937",
+      "benchmarks/non-speech-v1/audio/ns-012.wav": "db2d66573146ed5c81463fe943d8b6b8b0422801da9c134c49727813fedfb752",
+      "benchmarks/non-speech-v1/model-a-report.md": "e040305e94ffbdf99f8ba847b72a4aab034021ff2f31e3be07af2962b33f2b77",
+      "benchmarks/non-speech-v1/model-a.jsonl": "9cae1575ecf3be8a60af68eb274791c0ab06faf2491709c4e5ad27986d0be03c",
+      "benchmarks/non-speech-v1/references.jsonl": "f61b01dabbe8a42e31b7a5cbdc011984594c6447405fbb9b527eb6b0fe04b90f"
+    }
+  },
+  "corpus": "non-speech-v1",
+  "schema_version": 1,
+  "status": "frozen"
+}

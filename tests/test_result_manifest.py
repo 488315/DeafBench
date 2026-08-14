@@ -1,5 +1,6 @@
 import json
 from copy import deepcopy
+from pathlib import Path
 
 import pytest
 
@@ -55,6 +56,11 @@ _PAYLOAD = {
             "critical_failures": [],
         },
     ],
+    "verification": {
+        "status": "recorded_local_observation",
+        "sample_artifacts_in_repository": False,
+        "independently_recomputable_from_checkout": False,
+    },
     "claim_boundary": "Local compatibility smoke only.",
 }
 
@@ -75,6 +81,41 @@ def _customer_payload() -> dict:
     return payload
 
 
+def _non_speech_payload() -> dict:
+    payload = deepcopy(_PAYLOAD)
+    payload["status"] = "smoke_complete_with_non_speech"
+    payload["corpora"].append(
+        {
+            "name": "non-speech-v1",
+            "manifest_sha256": "c" * 64,
+            "frozen": True,
+        }
+    )
+    payload["evaluations"].append(
+        {
+            "lane": "non-speech-v1",
+            "scope": "complete",
+            "sample_count": 12,
+            "metrics": {
+                "wer_percent": 1.0,
+                "strict_lexical_recall_percent": 95.0,
+                "canonical_semantic_recall_percent": 95.0,
+                "substitutions": 2,
+                "insertions": 0,
+                "deletions": 0,
+                "non_speech_recall_percent": 0.0,
+                "matched_sound_events": 0,
+                "total_sound_events": 19,
+                "local_rtfx": 4.0,
+                "median_latency_ms": 5.0,
+                "peak_vram_bytes": 6,
+            },
+            "critical_failures": [],
+        }
+    )
+    return payload
+
+
 def test_result_manifest_requires_both_separate_tracks() -> None:
     payload = deepcopy(_PAYLOAD)
     payload["evaluations"].pop()
@@ -87,6 +128,28 @@ def test_result_manifest_accepts_complete_customer_audit() -> None:
     assert validate_result_manifest(_customer_payload())["status"] == (
         "customer_audit_complete"
     )
+
+
+def test_result_manifest_accepts_separate_non_speech_evidence() -> None:
+    assert validate_result_manifest(_non_speech_payload())["status"] == (
+        "smoke_complete_with_non_speech"
+    )
+
+
+def test_non_speech_result_requires_all_three_evaluation_lanes() -> None:
+    payload = _non_speech_payload()
+    payload["evaluations"].pop(0)
+
+    with pytest.raises(ResultManifestError, match="lanes do not match"):
+        validate_result_manifest(payload)
+
+
+def test_non_speech_result_rejects_inconsistent_sound_counts() -> None:
+    payload = _non_speech_payload()
+    payload["evaluations"][2]["metrics"]["matched_sound_events"] = 20
+
+    with pytest.raises(ResultManifestError, match="sound event counts"):
+        validate_result_manifest(payload)
 
 
 def test_customer_audit_manifest_rejects_extra_evaluation_lane() -> None:
@@ -127,15 +190,45 @@ def test_result_manifest_is_byte_stable() -> None:
     assert canonical_result_bytes(_PAYLOAD) == canonical_result_bytes(reordered)
 
 
+def test_whisper_at_result_manifest_is_valid_and_byte_stable() -> None:
+    path = (
+        Path(__file__).parents[1]
+        / "experiments"
+        / "model-results"
+        / "whisper-at-medium-en.json"
+    )
+    raw = path.read_bytes()
+    payload = json.loads(raw)
+
+    assert canonical_result_bytes(payload) == raw
+
+
 @pytest.mark.parametrize(
     ("mutation", "message"),
     [
         (lambda payload: payload.pop("claim_boundary"), "result manifest missing"),
+        (lambda payload: payload.pop("verification"), "result manifest missing"),
         (lambda payload: payload.update(schema_version=2), "unsupported"),
         (lambda payload: payload.update(schema_version=True), "unsupported"),
         (lambda payload: payload.update(status="draft"), "unsupported"),
         (lambda payload: payload.update(status=[]), "unsupported"),
         (lambda payload: payload.update(claim_boundary=""), "claim_boundary"),
+        (
+            lambda payload: payload["verification"].update(
+                sample_artifacts_in_repository=True
+            ),
+            "verification state",
+        ),
+        (
+            lambda payload: payload["verification"].update(
+                independently_recomputable_from_checkout=True
+            ),
+            "verification state",
+        ),
+        (
+            lambda payload: payload["verification"].update(status="verified"),
+            "verification state",
+        ),
         (lambda payload: payload.update(evaluator_revision="main"), "evaluator revision"),
         (lambda payload: payload.update(decoding=[]), "decoding must be an object"),
         (lambda payload: payload.update(corpora="synthetic-v2"), "corpora"),

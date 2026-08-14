@@ -167,15 +167,27 @@ def test_main_keeps_audio_tags_separate_from_asr_text(tmp_path, monkeypatch):
         return [{"audio tags": [("Speech", 2.0), ("Alarm", 1.5)]}]
 
     fake_module.parse_at_label = parse_at_label
-    monkeypatch.setitem(sys.modules, "whisper_at", fake_module)
+    real_run = whisper_at_adapter.run_whisper_at
+
+    def run_with_fake_backend(*args, **kwargs):
+        return real_run(
+            *args,
+            **kwargs,
+            backend=fake_module,
+            clock=iter([1.0, 1.25]).__next__,
+        )
+
+    monkeypatch.setattr(
+        whisper_at_adapter,
+        "run_whisper_at",
+        run_with_fake_backend,
+    )
 
     transcribe_whisper_at.main([
         "--repo-root",
         str(tmp_path),
         "--dataset",
         "non-speech-v1",
-        "--model",
-        "tiny.en",
     ])
 
     records = [
@@ -185,12 +197,13 @@ def test_main_keeps_audio_tags_separate_from_asr_text(tmp_path, monkeypatch):
     assert records == [
         {
             "id": "ns-001",
+            "latency_ms": 250.0,
             "text": " Please remain seated. ",
             "sounds": ["[alarm]"],
             "audio_tags": ["Speech", "Alarm"],
         }
     ]
-    assert calls["model"] == "tiny.en"
+    assert calls["model"] == "medium.en"
     assert calls["transcribe_kwargs"]["language"] == "en"
     assert calls["transcribe_kwargs"]["task"] == "transcribe"
     assert calls["transcribe_kwargs"]["at_time_res"] == 10.0
