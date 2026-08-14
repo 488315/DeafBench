@@ -47,7 +47,7 @@ Install the current PyPI release, download the two public example files from
 the matching `v0.2.1` tag, and compare them:
 
 ```bash
-python -m pip install deafbench
+python -m pip install "deafbench==0.2.1"
 curl -LO https://raw.githubusercontent.com/488315/DeafBench/v0.2.1/examples/references.jsonl
 curl -LO https://raw.githubusercontent.com/488315/DeafBench/v0.2.1/examples/model-a.jsonl
 deafbench compare references.jsonl model-a.jsonl
@@ -61,7 +61,7 @@ v0.2.1 from PyPI does not expose those new fields. Read the
 [`ASR evaluation methodology`](docs/asr-evaluation-methodology.md) for the
 normalization and aggregation contract, or continue to the separately labeled
 [model results](#results-for-all-integrated-models) and
-[detailed workflows](#detailed-installation-and-workflows).
+[source-checkout workflows for `main`](#detailed-installation-and-workflows).
 
 ## The goal
 
