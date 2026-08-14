@@ -243,9 +243,11 @@ def test_layout_links_resolved_hugging_face_assets(
         destination.write_bytes(resolved_source.read_bytes())
 
     monkeypatch.setattr(worker.os, "link", link)
-    worker._link_file(source, tmp_path / "staged.json")
+    staged = tmp_path / "staged.json"
+    worker._link_file(source, staged)
 
     assert received == [blob.resolve()]
+    assert staged.read_bytes() == blob.read_bytes()
 
 
 def test_official_module_loader_executes_pinned_script(tmp_path) -> None:
