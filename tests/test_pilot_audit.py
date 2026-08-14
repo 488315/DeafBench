@@ -5,7 +5,11 @@ from pathlib import Path
 import pytest
 
 from deafbench.benchmark.models import ModelRunInfo
-from deafbench.pilot.audit import PILOT_MODEL_RUNNERS, run_customer_audit
+from deafbench.pilot.audit import (
+    PILOT_MODEL_RUNNERS,
+    _default_runners,
+    run_customer_audit,
+)
 from deafbench.pilot.export import create_customer_export
 from deafbench.pilot.zero_custody import ExecutionAttestation
 from deafbench.pilot.export_scan import assert_export_safe
@@ -167,6 +171,92 @@ def test_customer_audit_rejects_unpermitted_pilot_model(tmp_path: Path) -> None:
         )
     assert called is False
     assert not (case_root / "work" / "results").exists()
+
+
+def test_customer_audit_discovers_exact_default_model_set() -> None:
+    assert set(_default_runners()) == set(PILOT_MODEL_RUNNERS)
+
+
+def test_customer_audit_rejects_incomplete_audio_set(tmp_path: Path) -> None:
+    case_root = _case(tmp_path)
+    (case_root / "input" / "audio" / "sample-001.wav").unlink()
+
+    with pytest.raises(ValueError, match="complete valid audio set"):
+        run_customer_audit(
+            repo_root=REPO_ROOT,
+            case_root=case_root,
+            runners=_runners(),
+        )
+
+
+def test_customer_audit_rejects_existing_results(tmp_path: Path) -> None:
+    case_root = _case(tmp_path)
+    (case_root / "work" / "results").mkdir()
+
+    with pytest.raises(FileExistsError, match="already exist"):
+        run_customer_audit(
+            repo_root=REPO_ROOT,
+            case_root=case_root,
+            runners=_runners(),
+        )
+
+
+def test_customer_audit_rejects_incomplete_runner_set(tmp_path: Path) -> None:
+    case_root = _case(tmp_path)
+    runners = _runners()
+    runners.pop(PILOT_MODEL_RUNNERS[-1])
+
+    with pytest.raises(ValueError, match="exact three-model"):
+        run_customer_audit(
+            repo_root=REPO_ROOT,
+            case_root=case_root,
+            runners=runners,
+        )
+
+
+@pytest.mark.parametrize(
+    ("revision", "performance", "message"),
+    [
+        (
+            "f" * 40,
+            {"local_rtfx": 1, "median_latency_ms": 1, "peak_vram_bytes": 1},
+            "revision differs",
+        ),
+        (
+            "bcd2b5b7f32b480ab5790554cfa8347f246a14f3",
+            None,
+            "complete local performance",
+        ),
+    ],
+)
+def test_customer_audit_rejects_invalid_model_evidence(
+    tmp_path: Path,
+    revision: str,
+    performance: dict[str, int] | None,
+    message: str,
+) -> None:
+    case_root = _case(tmp_path)
+    runners = _runners()
+    model_id = PILOT_MODEL_RUNNERS[0]
+    original = runners[model_id]
+
+    def invalid_runner(audio_dir: Path, references: Path, output: Path) -> ModelRunInfo:
+        info = original(audio_dir, references, output)
+        return ModelRunInfo(
+            name=info.name,
+            model_id=info.model_id,
+            revision=revision,
+            decoding=info.decoding,
+            performance=performance,
+        )
+
+    runners[model_id] = invalid_runner
+    with pytest.raises(ValueError, match=message):
+        run_customer_audit(
+            repo_root=REPO_ROOT,
+            case_root=case_root,
+            runners=runners,
+        )
 
 
 def test_customer_audit_rejects_case_inside_repository(tmp_path: Path) -> None:
