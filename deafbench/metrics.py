@@ -2,7 +2,11 @@ import math
 import re
 from typing import List, Dict, Any, Optional
 import jiwer
-from .asr_metrics import evaluate_conventional_asr
+from .asr_metrics import (
+    NORMALIZATION_POLICY,
+    evaluate_conventional_asr,
+    normalize_asr_text,
+)
 from .parser import normalize_text
 from .critical_entities import ENTITY_TYPES, canonical_contains, strict_contains
 
@@ -407,10 +411,32 @@ def evaluate_dataset(aligned_data: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
     Run full metric evaluation over aligned dataset.
     """
-    ref_texts = [item["reference"].get("text", "") for item in aligned_data]
-    pred_texts = [item["prediction"].get("text", "") for item in aligned_data]
-    
-    conventional_asr = evaluate_conventional_asr(ref_texts, pred_texts)
+    lexical_pairs = []
+    for item in aligned_data:
+        reference_text = item["reference"].get("text", "")
+        if normalize_asr_text(reference_text):
+            lexical_pairs.append(
+                (reference_text, item["prediction"].get("text", ""))
+            )
+    if lexical_pairs:
+        conventional_asr = evaluate_conventional_asr(
+            [pair[0] for pair in lexical_pairs],
+            [pair[1] for pair in lexical_pairs],
+        )
+    else:
+        conventional_asr = {
+            "normalization_policy": NORMALIZATION_POLICY,
+            "orthographic_wer": None,
+            "normalized_wer": None,
+            "orthographic_cer": None,
+            "normalized_cer": None,
+            "orthographic_substitutions": 0,
+            "orthographic_insertions": 0,
+            "orthographic_deletions": 0,
+            "normalized_substitutions": 0,
+            "normalized_insertions": 0,
+            "normalized_deletions": 0,
+        }
     word_errors_by_sample = []
     substitutions = conventional_asr["orthographic_substitutions"]
     insertions = conventional_asr["orthographic_insertions"]
@@ -456,10 +482,11 @@ def evaluate_dataset(aligned_data: List[Dict[str, Any]]) -> Dict[str, Any]:
                 "predicted_text": pred.get("text", ""),
             })
 
-        sample_errors = _word_error_counts(
-            ref.get("text", ""), pred.get("text", "")
-        )
-        word_errors_by_sample.append({"id": sample_id, **sample_errors})
+        if normalize_asr_text(ref.get("text", "")):
+            sample_errors = _word_error_counts(
+                ref.get("text", ""), pred.get("text", "")
+            )
+            word_errors_by_sample.append({"id": sample_id, **sample_errors})
             
         # Non-speech
         sound_res = evaluate_non_speech_info(ref, pred)
