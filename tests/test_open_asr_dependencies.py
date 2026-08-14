@@ -62,3 +62,9 @@ def test_open_asr_torch_runtime_uses_patched_matching_abi() -> None:
         "manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
         "#sha256=e9d703f0599b56dfccba1f659fa172c38e5599808b5ca1b766ab8a724a3d0c21"
     )
+
+
+def test_open_asr_setuptools_runtime_covers_security_floor() -> None:
+    lock_text = _LOCK.read_text(encoding="utf-8")
+
+    assert Version(_locked_version("setuptools", lock_text)) >= Version("83.0.0")
