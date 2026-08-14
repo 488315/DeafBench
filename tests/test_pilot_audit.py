@@ -119,6 +119,11 @@ def test_customer_audit_writes_three_valid_local_result_manifests(
         )
         evaluation = manifest["evaluations"][0]
         assert manifest["status"] == "customer_audit_complete"
+        assert manifest["verification"] == {
+            "status": "recorded_local_observation",
+            "sample_artifacts_in_repository": False,
+            "independently_recomputable_from_checkout": False,
+        }
         assert evaluation["lane"] == "customer-audit"
         assert evaluation["critical_failures"] == [
             {
