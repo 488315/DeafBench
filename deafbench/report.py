@@ -1,3 +1,4 @@
+import math
 from typing import Dict, Any
 
 
@@ -13,7 +14,13 @@ def _escape_markdown_table_cell(value: Any) -> str:
     )
 
 
-def generate_markdown_report(metrics: Dict[str, Any], ref_file: str, pred_file: str) -> str:
+def generate_markdown_report(
+    metrics: Dict[str, Any],
+    ref_file: str,
+    pred_file: str,
+    *,
+    performance: Dict[str, Any] | None = None,
+) -> str:
     """Generate Markdown report from metrics output."""
     canonical_recall = metrics.get("canonical_critical_recall")
     if canonical_recall is None:
@@ -63,6 +70,25 @@ def generate_markdown_report(metrics: Dict[str, Any], ref_file: str, pred_file: 
         lines.append(f"| **Median Latency** | {latency_sec:.2f}s ({metrics['median_latency_ms']:.0f} ms) |")
     else:
         lines.append("| **Median Latency** | N/A |")
+
+    local_rtfx = (performance or {}).get("local_rtfx")
+    if local_rtfx is not None:
+        if isinstance(local_rtfx, bool):
+            raise ValueError("local_rtfx must be a finite positive number")
+        try:
+            local_rtfx = float(local_rtfx)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("local_rtfx must be a finite positive number") from exc
+        if not math.isfinite(local_rtfx) or local_rtfx <= 0.0:
+            raise ValueError("local_rtfx must be a finite positive number")
+        lines.append(f"| **Local throughput (RTFx)** | {local_rtfx:.2f}x |")
+        lines.extend(
+            [
+                "",
+                "Local RTFx is audio seconds divided by inference wall seconds; "
+                "it is environment-dependent and is not an official hardware comparison.",
+            ]
+        )
 
     normalization_policy = metrics.get("normalization_policy")
     if normalization_policy:
