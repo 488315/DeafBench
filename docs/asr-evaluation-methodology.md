@@ -22,6 +22,11 @@ WER, CER, and edit counts are accumulated across the corpus rather than
 averaging per-sample percentages. Per-sample orthographic WER and edit counts
 remain available for error analysis.
 
+Non-lexical records are excluded from WER and CER so sound-only accessibility
+samples remain evaluable. If a corpus contains no lexical reference records,
+conventional transcription metrics are reported as unavailable; non-speech and
+other accessibility metrics continue to be evaluated.
+
 Local RTFx is environment-dependent. A local RTX 4070 or CPU measurement is not
 directly comparable with an official leaderboard hardware result unless the
 hardware, runtime, batching, preprocessing, warm-up, and timing boundaries are
