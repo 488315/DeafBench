@@ -48,6 +48,18 @@ def test_packaged_model_registry_is_valid() -> None:
     assert model.intended_lane == "commercial_candidate"
     assert model.remote_code_required is False
 
+    distil = models_by_id["Systran/faster-distil-whisper-large-v3"]
+    assert distil.revision == "c3058b475261292e64a0412df1d2681c06260fab"
+    assert distil.spdx_license == "MIT"
+    assert distil.intended_lane == "commercial_candidate"
+    assert distil.remote_code_required is False
+
+    whisper_at = models_by_id["YuanGongND/whisper-at"]
+    assert whisper_at.revision == "17d94d6acd53866390ce70f95afa13507dcb8aef"
+    assert whisper_at.spdx_license == "BSD-2-Clause"
+    assert whisper_at.intended_lane == "commercial_candidate"
+    assert whisper_at.remote_code_required is False
+
 
 def test_packaged_apache_license_matches_canonical_bytes() -> None:
     license_bytes = files("deafbench").joinpath(
@@ -66,6 +78,16 @@ def test_packaged_cc_by_license_matches_canonical_bytes() -> None:
 
     assert hashlib.sha256(license_bytes).hexdigest() == (
         "9e5f1b3c610b9c2da5c313bf81d577a7d1acec686bdb0384edefa6df0f90cd94"
+    )
+
+
+def test_packaged_whisper_at_license_matches_upstream_blob() -> None:
+    license_bytes = files("deafbench").joinpath(
+        "licenses", "BSD-2-Clause-Whisper-AT.txt"
+    ).read_bytes()
+
+    assert hashlib.sha256(license_bytes).hexdigest() == (
+        "033fade57eb7bbd6a1266ca63d55101be6892268b5756483afc5239456c30ae0"
     )
 
 
@@ -88,6 +110,32 @@ def test_registry_rejects_noncommercial_product_candidate() -> None:
 def test_registry_requires_exact_upstream_model_url() -> None:
     model = deepcopy(_MODEL)
     model["upstream_url"] = "https://example.com/model"
+
+    with pytest.raises(ModelRegistryError, match="invalid upstream_url"):
+        validate_model_registry(_registry(model))
+
+
+def test_registry_accepts_exact_github_repository_url() -> None:
+    model = deepcopy(_MODEL)
+    model["upstream_url"] = "https://github.com/example/model"
+
+    validated = validate_model_registry(_registry(model))
+
+    assert validated[0].upstream_url == "https://github.com/example/model"
+
+
+@pytest.mark.parametrize(
+    "upstream_url",
+    [
+        "http://github.com/example/model",
+        "https://github.com/example/model/",
+        "https://github.com/example/other",
+        "https://evil.example/example/model",
+    ],
+)
+def test_registry_rejects_inexact_github_repository_url(upstream_url) -> None:
+    model = deepcopy(_MODEL)
+    model["upstream_url"] = upstream_url
 
     with pytest.raises(ModelRegistryError, match="invalid upstream_url"):
         validate_model_registry(_registry(model))

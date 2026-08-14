@@ -1,0 +1,127 @@
+{
+  "claim_boundary": "Local reproducibility evidence only. The synthetic and non-speech corpora do not measure DHH, dysarthric, accent, or demographic performance. The two-row public smoke is partial, is not a seven-set macro-average, and is not a Hugging Face verified leaderboard result.",
+  "corpora": [
+    {
+      "frozen": true,
+      "manifest_sha256": "b962df9c122870825e75fdd4d628acc1101cff7bfc023d11fe967ed116cf0055",
+      "name": "synthetic-v2"
+    },
+    {
+      "frozen": true,
+      "manifest_sha256": "4615d2d50d6fe8377a5836130c39c9c6daf5b26dec46861bc7fef53208811823",
+      "name": "librispeech-test.clean-two-row-smoke"
+    },
+    {
+      "frozen": true,
+      "manifest_sha256": "0f437a301fb0cee04f2c61fb2d911ba908d870021f53c20e350c96ad6d1a0e91",
+      "name": "non-speech-v1"
+    }
+  ],
+  "decoding": {
+    "at_time_res": 10.0,
+    "backend_model": "medium.en",
+    "device": "cuda",
+    "language": "en",
+    "p_threshold": -1.0,
+    "task": "transcribe",
+    "top_k": 5
+  },
+  "evaluations": [
+    {
+      "critical_failures": [
+        {
+          "entity_type": "UNCLASSIFIED",
+          "id": "core-006",
+          "term": "15 milligrams"
+        },
+        {
+          "entity_type": "UNCLASSIFIED",
+          "id": "core-006",
+          "term": "not 50 milligrams"
+        }
+      ],
+      "evidence": {
+        "predictions_sha256": "1ae2d7cff9a5e0b52ec26e5f9aa0b38e45375f914dc99af4a35274a074bb28c6",
+        "report_sha256": "060cff8bb4e7ce315bf5b0a0a6b782648bd0727a800edf3d62f076d869851fac",
+        "run_metadata_sha256": "1fcea2609ba0b8cd40dad5bbe8c7bfa4273101f0e8ac334b84dbed953936521e"
+      },
+      "lane": "synthetic-v2",
+      "metrics": {
+        "canonical_semantic_recall_percent": 96.8,
+        "deletions": 30,
+        "insertions": 8,
+        "local_rtfx": 7.341994287887578,
+        "median_latency_ms": 604.9728,
+        "peak_vram_bytes": 4790831104,
+        "strict_lexical_recall_percent": 67.7,
+        "substitutions": 37,
+        "wer_percent": 26.2
+      },
+      "sample_count": 25,
+      "scope": "complete"
+    },
+    {
+      "critical_failures": [],
+      "evidence": {
+        "dataset_revision": "b6bdcd0beb34f8975dc659796176d88f43aff502",
+        "official_evaluator_revision": "9585fc39bff55697a2ec1c5f13921b18812bfde8",
+        "official_manifest_sha256": "093a9b77acf2c34194787a0954e3d6112cc02abb6ba5ce5f3857a3bc9521f01a",
+        "predictions_sha256": "ddf3ecf95bd3dfc14560fd9857cf30291516e61905e46d5a60a8903440a134f7"
+      },
+      "lane": "hugging-face-compatibility-smoke",
+      "metrics": {
+        "deletions": 0,
+        "insertions": 0,
+        "local_rtfx": 11.19394269289769,
+        "median_latency_ms": 3075.99395,
+        "peak_vram_bytes": 4790831104,
+        "substitutions": 3,
+        "wer_percent": 1.7341040462427744
+      },
+      "sample_count": 2,
+      "scope": "partial"
+    },
+    {
+      "critical_failures": [
+        {
+          "entity_type": "UNCLASSIFIED",
+          "id": "ns-010",
+          "term": "Casey"
+        }
+      ],
+      "evidence": {
+        "predictions_sha256": "cf6160b6a90c4d9c5a080d9ea8043447e043b0ac67f1f805efaab381eccb7fbe"
+      },
+      "lane": "non-speech-v1",
+      "metrics": {
+        "canonical_semantic_recall_percent": 95.0,
+        "deletions": 0,
+        "insertions": 0,
+        "local_rtfx": 13.575500245848579,
+        "matched_sound_events": 0,
+        "median_latency_ms": 478.84555,
+        "non_speech_recall_percent": 0.0,
+        "peak_vram_bytes": 4790831104,
+        "strict_lexical_recall_percent": 95.0,
+        "substitutions": 2,
+        "total_sound_events": 19,
+        "wer_percent": 1.9801980198019802
+      },
+      "sample_count": 12,
+      "scope": "complete"
+    }
+  ],
+  "evaluator_revision": "09f3641e0dd2bff58bdb16e44455d9c5ac0f48f5",
+  "license_classification": "commercial_candidate",
+  "model": {
+    "model_id": "YuanGongND/whisper-at",
+    "revision": "17d94d6acd53866390ce70f95afa13507dcb8aef"
+  },
+  "schema_version": 1,
+  "status": "smoke_complete_with_non_speech",
+  "verification": {
+    "independently_recomputable_from_checkout": false,
+    "sample_artifacts_in_repository": false,
+    "status": "recorded_local_observation"
+  }
+}

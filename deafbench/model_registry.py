@@ -124,7 +124,11 @@ def _validate_model(record: object) -> ModelLicense:
     if _REVISION_PATTERN.fullmatch(revision) is None:
         raise ModelRegistryError(f"invalid revision for model: {model_id}")
     upstream_url = _required_text(record, "upstream_url", model_id)
-    if upstream_url != f"https://huggingface.co/{model_id}":
+    allowed_upstream_urls = {
+        f"https://huggingface.co/{model_id}",
+        f"https://github.com/{model_id}",
+    }
+    if upstream_url not in allowed_upstream_urls:
         raise ModelRegistryError(f"invalid upstream_url for model: {model_id}")
 
     commercial_use = _required_text(record, "commercial_use", model_id)

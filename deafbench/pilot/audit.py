@@ -160,6 +160,11 @@ def _result_manifest(
             "Customer-executed and environment-dependent local audit; not a "
             "certification or Hugging Face leaderboard result."
         ),
+        "verification": {
+            "status": "recorded_local_observation",
+            "sample_artifacts_in_repository": False,
+            "independently_recomputable_from_checkout": False,
+        },
     }
 
 

@@ -2,20 +2,41 @@
 
 from __future__ import annotations
 
+import hashlib
 import math
-from collections.abc import Iterable, Mapping
+import os
+import wave
+from collections.abc import Callable, Iterable, Mapping
 from pathlib import Path
+from statistics import median
+from time import perf_counter
 from typing import Any
+from urllib.request import urlopen
 
 from deafbench.benchmark.models import ModelRunInfo, _validated_wavs
 from deafbench.benchmark.workspace import atomic_write_jsonl
+from deafbench.model_registry import get_model_license
 
 
 DEFAULT_MODEL = "medium.en"
+UPSTREAM_MODEL_ID = "YuanGongND/whisper-at"
+UPSTREAM_REVISION = "17d94d6acd53866390ce70f95afa13507dcb8aef"
 DEFAULT_AT_TIME_RES = 10.0
 DEFAULT_TOP_K = 5
 DEFAULT_P_THRESHOLD = -1.0
 AUDIOSET_CLASS_COUNT = 527
+PINNED_CHECKPOINTS = {
+    "medium.en.pt": (
+        "https://openaipublic.azureedge.net/main/whisper/models/"
+        "d7440d1dc186f76616474e0ff0b3b6b879abc9d1a4926b7adfa41db2d497ab4f/"
+        "medium.en.pt",
+        "d7440d1dc186f76616474e0ff0b3b6b879abc9d1a4926b7adfa41db2d497ab4f",
+    ),
+    "medium.en_ori.pth": (
+        "https://www.dropbox.com/s/bbvylvmgns8ja4p/medium.en_ori.pth?dl=1",
+        "2bb6ed52169cffd19623106dadb71918da27f8664ea1788c6379956b91ad2cea",
+    ),
+}
 
 AUDIOSET_TO_DEAFBENCH = {
     "Alarm": "[alarm]",
@@ -113,6 +134,45 @@ def _load_backend() -> Any:
     return whisper_at
 
 
+def _checkpoint_digest(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _prepare_pinned_checkpoints(
+    cache_dir: Path,
+    *,
+    opener: Callable[[str], Any] = urlopen,
+) -> None:
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    for filename, (url, expected_digest) in PINNED_CHECKPOINTS.items():
+        destination = cache_dir / filename
+        if destination.exists():
+            if (
+                not destination.is_file()
+                or _checkpoint_digest(destination) != expected_digest
+            ):
+                raise RuntimeError(f"Whisper-AT checkpoint hash mismatch: {filename}")
+            continue
+
+        partial = cache_dir / f"{filename}.part"
+        try:
+            with opener(url) as source, partial.open("wb") as output:
+                for chunk in iter(lambda: source.read(1024 * 1024), b""):
+                    output.write(chunk)
+            if _checkpoint_digest(partial) != expected_digest:
+                raise RuntimeError(
+                    f"Whisper-AT checkpoint hash mismatch: {filename}"
+                )
+            partial.replace(destination)
+        except BaseException:
+            partial.unlink(missing_ok=True)
+            raise
+
+
 def run_whisper_at(
     audio_dir: Path,
     references: Path,
@@ -122,16 +182,44 @@ def run_whisper_at(
     top_k: int = DEFAULT_TOP_K,
     p_threshold: float = DEFAULT_P_THRESHOLD,
     backend: Any | None = None,
+    clock: Callable[[], float] = perf_counter,
 ) -> ModelRunInfo:
     """Transcribe and tag one complete audio set into Model B JSONL."""
+    if model_id != DEFAULT_MODEL:
+        raise ValueError(f"Unsupported unpinned Whisper-AT model: {model_id}")
     _validate_time_resolution(at_time_res)
     wav_paths = _validated_wavs(audio_dir, references)
-    runtime = _load_backend() if backend is None else backend
-    model = runtime.load_model(model_id)
+    if backend is None:
+        runtime = _load_backend()
+        import torch
+
+        get_model_license(UPSTREAM_MODEL_ID)
+        cache_root = Path(
+            os.getenv("XDG_CACHE_HOME", str(Path.home() / ".cache"))
+        ) / "whisper"
+        _prepare_pinned_checkpoints(cache_root)
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        if device == "cuda":
+            torch.cuda.reset_peak_memory_stats()
+        model = runtime.load_model(
+            model_id,
+            device=device,
+            download_root=str(cache_root),
+        )
+    else:
+        runtime = backend
+        torch = None
+        device = "injected"
+        model = runtime.load_model(model_id)
     include_class_list = list(range(AUDIOSET_CLASS_COUNT))
     records: list[Mapping[str, Any]] = []
+    latencies_ms: list[float] = []
+    total_audio_seconds = 0.0
 
     for wav_path in wav_paths:
+        if torch is not None and device == "cuda":
+            torch.cuda.synchronize()
+        started = clock()
         result = model.transcribe(
             str(wav_path),
             language="en",
@@ -158,9 +246,27 @@ def run_whisper_at(
             include_class_list=include_class_list,
         )
         raw_tags, sounds = extract_audio_tags(parsed)
+        if torch is not None and device == "cuda":
+            torch.cuda.synchronize()
+        latency_ms = round((clock() - started) * 1_000.0, 6)
+        if not math.isfinite(latency_ms) or latency_ms <= 0:
+            raise ValueError(
+                f"Invalid Whisper-AT latency for {wav_path.name}: "
+                "expected a positive finite number"
+            )
+        with wave.open(str(wav_path), "rb") as audio:
+            duration = audio.getnframes() / audio.getframerate()
+        if not math.isfinite(duration) or duration <= 0:
+            raise ValueError(
+                f"Invalid Whisper-AT duration for {wav_path.name}: "
+                "expected a positive finite number"
+            )
+        latencies_ms.append(latency_ms)
+        total_audio_seconds += duration
         records.append(
             {
                 "id": wav_path.stem,
+                "latency_ms": latency_ms,
                 "text": text,
                 "sounds": sounds,
                 "audio_tags": raw_tags,
@@ -168,4 +274,27 @@ def run_whisper_at(
         )
 
     atomic_write_jsonl(output, records)
-    return ModelRunInfo("whisper-at", model_id)
+    return ModelRunInfo(
+        "whisper-at",
+        UPSTREAM_MODEL_ID,
+        revision=UPSTREAM_REVISION,
+        decoding={
+            "at_time_res": at_time_res,
+            "backend_model": model_id,
+            "device": device,
+            "language": "en",
+            "p_threshold": p_threshold,
+            "task": "transcribe",
+            "top_k": top_k,
+        },
+        performance={
+            "local_rtfx": total_audio_seconds
+            / (sum(latencies_ms) / 1_000.0),
+            "median_latency_ms": median(latencies_ms),
+            "peak_vram_bytes": (
+                torch.cuda.max_memory_allocated()
+                if torch is not None and device == "cuda"
+                else 0
+            ),
+        },
+    )
