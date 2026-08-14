@@ -1,0 +1,55 @@
+name: Bug report
+description: Report a reproducible DeafBench defect
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping improve DeafBench. Do not include customer audio,
+        transcripts, credentials, secrets, private paths, or sensitive personal
+        information. Use GitHub private vulnerability reporting for security issues.
+  - type: input
+    id: version
+    attributes:
+      label: DeafBench version
+      description: Use `deafbench --version` or the exact Git commit.
+      placeholder: 0.2.1 or commit SHA
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Include operating system and Python version without private paths.
+      placeholder: Windows 11, Python 3.13
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Provide the smallest sanitized sequence that reproduces the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Remove raw audio, transcripts, secrets, customer data, and private paths.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Data-safety confirmation
+      options:
+        - label: I removed customer data, raw transcripts, secrets, and private identifiers.
+          required: true
+        - label: This is not a confidential security vulnerability.
+          required: true
