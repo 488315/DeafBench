@@ -30,10 +30,19 @@ also apply to all activity hosted on GitHub.
 
 ## Reporting and enforcement
 
+Report Code of Conduct incidents privately to the project maintainer at
+[kvjones0243@gmail.com](mailto:kvjones0243@gmail.com). Include only the minimum
+information needed to explain the incident, and do not send customer audio,
+transcripts, credentials, or unrelated personal information.
+
 Use GitHub's report and moderation controls for repository content. For threats,
 harassment, disclosure of private information, or other GitHub policy concerns,
 use [GitHub's abuse-reporting form](https://github.com/contact/report-abuse).
 Do not put sensitive evidence in a public issue or discussion.
+
+Security vulnerabilities follow the separate private process in
+[`SECURITY.md`](SECURITY.md); do not use the conduct address as a substitute for
+vulnerability reporting.
 
 Project maintainers may edit, hide, or remove content and may temporarily or
 permanently restrict participation when behavior is inappropriate, threatening,
