@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "name": "real-speech-dev-v1",
+  "purpose": "model_selection_only",
+  "source": {
+    "dataset_id": "openslr/librispeech_asr",
+    "revision": "71cacbfb7e2354c4226d01e70d77d5fca3d04ba1",
+    "config": "clean",
+    "split": "validation",
+    "license": "CC-BY-4.0"
+  },
+  "selection": {
+    "strategy": "sha256_id_lowest",
+    "count": 100,
+    "population_count": 2703
+  },
+  "official_evaluation_exclusions": [
+    "hf-audio/open_asr_leaderboard:librispeech:test.clean",
+    "hf-audio/open_asr_leaderboard:librispeech:test.other"
+  ],
+  "references_sha256": "eb06ad7dd0b86e95be12c2cfc1af287eb65a66ee77ba3ea988f87326c411fffa"
+}

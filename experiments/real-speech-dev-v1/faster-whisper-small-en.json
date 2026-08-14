@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "lane": "real-speech-dev-v1",
+  "result_kind": "local_development_baseline",
+  "model": {
+    "adapter": "faster-whisper",
+    "model_id": "small.en",
+    "revision": "d1d751a5f8271d482d14ca55d9e2deeebbae577f",
+    "runtime": "faster-whisper 1.2.1",
+    "compute_runtime": "ctranslate2 4.8.1"
+  },
+  "decoding": {
+    "beam_size": 5,
+    "compute_type": "int8",
+    "device": "cpu",
+    "language": "en"
+  },
+  "corpus": {
+    "sample_count": 100,
+    "audio_duration_seconds": 701.880125,
+    "manifest_sha256": "ed6338854358769b0d2799cb54e581c5574600fd4347afdd8c718b7e90e6feff",
+    "references_sha256": "eb06ad7dd0b86e95be12c2cfc1af287eb65a66ee77ba3ea988f87326c411fffa",
+    "materialization_manifest_sha256": "d9fa88e90fd841af8cedadf31b166fb4ca0facb96e3db320f9c4013aa3925868"
+  },
+  "evaluator": {
+    "family": "open_asr_english_compatibility",
+    "upstream_revision": "9585fc39bff55697a2ec1c5f13921b18812bfde8",
+    "deafbench_revision": "5f243548d86ad6f74986f761b55c7e607eab4287"
+  },
+  "metrics": {
+    "wer_percent": 3.558718861209965,
+    "reference_words": 1967,
+    "substitutions": 51,
+    "insertions": 11,
+    "deletions": 8,
+    "strict_critical_recall_percent": null,
+    "canonical_critical_recall_percent": null,
+    "local_rtfx": null,
+    "median_latency_ms": null,
+    "peak_vram_gib": null
+  },
+  "artifacts": {
+    "predictions_sha256": "86e63117ee355847310930f6f41fd63d90d67fa394b33d463edde266727dbc6a"
+  },
+  "environment": {
+    "materialization": {
+      "python": null,
+      "supported_python": ">=3.11,<3.14",
+      "recording_status": "not_captured"
+    },
+    "decoding": {
+      "operating_system": "Windows 11 10.0.29639",
+      "python": "3.14",
+      "processor": "local CPU"
+    }
+  },
+  "limitations": [
+    "This is a deterministic public development cohort, not an official Open ASR Leaderboard dataset or submission.",
+    "The generated audio, predictions, and benchmark run are intentionally not committed.",
+    "Critical-information recall is not applicable because this corpus has no typed critical-entity annotations.",
+    "Latency, RTFx, and peak VRAM were not captured by this run and are not inferred.",
+    "The exact Python minor version used for corpus materialization was not captured; the materializer enforced Python 3.11 through 3.13.",
+    "This public read-speech result is not evidence of DHH, dysarthric, accent, or noisy-environment performance."
+  ]
+}

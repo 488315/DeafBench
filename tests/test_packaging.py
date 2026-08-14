@@ -53,6 +53,24 @@ def test_test_extra_installs_collection_dependencies() -> None:
     assert "soundfile>=0.13,<1.0" in test_dependencies
 
 
+def test_real_speech_dev_extra_is_isolated_from_base_installation() -> None:
+    pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+    metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+
+    dependencies = metadata["project"]["dependencies"]
+    dev_dependencies = metadata["project"]["optional-dependencies"][
+        "real-speech-dev"
+    ]
+
+    assert dev_dependencies == [
+        "datasets==3.6.0; python_version < '3.14'",
+        "numpy>=1.26",
+        "scipy>=1.15,<2.0",
+        "soundfile>=0.13,<1.0",
+    ]
+    assert all("datasets" not in dependency for dependency in dependencies)
+
+
 def test_coverage_tracks_isolated_evaluator_subprocesses() -> None:
     pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
     metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))

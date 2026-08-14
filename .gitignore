@@ -220,6 +220,9 @@ __marimo__/
 /benchmarks/synthetic-v2/runs/
 /benchmarks/synthetic-v2-candidate*/
 /benchmarks/synthetic-v2-whisperspeech-probe-*.wav
+/benchmarks/real-speech-dev-v1/audio/
+/benchmarks/real-speech-dev-v1/runs/
+/benchmarks/real-speech-dev-v1/.audio-materialize-*/
 
 # Streamlit
 .streamlit/secrets.toml
