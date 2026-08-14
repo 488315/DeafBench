@@ -246,6 +246,7 @@ def test_whisper_at_keeps_sounds_out_of_text(tmp_path: Path) -> None:
         references,
         output,
         backend=FakeBackend(),
+        clock=iter([1.0, 1.25]).__next__,
     )
     record = _records(output)[0]
 
@@ -256,14 +257,21 @@ def test_whisper_at_keeps_sounds_out_of_text(tmp_path: Path) -> None:
         decoding={
             "at_time_res": 10.0,
             "backend_model": "medium.en",
+            "device": "injected",
             "language": "en",
             "p_threshold": -1.0,
             "task": "transcribe",
             "top_k": 5,
         },
+        performance={
+            "local_rtfx": pytest.approx((8 / 48_000) / 0.25),
+            "median_latency_ms": 250.0,
+            "peak_vram_bytes": 0,
+        },
     )
     assert record == {
         "id": "ns-001",
+        "latency_ms": 250.0,
         "text": " Please remain seated. ",
         "sounds": ["[alarm]"],
         "audio_tags": ["Speech", "Alarm"],
@@ -282,6 +290,41 @@ def test_whisper_at_keeps_sounds_out_of_text(tmp_path: Path) -> None:
         "p_threshold": -1.0,
         "include_class_list": list(range(527)),
     }
+
+
+def test_whisper_at_rejects_invalid_latency_without_overwriting(
+    tmp_path: Path,
+) -> None:
+    references, audio_dir = _dataset(tmp_path, "ns-001")
+    output = tmp_path / "predictions.jsonl"
+    original = b'{"id":"existing"}\n'
+    output.write_bytes(original)
+
+    class FakeModel:
+        def transcribe(self, _path: str, **_kwargs: object) -> dict[str, str]:
+            return {"text": "Please remain seated."}
+
+    class FakeBackend:
+        def load_model(self, _name: str) -> FakeModel:
+            return FakeModel()
+
+        def parse_at_label(
+            self,
+            _result: dict[str, str],
+            **_kwargs: object,
+        ) -> list[dict[str, object]]:
+            return [{"audio tags": []}]
+
+    with pytest.raises(ValueError, match="positive finite number"):
+        run_whisper_at(
+            audio_dir,
+            references,
+            output,
+            backend=FakeBackend(),
+            clock=iter([1.0, 1.0]).__next__,
+        )
+
+    assert output.read_bytes() == original
 
 
 def test_whisper_at_downloads_and_verifies_pinned_checkpoints(
