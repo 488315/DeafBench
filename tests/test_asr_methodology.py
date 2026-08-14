@@ -16,6 +16,7 @@ def test_methodology_discloses_normalization_and_metric_boundaries() -> None:
         "Unicode NFKC normalization",
         "Unicode case folding",
         "eight` and `8` remain different",
+        "Non-lexical records are excluded from WER and CER",
         "Total audio seconds divided by inference wall seconds",
         "Open ASR Leaderboard compatibility lane",
         "must stay labeled separately",
