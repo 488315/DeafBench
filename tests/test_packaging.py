@@ -54,7 +54,7 @@ def test_whisper_at_ci_exercises_exact_setuptools_floor() -> None:
         ".github/build-constraints/whisper-at-setuptools83.txt"
     ).read_text(encoding="utf-8")
     job_start = workflow.index("  whisper-at:\n")
-    job_end = workflow.index("\n  package:\n", job_start)
+    job_end = workflow.index("\n  ark-transformers:\n", job_start)
     whisper_at_job = workflow[job_start:job_end]
 
     floor_start = whisper_at_job.index(
@@ -74,6 +74,25 @@ def test_whisper_at_ci_exercises_exact_setuptools_floor() -> None:
     ) in floor_step
     assert "run: python -m deafbench.whisper_at_compat" in floor_step
     assert "run: python -m deafbench.whisper_at_compat" in normal_step
+
+
+def test_ark_ci_exercises_secure_transformers_floor() -> None:
+    workflow = (
+        Path(__file__).resolve().parents[1] / ".github/workflows/ci.yml"
+    ).read_text(encoding="utf-8")
+    job_start = workflow.index("  ark-transformers:\n")
+    job_end = workflow.index("\n  package:\n", job_start)
+    ark_job = workflow[job_start:job_end]
+
+    assert 'python -m pip install "transformers[torch]==5.5.0"' in ark_job
+    assert 'python -m pip install ".[ark-onnx-asr,test]"' in ark_job
+    assert "assert transformers.__version__ == '5.5.0'" in ark_job
+    assert "load_native(); load_onnx()" in ark_job
+    assert "tests/test_ark_asr_adapter.py" in ark_job
+    assert "tests/test_ark_asr_worker.py" in ark_job
+    assert "tests/test_ark_asr_onnx_adapter.py" in ark_job
+    assert "tests/test_ark_asr_onnx_worker.py" in ark_job
+    assert "python -m pip check" in ark_job
 
 
 def test_wheel_discovery_excludes_nonruntime_trees() -> None:
