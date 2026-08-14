@@ -67,7 +67,11 @@ def test_whisper_at_ci_exercises_exact_setuptools_floor() -> None:
     normal_step = whisper_at_job[normal_start:]
 
     assert constraint.strip() == "setuptools==83.0.0"
-    assert "PIP_BUILD_CONSTRAINT" in floor_step
+    assert (
+        "PIP_BUILD_CONSTRAINT: >-\n"
+        "            ${{ github.workspace }}\\.github\\build-constraints\\"
+        "whisper-at-setuptools83.txt"
+    ) in floor_step
     assert "run: python -m deafbench.whisper_at_compat" in floor_step
     assert "run: python -m deafbench.whisper_at_compat" in normal_step
 
