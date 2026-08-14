@@ -1,10 +1,13 @@
 # DeafBench
 
 I wrote DeafBench because I am Deaf, I use cochlear implants, and the normal
-ASR score does not always describe whether captions are useful to me. A system
-can have a low word error rate and still get the time, medication amount,
-username, Wi-Fi name, confirmation code, speaker, or sound event wrong. Those
-are not small mistakes when the caption is the information I have to act on.
+ASR score does not always describe whether captions are useful to me. Word
+error rate treats every edit as part of the same total, but a caption can have
+a low WER and still get the time, medication amount, username, Wi-Fi name,
+confirmation code, speaker, or sound event wrong. Those are not small mistakes
+when the caption is the information I have to act on.
+
+## What DeafBench measures
 
 My background is in IT, so I built this like an audit instead of a demo.
 DeafBench keeps the references, model revisions, decoding settings, evaluator
@@ -21,21 +24,41 @@ compatibility track uses the pinned Open ASR Leaderboard datasets, normalizer,
 preprocessing, WER calculation, and seven-dataset macro-average. I do not mix
 those scores because they answer different questions.
 
+## One current result
+
+The reproduced Zipformer baseline scored **5.23% public seven-set macro WER**
+with the pinned official-compatible local workflow. This is evidence that the
+runner reproduces the public contract; it is not a verified leaderboard win,
+does not include private sets, and uses a CC-BY-NC-4.0 checkpoint that cannot be
+the commercial foundation without separate permission.
+
+## Install and run in 30 seconds
+
+Install the current PyPI release and compare the included reference captions
+with one prediction file:
+
+```bash
+python -m pip install deafbench
+deafbench compare examples/references.jsonl examples/model-a.jsonl
+```
+
+The command reports orthographic and normalized WER/CER, strict and canonical
+critical-information recall, edit counts, non-speech information, speaker
+attribution, and latency. Read the
+[`ASR evaluation methodology`](docs/asr-evaluation-methodology.md) for the
+normalization and aggregation contract, or continue to the separately labeled
+[model results](#results-for-all-integrated-models) and
+[detailed workflows](#detailed-installation-and-workflows).
+
 ## The goal
 
 My goal is to build an ASR system that beats the Hugging Face Open ASR
 Leaderboard while still doing better on the information that matters to Deaf
-and hard-of-hearing users. The current reproduced Zipformer baseline scored
-**5.23% public seven-set macro WER** with the pinned official-compatible local
-workflow. That result is useful evidence that the runner matches the public
-contract, but it is not a verified leaderboard win, it does not include the
-private sets, and the Zipformer checkpoint is CC-BY-NC-4.0, so it cannot be the
-commercial foundation without separate permission.
-
-I will only say DeafBench beat the leaderboard after a separate candidate is
-evaluated at a declared milestone and Hugging Face verifies the result. Until
-then, 5.23% is the local public compatibility baseline to beat, not a product
-claim. The exact upstream revisions, commands, and evidence are in
+and hard-of-hearing users. I will only say DeafBench beat the leaderboard after
+a separate candidate is evaluated at a declared milestone and Hugging Face
+verifies the result. Until then, the result above is the local public
+compatibility baseline to beat, not a product claim. The exact upstream
+revisions, commands, and evidence are in
 [`experiments/open-asr/README.md`](experiments/open-asr/README.md).
 
 ## Models that work with DeafBench
@@ -170,13 +193,9 @@ runs stay untracked.
 
 ---
 
-## Quickstart
+## Detailed installation and workflows
 
-### Installation
-
-```bash
-pip install deafbench
-```
+### Optional installations and development setup
 
 Install the recorder extra if you want to capture benchmark audio:
 
