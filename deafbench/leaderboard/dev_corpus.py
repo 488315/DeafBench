@@ -263,7 +263,7 @@ def _promote_materialization(staging: Path, destination: Path) -> None:
         raise
     else:
         if backup.exists():
-            shutil.rmtree(backup)
+            shutil.rmtree(backup, ignore_errors=True)
 
 
 def _select_source_rows(

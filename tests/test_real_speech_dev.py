@@ -13,6 +13,7 @@ from deafbench.leaderboard.dev_corpus import (
     DEV_DATASET_REVISION,
     DevCorpusError,
     _pinned_source_rows,
+    _promote_materialization,
     load_dev_contract,
     materialize_dev_corpus,
 )
@@ -347,6 +348,54 @@ def test_materialize_dev_corpus_writes_verified_48khz_audio(tmp_path):
             assert handle.getsampwidth() == 2
     saved = json.loads((destination / "materialization-manifest.json").read_text())
     assert saved == result
+
+
+def test_materialize_dev_corpus_replaces_existing_destination(tmp_path):
+    manifest, references, source_rows = _write_materialization_contract(tmp_path)
+    destination = tmp_path / "real-speech-dev-v1" / "audio"
+    destination.mkdir(parents=True)
+    (destination / "stale.wav").write_bytes(b"stale")
+
+    materialize_dev_corpus(
+        manifest,
+        references,
+        destination,
+        source_rows=source_rows,
+        expected_count=2,
+    )
+
+    assert not (destination / "stale.wav").exists()
+    assert {path.name for path in destination.glob("*.wav")} == {
+        "dev-001.wav",
+        "dev-002.wav",
+    }
+    assert not (destination.parent / ".audio-materialize-test-previous").exists()
+    assert not list(destination.parent.glob(".audio-materialize-*-previous"))
+
+
+def test_promote_materialization_ignores_backup_cleanup_failure(
+    tmp_path, monkeypatch
+):
+    staging = tmp_path / ".audio-materialize-test"
+    destination = tmp_path / "audio"
+    staging.mkdir()
+    destination.mkdir()
+    (staging / "new.wav").write_bytes(b"new")
+    (destination / "old.wav").write_bytes(b"old")
+
+    cleanup_calls = []
+
+    def fail_cleanup(path, *, ignore_errors=False):
+        cleanup_calls.append((path, ignore_errors))
+        if not ignore_errors:
+            raise OSError("cleanup failed")
+
+    monkeypatch.setattr(dev_corpus.shutil, "rmtree", fail_cleanup)
+
+    _promote_materialization(staging, destination)
+
+    assert (destination / "new.wav").read_bytes() == b"new"
+    assert cleanup_calls == [(staging.with_name(f"{staging.name}-previous"), True)]
 
 
 @pytest.mark.parametrize(
