@@ -14,8 +14,8 @@
       "runner_revision": "64c698c42932a54bc7a40a7f172d03c8c4838fe6",
       "icefall_revision": "3f848bb6d0acc970c9b294a30ca0a04a7c9c78d1",
       "compatible_stack": {
-        "torch": "2.6.0",
-        "torchaudio": "2.6.0",
+        "torch": "2.6.0+cu124",
+        "torchaudio": "2.6.0+cu124",
         "k2": "1.24.4.dev20250130+cuda12.4.torch2.6.0"
       },
       "reachability": {

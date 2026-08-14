@@ -239,6 +239,21 @@ def test_open_asr_lane_rejects_changed_runtime_lock(tmp_path: Path) -> None:
         verify_open_asr_dependency_disposition(lock_path)
 
 
+def test_open_asr_lane_rejects_changed_local_version(tmp_path: Path) -> None:
+    source = _ROOT / "experiments" / "open-asr" / "requirements.lock.txt"
+    changed = source.read_text(encoding="utf-8").replace(
+        "torch-2.6.0%2Bcu124", "torch-2.6.0%2Bcpu", 1
+    )
+    lock_path = tmp_path / "requirements.lock.txt"
+    lock_path.write_text(changed, encoding="utf-8")
+
+    with pytest.raises(
+        DependencyDispositionError,
+        match="differs from runtime",
+    ):
+        verify_open_asr_dependency_disposition(lock_path)
+
+
 def test_open_asr_lane_rejects_expired_review() -> None:
     lock_path = _ROOT / "experiments" / "open-asr" / "requirements.lock.txt"
 
