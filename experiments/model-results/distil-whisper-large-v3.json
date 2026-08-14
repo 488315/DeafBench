@@ -97,5 +97,10 @@
     "revision": "c3058b475261292e64a0412df1d2681c06260fab"
   },
   "schema_version": 1,
-  "status": "smoke_complete"
+  "status": "smoke_complete",
+  "verification": {
+    "independently_recomputable_from_checkout": false,
+    "sample_artifacts_in_repository": false,
+    "status": "recorded_local_observation"
+  }
 }

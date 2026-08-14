@@ -118,5 +118,10 @@
     "revision": "17d94d6acd53866390ce70f95afa13507dcb8aef"
   },
   "schema_version": 1,
-  "status": "smoke_complete_with_non_speech"
+  "status": "smoke_complete_with_non_speech",
+  "verification": {
+    "independently_recomputable_from_checkout": false,
+    "sample_artifacts_in_repository": false,
+    "status": "recorded_local_observation"
+  }
 }
