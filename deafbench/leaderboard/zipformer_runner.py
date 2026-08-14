@@ -11,7 +11,9 @@ import subprocess
 import sys
 import time
 
-from deafbench.dependency_security import verify_open_asr_dependency_disposition
+from deafbench.dependency_security import (
+    verify_open_asr_dependency_disposition,
+)
 
 from .official import open_asr_evaluator
 from .policy import verify_evaluation_policy
@@ -21,7 +23,10 @@ from .zipformer import PinnedZipformerContract
 ZIPFORMER_RUNNER_REVISION = "64c698c42932a54bc7a40a7f172d03c8c4838fe6"
 ICEFALL_REVISION = "3f848bb6d0acc970c9b294a30ca0a04a7c9c78d1"
 OPEN_ASR_REQUIREMENTS_LOCK = (
-    Path(__file__).parents[2] / "experiments" / "open-asr" / "requirements.lock.txt"
+    Path(__file__).parents[2]
+    / "experiments"
+    / "open-asr"
+    / "requirements.lock.txt"
 )
 _PINNED_IMPORT_ROOTS = (
     "run_eval",

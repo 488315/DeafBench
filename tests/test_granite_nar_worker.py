@@ -149,7 +149,9 @@ def test_worker_requires_cuda(monkeypatch, tmp_path) -> None:
     audit = SimpleNamespace(revision="a" * 40)
     monkeypatch.setattr(worker, "load_remote_code_audit", lambda model_id: audit)
     monkeypatch.setattr(
-        worker, "verify_dependency_disposition_snapshot", lambda audit, root: None
+        worker,
+        "verify_dependency_disposition_snapshot",
+        lambda audit, root: None,
     )
     backend, _ = _backend()
     backend.torch.cuda.is_available = lambda: False
@@ -238,7 +240,9 @@ def test_worker_resamples_nonstandard_audio(monkeypatch, tmp_path) -> None:
         lambda model_id: SimpleNamespace(revision="a" * 40),
     )
     monkeypatch.setattr(
-        worker, "verify_dependency_disposition_snapshot", lambda audit, root: None
+        worker,
+        "verify_dependency_disposition_snapshot",
+        lambda audit, root: None,
     )
     backend, _ = _backend()
     waveform = _Waveform()
@@ -264,7 +268,9 @@ def test_worker_rejects_nonmono_audio(monkeypatch, tmp_path) -> None:
         lambda model_id: SimpleNamespace(revision="a" * 40),
     )
     monkeypatch.setattr(
-        worker, "verify_dependency_disposition_snapshot", lambda audit, root: None
+        worker,
+        "verify_dependency_disposition_snapshot",
+        lambda audit, root: None,
     )
     backend, _ = _backend()
     backend.torchaudio.load = lambda path: (
@@ -287,7 +293,9 @@ def test_worker_rejects_nonpositive_timing(monkeypatch, tmp_path) -> None:
         lambda model_id: SimpleNamespace(revision="a" * 40),
     )
     monkeypatch.setattr(
-        worker, "verify_dependency_disposition_snapshot", lambda audit, root: None
+        worker,
+        "verify_dependency_disposition_snapshot",
+        lambda audit, root: None,
     )
     backend, _ = _backend()
     backend = worker._Backend(
@@ -313,7 +321,9 @@ def test_worker_rejects_invalid_transcription(monkeypatch, tmp_path) -> None:
         lambda model_id: SimpleNamespace(revision="a" * 40),
     )
     monkeypatch.setattr(
-        worker, "verify_dependency_disposition_snapshot", lambda audit, root: None
+        worker,
+        "verify_dependency_disposition_snapshot",
+        lambda audit, root: None,
     )
     backend, _ = _backend()
 
