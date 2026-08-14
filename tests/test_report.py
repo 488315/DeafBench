@@ -1,3 +1,5 @@
+import pytest
+
 from deafbench.report import generate_markdown_report
 
 
@@ -47,6 +49,54 @@ def test_report_keeps_dual_critical_metrics_and_word_error_counts():
     assert "Normalized CER** | 12.5%" in report
     assert "`deafbench-asr-normalization-v1`" in report
     assert "| `sample-1` | 50.0% | 1 | 0 | 0 |" in report
+
+
+def test_report_labels_local_rtfx_as_environment_dependent() -> None:
+    metrics = {
+        "samples": 1,
+        "wer": 0.0,
+        "critical_recall": 100.0,
+        "matched_critical": 0,
+        "total_critical": 0,
+        "non_speech_recall": None,
+        "matched_sounds": 0,
+        "total_sounds": 0,
+        "critical_failures": [],
+    }
+
+    report = generate_markdown_report(
+        metrics,
+        "refs.jsonl",
+        "preds.jsonl",
+        performance={"local_rtfx": 12.5},
+    )
+
+    assert "Local throughput (RTFx)** | 12.50x" in report
+    assert "audio seconds divided by inference wall seconds" in report
+    assert "environment-dependent" in report
+
+
+@pytest.mark.parametrize("local_rtfx", [0.0, -1.0, float("nan"), True, "fast"])
+def test_report_rejects_invalid_local_rtfx(local_rtfx: object) -> None:
+    metrics = {
+        "samples": 1,
+        "wer": 0.0,
+        "critical_recall": 100.0,
+        "matched_critical": 0,
+        "total_critical": 0,
+        "non_speech_recall": None,
+        "matched_sounds": 0,
+        "total_sounds": 0,
+        "critical_failures": [],
+    }
+
+    with pytest.raises(ValueError, match="local_rtfx"):
+        generate_markdown_report(
+            metrics,
+            "refs.jsonl",
+            "preds.jsonl",
+            performance={"local_rtfx": local_rtfx},
+        )
 
 
 def test_report_accepts_canonical_metrics_without_legacy_aliases() -> None:

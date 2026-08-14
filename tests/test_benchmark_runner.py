@@ -168,6 +168,8 @@ def test_run_metadata_preserves_model_performance_evidence(tmp_path: Path) -> No
         "median_latency_ms": 40.0,
         "peak_vram_bytes": 123_456,
     }
+    report = result.report.read_text(encoding="utf-8")
+    assert "Local throughput (RTFx)** | 12.50x" in report
     assert references.is_file()
 
 

@@ -384,6 +384,7 @@ def _build_run_bundle(
             metrics,
             str(paths.references),
             str(paths.predictions),
+            performance=model_info.performance,
         )
         atomic_write_text(staging / "report.md", report)
         metadata = _metadata(
