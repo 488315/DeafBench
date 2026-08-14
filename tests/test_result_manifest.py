@@ -56,6 +56,11 @@ _PAYLOAD = {
             "critical_failures": [],
         },
     ],
+    "verification": {
+        "status": "recorded_local_observation",
+        "sample_artifacts_in_repository": False,
+        "independently_recomputable_from_checkout": False,
+    },
     "claim_boundary": "Local compatibility smoke only.",
 }
 
@@ -202,11 +207,28 @@ def test_whisper_at_result_manifest_is_valid_and_byte_stable() -> None:
     ("mutation", "message"),
     [
         (lambda payload: payload.pop("claim_boundary"), "result manifest missing"),
+        (lambda payload: payload.pop("verification"), "result manifest missing"),
         (lambda payload: payload.update(schema_version=2), "unsupported"),
         (lambda payload: payload.update(schema_version=True), "unsupported"),
         (lambda payload: payload.update(status="draft"), "unsupported"),
         (lambda payload: payload.update(status=[]), "unsupported"),
         (lambda payload: payload.update(claim_boundary=""), "claim_boundary"),
+        (
+            lambda payload: payload["verification"].update(
+                sample_artifacts_in_repository=True
+            ),
+            "verification state",
+        ),
+        (
+            lambda payload: payload["verification"].update(
+                independently_recomputable_from_checkout=True
+            ),
+            "verification state",
+        ),
+        (
+            lambda payload: payload["verification"].update(status="verified"),
+            "verification state",
+        ),
         (lambda payload: payload.update(evaluator_revision="main"), "evaluator revision"),
         (lambda payload: payload.update(decoding=[]), "decoding must be an object"),
         (lambda payload: payload.update(corpora="synthetic-v2"), "corpora"),

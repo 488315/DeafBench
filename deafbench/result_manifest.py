@@ -159,6 +159,7 @@ def validate_result_manifest(payload: object) -> Mapping[str, Any]:
             "corpora",
             "evaluations",
             "claim_boundary",
+            "verification",
         },
         "result manifest",
     )
@@ -174,6 +175,14 @@ def validate_result_manifest(payload: object) -> Mapping[str, Any]:
         "claim_boundary"
     ].strip():
         raise ResultManifestError("claim_boundary must be nonempty")
+    verification = _mapping(manifest["verification"], "verification")
+    expected_verification = {
+        "status": "recorded_local_observation",
+        "sample_artifacts_in_repository": False,
+        "independently_recomputable_from_checkout": False,
+    }
+    if dict(verification) != expected_verification:
+        raise ResultManifestError("unsupported result verification state")
 
     model = _mapping(manifest["model"], "model")
     _required(model, {"model_id", "revision"}, "model")
