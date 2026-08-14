@@ -8,6 +8,7 @@ ISSUE_TEMPLATE = ROOT / ".github" / "ISSUE_TEMPLATE"
 
 
 def test_required_community_files_are_present() -> None:
+    """Require every file used by GitHub's repository checklist."""
     required = (
         ROOT / "CODE_OF_CONDUCT.md",
         ROOT / "CONTRIBUTING.md",
@@ -25,6 +26,7 @@ def test_required_community_files_are_present() -> None:
 
 
 def test_issue_forms_fail_closed_for_sensitive_reports() -> None:
+    """Keep public issue intake routed and explicitly free of sensitive data."""
     config = yaml.safe_load((ISSUE_TEMPLATE / "config.yml").read_text(encoding="utf-8"))
     assert config["blank_issues_enabled"] is False
     links = {link["name"]: link["url"] for link in config["contact_links"]}
@@ -68,6 +70,7 @@ def test_issue_forms_fail_closed_for_sensitive_reports() -> None:
 
 
 def test_pull_request_template_preserves_review_gates() -> None:
+    """Keep the pull request template's evidence and data-safety gates."""
     template = (ROOT / ".github" / "pull_request_template.md").read_text(
         encoding="utf-8"
     )
