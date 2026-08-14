@@ -94,7 +94,6 @@ toolz==1.1.0
 torch @ https://download-r2.pytorch.org/whl/cu124/torch-2.6.0%2Bcu124-cp312-cp312-linux_x86_64.whl#sha256=a393b506844035c0dac2f30ea8478c343b8e95a429f06f3b3cadfc7f53adb597
 torchaudio @ https://download-r2.pytorch.org/whl/cu124/torchaudio-2.6.0%2Bcu124-cp312-cp312-linux_x86_64.whl#sha256=3e5ffa69606171c74f3e2b969785ead50b782ca657e746aaee1ee7cc88dcfc08
 tqdm==4.70.0
-transformers==4.57.6
 triton==3.2.0
 typing-extensions==4.15.0
 urllib3==2.7.0

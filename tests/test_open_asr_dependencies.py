@@ -68,3 +68,9 @@ def test_open_asr_setuptools_runtime_covers_security_floor() -> None:
     lock_text = _LOCK.read_text(encoding="utf-8")
 
     assert Version(_locked_version("setuptools", lock_text)) >= Version("83.0.0")
+
+
+def test_open_asr_runtime_excludes_unused_transformers() -> None:
+    lock_text = _LOCK.read_text(encoding="utf-8")
+
+    assert not re.search(r"(?m)^transformers(?:==|\[)", lock_text)
