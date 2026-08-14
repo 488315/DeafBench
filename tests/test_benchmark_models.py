@@ -1,6 +1,7 @@
 import json
 import math
 import builtins
+import io
 import wave
 from pathlib import Path
 
@@ -11,6 +12,7 @@ from deafbench.benchmark.models.whisper import run_whisper
 from deafbench.benchmark.models import whisper as whisper_adapter
 from deafbench.benchmark.models import whisper_at as whisper_at_adapter
 from deafbench.benchmark.models.whisper_at import (
+    _prepare_pinned_checkpoints,
     extract_audio_tags,
     run_whisper_at,
 )
@@ -247,7 +249,19 @@ def test_whisper_at_keeps_sounds_out_of_text(tmp_path: Path) -> None:
     )
     record = _records(output)[0]
 
-    assert info == ModelRunInfo("whisper-at", "medium.en")
+    assert info == ModelRunInfo(
+        "whisper-at",
+        "YuanGongND/whisper-at",
+        revision="17d94d6acd53866390ce70f95afa13507dcb8aef",
+        decoding={
+            "at_time_res": 10.0,
+            "backend_model": "medium.en",
+            "language": "en",
+            "p_threshold": -1.0,
+            "task": "transcribe",
+            "top_k": 5,
+        },
+    )
     assert record == {
         "id": "ns-001",
         "text": " Please remain seated. ",
@@ -268,6 +282,61 @@ def test_whisper_at_keeps_sounds_out_of_text(tmp_path: Path) -> None:
         "p_threshold": -1.0,
         "include_class_list": list(range(527)),
     }
+
+
+def test_whisper_at_downloads_and_verifies_pinned_checkpoints(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    checkpoints = {
+        "asr.pt": (
+            "https://example.test/asr",
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+        ),
+        "tags.pth": (
+            "https://example.test/tags",
+            "3608bca1e44ea6c4d268eb6db02260269892c0b42b86bbf1e77a6fa16c3c9282",
+        ),
+    }
+    monkeypatch.setattr(whisper_at_adapter, "PINNED_CHECKPOINTS", checkpoints)
+    opened: list[str] = []
+
+    def opener(url: str) -> io.BytesIO:
+        opened.append(url)
+        return io.BytesIO(b"abc" if url.endswith("asr") else b"xyz")
+
+    _prepare_pinned_checkpoints(tmp_path, opener=opener)
+
+    assert opened == ["https://example.test/asr", "https://example.test/tags"]
+    assert (tmp_path / "asr.pt").read_bytes() == b"abc"
+    assert (tmp_path / "tags.pth").read_bytes() == b"xyz"
+    assert list(tmp_path.glob("*.part")) == []
+
+
+def test_whisper_at_rejects_tampered_cached_checkpoint(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    checkpoint = tmp_path / "asr.pt"
+    checkpoint.write_bytes(b"tampered")
+    monkeypatch.setattr(
+        whisper_at_adapter,
+        "PINNED_CHECKPOINTS",
+        {
+            "asr.pt": (
+                "https://example.test/asr",
+                "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+            )
+        },
+    )
+
+    with pytest.raises(RuntimeError, match="checkpoint hash mismatch"):
+        _prepare_pinned_checkpoints(
+            tmp_path,
+            opener=lambda _url: pytest.fail("tampered files must not be replaced"),
+        )
+
+    assert checkpoint.read_bytes() == b"tampered"
 
 
 def test_extract_audio_tags_preserves_mapping_and_raw_only_labels() -> None:
