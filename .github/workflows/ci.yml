@@ -89,18 +89,23 @@ jobs:
           python -m pip install ".[ark-onnx-asr,test]"
 
       - name: Verify adapter discovery at the exact floor
-        run: >-
-          python -I -c
-          "import transformers;
-          assert transformers.__version__ == '5.5.0';
-          from deafbench.benchmark.models import ark_asr, ark_asr_onnx;
-          from deafbench.benchmark.models._ark_asr_worker import
-          _load_backend as load_native;
-          from deafbench.benchmark.models._ark_asr_onnx_worker import
-          _load_backend as load_onnx;
-          assert ark_asr.MODEL_NAME == 'ark-asr-0.6b';
-          assert ark_asr_onnx.MODEL_NAME == 'ark-asr-0.6b-int8-onnx';
-          load_native(); load_onnx()"
+        shell: python
+        run: |
+          import transformers
+
+          from deafbench.benchmark.models import ark_asr, ark_asr_onnx
+          from deafbench.benchmark.models._ark_asr_onnx_worker import (
+              _load_backend as load_onnx,
+          )
+          from deafbench.benchmark.models._ark_asr_worker import (
+              _load_backend as load_native,
+          )
+
+          assert transformers.__version__ == "5.5.0"
+          assert ark_asr.MODEL_NAME == "ark-asr-0.6b"
+          assert ark_asr_onnx.MODEL_NAME == "ark-asr-0.6b-int8-onnx"
+          load_native()
+          load_onnx()
 
       - name: Exercise ARK adapter smoke paths
         run: >-
