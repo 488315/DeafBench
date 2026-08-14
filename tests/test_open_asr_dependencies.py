@@ -54,9 +54,11 @@ def test_open_asr_torch_runtime_uses_patched_matching_abi() -> None:
         "torchaudio-2.6.0%2Bcu124-cp312-cp312-linux_x86_64.whl"
         "#sha256=3e5ffa69606171c74f3e2b969785ead50b782ca657e746aaee1ee7cc88dcfc08"
     )
-    assert "resolve/da4df24bb5f00061097f24d8a5caab841fa3c7fd/" in k2_url
-    assert f"+cuda12.4.torch{torch_version}-cp312-cp312-" in k2_url
     assert (
-        k2_url.rsplit("#sha256=", maxsplit=1)[-1]
-        == "e9d703f0599b56dfccba1f659fa172c38e5599808b5ca1b766ab8a724a3d0c21"
+        k2_url
+        == "https://huggingface.co/csukuangfj/k2/resolve/"
+        "da4df24bb5f00061097f24d8a5caab841fa3c7fd/ubuntu-cuda/"
+        "k2-1.24.4.dev20250130+cuda12.4.torch2.6.0-cp312-cp312-"
+        "manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+        "#sha256=e9d703f0599b56dfccba1f659fa172c38e5599808b5ca1b766ab8a724a3d0c21"
     )
