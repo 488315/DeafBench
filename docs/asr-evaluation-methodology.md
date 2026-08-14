@@ -16,7 +16,7 @@ The default DeafBench evaluator reports these corpus-level measurements:
 | Normalized WER | Word error rate after `deafbench-asr-normalization-v1`. |
 | Normalized CER | Character error rate after `deafbench-asr-normalization-v1`. Spaces count as characters. |
 | Substitutions, insertions, deletions | Orthographic word-alignment counts retained by the compatibility fields. Normalized counts are separately named. |
-| Local RTFx | Total audio seconds divided by inference wall seconds. Higher is faster. |
+| Local RTFx | Total audio seconds divided by inference wall seconds. Higher is faster. Reported only from finite, positive measurements. |
 
 The legacy `wer` and `cer` fields are aliases of orthographic WER and CER. They
 are not normalized measurements.
@@ -33,7 +33,8 @@ other accessibility metrics continue to be evaluated.
 Local RTFx is environment-dependent. A local RTX 4070 or CPU measurement is not
 directly comparable with an official leaderboard hardware result unless the
 hardware, runtime, batching, preprocessing, warm-up, and timing boundaries are
-the same.
+the same. Invalid, non-finite, or non-positive timing measurements do not
+produce a reported local RTFx value.
 
 ## `deafbench-asr-normalization-v1`
 
