@@ -13,12 +13,12 @@ from deafbench.benchmark.models._isolated_result import (
     validated_records,
 )
 from deafbench.benchmark.workspace import atomic_write_jsonl
-from deafbench.dependency_security import load_dependency_dispositions
-from deafbench.model_registry import ModelRegistryError, get_model_license
-from deafbench.remote_code_audit import (
-    load_remote_code_audit,
-    verify_audited_files,
+from deafbench.dependency_security import (
+    load_dependency_dispositions,
+    verify_dependency_disposition_snapshot,
 )
+from deafbench.model_registry import ModelRegistryError, get_model_license
+from deafbench.remote_code_audit import load_remote_code_audit
 
 
 MODEL_ID = "ibm-granite/granite-speech-4.1-2b-nar"
@@ -80,7 +80,7 @@ def run_granite_nar(
         snapshot_root = Path(downloader(repo_id=MODEL_ID, revision=revision))
     snapshot_root = snapshot_root.resolve(strict=True)
     audit = load_remote_code_audit(MODEL_ID)
-    verify_audited_files(audit, snapshot_root)
+    verify_dependency_disposition_snapshot(audit, snapshot_root)
 
     result = worker_invoker(
         WORKER_MODULE,

@@ -7,7 +7,10 @@ import re
 from dataclasses import dataclass
 from datetime import date
 from importlib.resources import files
+from pathlib import Path, PurePosixPath
 from typing import Any, Mapping, Sequence
+
+from deafbench.remote_code_audit import RemoteCodeAudit, verify_audited_files
 
 
 _MODEL_ID = "ibm-granite/granite-speech-4.1-2b-nar"
@@ -154,3 +157,33 @@ def load_dependency_dispositions(
     ):
         raise DependencyDispositionError("incomplete or duplicate dispositions")
     return dispositions
+
+
+def verify_dependency_disposition_snapshot(
+    audit: RemoteCodeAudit,
+    snapshot_root: Path,
+) -> None:
+    """Reject changed or affected remote source before dependency execution."""
+    if audit.model_id != _MODEL_ID or audit.revision != _MODEL_REVISION:
+        raise DependencyDispositionError("dependency disposition audit differs")
+    verify_audited_files(audit, snapshot_root)
+    affected_apis = {
+        api for item in load_dependency_dispositions() for api in item.affected_apis
+    }
+    root = snapshot_root.resolve(strict=True)
+    for audited_file in audit.audited_files:
+        if not audited_file.path.endswith(".py"):
+            continue
+        source_path = root.joinpath(*PurePosixPath(audited_file.path).parts)
+        try:
+            source = source_path.read_text(encoding="utf-8")
+        except (OSError, UnicodeError) as exc:
+            raise DependencyDispositionError(
+                f"audited dependency source is unreadable: {audited_file.path}"
+            ) from exc
+        matched = sorted(api for api in affected_apis if api in source)
+        if matched:
+            raise DependencyDispositionError(
+                f"affected dependency API is reachable: {audited_file.path}: "
+                + ", ".join(matched)
+            )

@@ -12,10 +12,8 @@ from time import perf_counter
 from typing import Any
 
 from deafbench.benchmark.models._isolated import RESULT_MARKER
-from deafbench.remote_code_audit import (
-    load_remote_code_audit,
-    verify_audited_files,
-)
+from deafbench.dependency_security import verify_dependency_disposition_snapshot
+from deafbench.remote_code_audit import load_remote_code_audit
 
 
 MODEL_ID = "ibm-granite/granite-speech-4.1-2b-nar"
@@ -84,7 +82,7 @@ def run_request(
     if not snapshot_root.is_absolute():
         raise ValueError("Granite NAR snapshot must be absolute")
     snapshot_root = snapshot_root.resolve(strict=True)
-    verify_audited_files(audit, snapshot_root)
+    verify_dependency_disposition_snapshot(audit, snapshot_root)
     wav_paths = _validated_wav_paths(payload)
 
     runtime = _load_backend() if backend is None else backend

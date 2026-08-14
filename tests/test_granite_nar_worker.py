@@ -96,7 +96,7 @@ def test_worker_verifies_source_before_loading_model(monkeypatch, tmp_path) -> N
     monkeypatch.setattr(worker, "load_remote_code_audit", lambda model_id: audit)
     monkeypatch.setattr(
         worker,
-        "verify_audited_files",
+        "verify_dependency_disposition_snapshot",
         lambda received, root: order.append("verify"),
     )
     backend, load_calls = _backend()
@@ -148,7 +148,9 @@ def test_worker_requires_cuda(monkeypatch, tmp_path) -> None:
     wav.write_bytes(b"fixture")
     audit = SimpleNamespace(revision="a" * 40)
     monkeypatch.setattr(worker, "load_remote_code_audit", lambda model_id: audit)
-    monkeypatch.setattr(worker, "verify_audited_files", lambda audit, root: None)
+    monkeypatch.setattr(
+        worker, "verify_dependency_disposition_snapshot", lambda audit, root: None
+    )
     backend, _ = _backend()
     backend.torch.cuda.is_available = lambda: False
 
@@ -235,7 +237,9 @@ def test_worker_resamples_nonstandard_audio(monkeypatch, tmp_path) -> None:
         "load_remote_code_audit",
         lambda model_id: SimpleNamespace(revision="a" * 40),
     )
-    monkeypatch.setattr(worker, "verify_audited_files", lambda audit, root: None)
+    monkeypatch.setattr(
+        worker, "verify_dependency_disposition_snapshot", lambda audit, root: None
+    )
     backend, _ = _backend()
     waveform = _Waveform()
     backend.torchaudio.load = lambda path: (waveform, 8_000)
@@ -259,7 +263,9 @@ def test_worker_rejects_nonmono_audio(monkeypatch, tmp_path) -> None:
         "load_remote_code_audit",
         lambda model_id: SimpleNamespace(revision="a" * 40),
     )
-    monkeypatch.setattr(worker, "verify_audited_files", lambda audit, root: None)
+    monkeypatch.setattr(
+        worker, "verify_dependency_disposition_snapshot", lambda audit, root: None
+    )
     backend, _ = _backend()
     backend.torchaudio.load = lambda path: (
         SimpleNamespace(ndim=2, shape=(2, 16_000)),
@@ -280,7 +286,9 @@ def test_worker_rejects_nonpositive_timing(monkeypatch, tmp_path) -> None:
         "load_remote_code_audit",
         lambda model_id: SimpleNamespace(revision="a" * 40),
     )
-    monkeypatch.setattr(worker, "verify_audited_files", lambda audit, root: None)
+    monkeypatch.setattr(
+        worker, "verify_dependency_disposition_snapshot", lambda audit, root: None
+    )
     backend, _ = _backend()
     backend = worker._Backend(
         backend.AutoModel,
@@ -304,7 +312,9 @@ def test_worker_rejects_invalid_transcription(monkeypatch, tmp_path) -> None:
         "load_remote_code_audit",
         lambda model_id: SimpleNamespace(revision="a" * 40),
     )
-    monkeypatch.setattr(worker, "verify_audited_files", lambda audit, root: None)
+    monkeypatch.setattr(
+        worker, "verify_dependency_disposition_snapshot", lambda audit, root: None
+    )
     backend, _ = _backend()
 
     class InvalidProcessor:
