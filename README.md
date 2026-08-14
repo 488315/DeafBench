@@ -40,12 +40,15 @@ claim. The exact upstream revisions, commands, and evidence are in
 
 ## Models that work with DeafBench
 
-The models below have working adapters in this repository. The nine newer
-adapters have completed a 25-sample synthetic-v2 run and a two-row public
-real-speech smoke run, with byte-stable local result manifests under
-`experiments/model-results`. A smoke run proves that the pinned adapter executes
-and produces a valid result; it does not prove model quality or a leaderboard
-score.
+The models below have working adapters in this repository. Nine newer adapters
+have recorded local observations for a 25-sample synthetic-v2 run and a two-row
+public real-speech smoke run. Their byte-stable metadata manifests are under
+`experiments/model-results`, but the sample-level predictions and run artifacts
+are not published in this checkout, so these values cannot be independently
+recomputed from the repository alone. A smoke observation shows that the pinned
+adapter executed in the recorded environment; it does not prove model quality
+or a leaderboard score. OpenAI Whisper `turbo` remains legacy report evidence
+only and does not have one of these newer manifests.
 
 | DeafBench model name | Pinned model | Current evidence | License lane |
 | --- | --- | --- | --- |
@@ -102,11 +105,12 @@ quality. Core v1 and Non-speech v1 are earlier, separately frozen benchmarks.
 | ARK-ASR 0.6B | 2.89% | 7.49 | 2.29 GiB |
 | ARK-ASR 0.6B INT8 ONNX | 2.89% | 3.01 | CPU |
 
-The byte-stable evidence for both tables is in
-[`experiments/model-results`](experiments/model-results). GPU rows are local RTX
-4070 measurements, and CPU rows are labeled separately. The two-row smoke
-results are not the seven-dataset macro-average and are not Hugging Face
-verified.
+The byte-stable metadata records for both tables are in
+[`experiments/model-results`](experiments/model-results). They are recorded
+local observations, not independently recomputable evidence, because their
+sample-level artifacts are not in this checkout. GPU rows are local RTX 4070
+measurements, and CPU rows are labeled separately. The two-row smoke results
+are not the seven-dataset macro-average and are not Hugging Face verified.
 
 ### Earlier model evidence
 
