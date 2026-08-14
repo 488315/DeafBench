@@ -501,6 +501,15 @@ Supported generated events are `[alarm]`, `[door closes]`, `[phone rings]`, `[kn
 
 ---
 
+## Citation
+
+GitHub can generate a citation from [`CITATION.cff`](CITATION.cff). The file
+identifies the released software version, author, license, source repository,
+and project website without implying a paper, DOI, or independent
+certification that does not exist.
+
+---
+
 ## License
 
 [Apache License 2.0](LICENSE)

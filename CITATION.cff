@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use DeafBench, cite the software using this metadata."
+title: "DeafBench: Accessibility-focused evaluation for AI captions and ASR systems"
+type: software
+authors:
+  - given-names: Kai
+    family-names: Jones
+    alias: "488315"
+    website: "https://github.com/488315"
+version: "0.2.1"
+date-released: 2026-08-13
+license: Apache-2.0
+repository-code: "https://github.com/488315/DeafBench"
+url: "https://488315.github.io/products/deafbench/"
+abstract: >-
+  DeafBench is an open-source accessibility benchmark for AI captions and
+  automatic speech recognition systems. It keeps conventional ASR measurements
+  separate from typed accessibility-critical information evaluation and from
+  its pinned Open ASR Leaderboard compatibility lane.
+keywords:
+  - accessibility
+  - automatic speech recognition
+  - captions
+  - deaf
+  - hard of hearing
+  - benchmark
