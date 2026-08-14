@@ -27,6 +27,8 @@ def normalize_asr_text(text: str) -> str:
 
 
 def _validate_corpus(references: Sequence[str], predictions: Sequence[str]) -> None:
+    if isinstance(references, str) or isinstance(predictions, str):
+        raise TypeError("references and predictions must be sequences of strings")
     if not references:
         raise ValueError("ASR evaluation requires at least one reference")
     if len(references) != len(predictions):
