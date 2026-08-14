@@ -4,6 +4,7 @@ import io
 import json
 from pathlib import Path
 import wave
+from dataclasses import replace
 
 import numpy as np
 import pytest
@@ -14,6 +15,7 @@ from deafbench.leaderboard.dev_corpus import (
     DevCorpusError,
     _pinned_source_rows,
     _promote_materialization,
+    _select_source_rows,
     load_dev_contract,
     materialize_dev_corpus,
 )
@@ -255,6 +257,21 @@ def test_pinned_source_rows_preserves_transitive_import_failure(
         _pinned_source_rows(contract)
 
 
+def test_select_source_rows_rejects_changed_hash_cohort(tmp_path):
+    manifest, references, _ = _write_contract(tmp_path)
+    contract = replace(
+        load_dev_contract(manifest, references, expected_count=2),
+        population_count=3,
+    )
+    rows = (
+        {"id": sample_id, "payload": object()}
+        for sample_id in ("dev-001", "dev-002", "extra-001")
+    )
+
+    with pytest.raises(DevCorpusError, match="cohort selection changed"):
+        _select_source_rows(rows, contract)
+
+
 def test_load_dev_contract_requires_official_test_exclusions(tmp_path):
     manifest_path, references, manifest = _write_contract(tmp_path)
     manifest["official_evaluation_exclusions"].pop()
@@ -443,11 +460,11 @@ def test_materialize_dev_corpus_rejects_source_drift_without_replacing_output(
     assert marker.read_text(encoding="utf-8") == "preserve"
 
 
-def test_materialize_dev_corpus_rejects_source_order_drift(tmp_path):
+def test_materialize_dev_corpus_rejects_source_identity_drift(tmp_path):
     manifest, references, source_rows = _write_materialization_contract(tmp_path)
     source_rows[0]["id"] = "zzz"
 
-    with pytest.raises(DevCorpusError, match="sample order changed"):
+    with pytest.raises(DevCorpusError, match="cohort selection changed"):
         materialize_dev_corpus(
             manifest,
             references,

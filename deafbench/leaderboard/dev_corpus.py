@@ -269,20 +269,31 @@ def _promote_materialization(staging: Path, destination: Path) -> None:
 def _select_source_rows(
     rows: Iterable[Mapping[str, Any]], contract: DevCorpusContract
 ) -> list[Mapping[str, Any]]:
-    population = list(rows)
-    if len(population) != contract.population_count:
+    wanted = set(contract.sample_ids)
+    seen_ids: list[str] = []
+    retained: dict[str, Mapping[str, Any]] = {}
+    for row in rows:
+        sample_id = row.get("id")
+        if not isinstance(sample_id, str):
+            raise DevCorpusError("development source sample ID is invalid")
+        seen_ids.append(sample_id)
+        if sample_id in wanted:
+            retained[sample_id] = row
+
+    if len(seen_ids) != contract.population_count:
         raise DevCorpusError("development source population count changed")
-    if any(not isinstance(row.get("id"), str) for row in population):
-        raise DevCorpusError("development source sample ID is invalid")
-    if len({cast(str, row["id"]) for row in population}) != len(population):
+    if len(set(seen_ids)) != len(seen_ids):
         raise DevCorpusError("development source contains duplicate sample IDs")
-    return sorted(
-        population,
-        key=lambda row: (
-            hashlib.sha256(cast(str, row["id"]).encode("utf-8")).hexdigest(),
-            cast(str, row["id"]),
+    selected = sorted(
+        seen_ids,
+        key=lambda sample_id: (
+            hashlib.sha256(sample_id.encode("utf-8")).hexdigest(),
+            sample_id,
         ),
     )[: len(contract.samples)]
+    if set(selected) != wanted:
+        raise DevCorpusError("development cohort selection changed")
+    return [retained[sample_id] for sample_id in selected]
 
 
 def materialize_dev_corpus(
