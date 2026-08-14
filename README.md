@@ -142,6 +142,24 @@ will not use rate changes, pauses, or noise to claim demographic performance.
 That evidence requires a separate authorized and consented human-speech lane
 with subgroup reporting and a corpus that is appropriate for that purpose.
 
+The executable local lane requires clean WAV files named for the selected
+reference IDs. `--implemented-only` runs the six transformation families that
+DeafBench can currently materialize and labels the result with the exact sample
+count. It does not count the declared overlap or codec cases as completed.
+
+```powershell
+python -m deafbench stress `
+  --references benchmarks/accessibility-stress-v1/references.jsonl `
+  --clean-audio benchmarks/accessibility-stress-v1/audio-clean `
+  --output benchmarks/accessibility-stress-v1/runs/faster-whisper/local `
+  --model faster-whisper `
+  --implemented-only
+```
+
+The output directory contains hash-bound preparation evidence, clean and
+stressed predictions, and a local result. Generated audio, predictions, and
+runs stay untracked.
+
 ---
 
 ## Quickstart

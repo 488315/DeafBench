@@ -52,6 +52,20 @@ subgroup uncertainty reporting. DeafBench must not publish or compare subgroup
 results until those conditions are met. No real customer or participant audio
 belongs in this repository.
 
+That future lane should be designed with Deaf and hard-of-hearing participants,
+not inferred from a list of assumed speech traits. Where participants and the
+study protocol authorize it, the lane may measure self-described DHH speech,
+dysarthric speech, prolonged signing-and-speaking pauses, and other declared
+communication patterns. Reports must keep cohorts separate and must not treat
+one speaker's phonetics, pitch, voicing, nasality, or therapy history as a
+general property of a disability group.
+
+In addition to WER and typed critical-information recall, the human-speech
+protocol should predeclare deletion counts, premature VAD closure during
+intra-phrase pauses, caption timestamp drift, and uncertainty for every
+reported cohort. These are future protocol requirements, not results produced
+by the current synthetic corpus.
+
 ## Reproducibility
 
 The frozen reference SHA-256 is
