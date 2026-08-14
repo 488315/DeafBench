@@ -2,6 +2,7 @@ import json
 import tomllib
 from copy import deepcopy
 from datetime import date
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -10,7 +11,9 @@ from deafbench.dependency_security import (
     DependencyDispositionError,
     load_dependency_dispositions,
     validate_dependency_disposition,
+    verify_dependency_disposition_snapshot,
 )
+from deafbench.remote_code_audit import AuditedFile, RemoteCodeAudit
 
 
 _ROOT = Path(__file__).parents[1]
@@ -125,3 +128,27 @@ def test_disposition_audit_hashes_match_remote_code_audit() -> None:
     assert dispositions["reviewed_source_sha256"] == {
         item["path"]: item["sha256"] for item in audit["files"]
     }
+
+
+def _snapshot_audit(tmp_path: Path, source: str) -> RemoteCodeAudit:
+    source_path = tmp_path / "modeling.py"
+    source_path.write_text(source, encoding="utf-8")
+    digest = hashlib.sha256(source_path.read_bytes()).hexdigest()
+    return RemoteCodeAudit(
+        model_id="ibm-granite/granite-speech-4.1-2b-nar",
+        revision="a1e3416e25ce29ab3852778e54fa8b3bd59c4bf2",
+        audited_files=(AuditedFile("modeling.py", digest),),
+    )
+
+
+def test_snapshot_verification_accepts_clean_audited_source(tmp_path) -> None:
+    audit = _snapshot_audit(tmp_path, "def transcribe(audio):\n    return audio\n")
+
+    verify_dependency_disposition_snapshot(audit, tmp_path)
+
+
+def test_snapshot_verification_rejects_affected_api(tmp_path) -> None:
+    audit = _snapshot_audit(tmp_path, "result = torch.jit.script(model)\n")
+
+    with pytest.raises(DependencyDispositionError, match="affected.*modeling.py"):
+        verify_dependency_disposition_snapshot(audit, tmp_path)

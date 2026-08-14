@@ -43,7 +43,7 @@ def test_adapter_verifies_snapshot_and_writes_worker_records(
     )
     monkeypatch.setattr(
         granite_nar,
-        "verify_audited_files",
+        "verify_dependency_disposition_snapshot",
         lambda received, root: verified.append((received, root)),
     )
 
@@ -86,7 +86,9 @@ def test_adapter_downloads_exact_registered_revision(monkeypatch, tmp_path) -> N
         "load_remote_code_audit",
         lambda model_id: SimpleNamespace(revision=revision),
     )
-    monkeypatch.setattr(granite_nar, "verify_audited_files", lambda *args: None)
+    monkeypatch.setattr(
+        granite_nar, "verify_dependency_disposition_snapshot", lambda *args: None
+    )
 
     def download(**options):
         calls.append(options)
@@ -116,7 +118,9 @@ def test_adapter_rejects_incomplete_worker_output(monkeypatch, tmp_path) -> None
         "load_remote_code_audit",
         lambda model_id: SimpleNamespace(revision=revision),
     )
-    monkeypatch.setattr(granite_nar, "verify_audited_files", lambda *args: None)
+    monkeypatch.setattr(
+        granite_nar, "verify_dependency_disposition_snapshot", lambda *args: None
+    )
 
     with pytest.raises(ValueError, match="incomplete predictions"):
         granite_nar.run_granite_nar(
