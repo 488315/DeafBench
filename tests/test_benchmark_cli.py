@@ -127,7 +127,7 @@ def test_benchmark_command_prints_complete_terminal_summary(
         "Report:",
     ):
         assert expected in output
-    assert "Orthographic WER             0.0%" in output
+    assert "WER (legacy payload)         0.0%" in output
     assert "Strict Critical Information     100.0%" in output
     assert "Canonical Critical Information  100.0%" in output
     assert "Non-Speech Information     100.0%" in output
