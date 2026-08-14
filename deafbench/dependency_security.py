@@ -14,6 +14,7 @@ _MODEL_ID = "ibm-granite/granite-speech-4.1-2b-nar"
 _MODEL_REVISION = "a1e3416e25ce29ab3852778e54fa8b3bd59c4bf2"
 _AUDIT_RESOURCE = "granite-speech-4.1-2b-nar.json"
 _STACK = {"torch": "2.9.1", "torchaudio": "2.9.1", "torchcodec": "0.9.1"}
+_REVIEW_BY = date(2026, 11, 13)
 _ADVISORIES = {
     15: ("GHSA-qfhq-4f3w-5fph", "CVE-2025-3001", ("torch.lstm_cell",)),
     16: ("GHSA-rrmf-rvhw-rf47", "CVE-2025-3000", ("torch.jit.script",)),
@@ -78,6 +79,8 @@ def validate_dependency_disposition(
 
     reviewed_utc = _iso_date(record.get("reviewed_utc"), "reviewed_utc")
     review_by = _iso_date(record.get("review_by"), "review_by")
+    if review_by != _REVIEW_BY:
+        raise DependencyDispositionError("invalid disposition review deadline")
     if review_by <= reviewed_utc or review_by < (today or date.today()):
         raise DependencyDispositionError("dependency disposition expired")
 

@@ -13,6 +13,7 @@ from deafbench.benchmark.models._isolated_result import (
     validated_records,
 )
 from deafbench.benchmark.workspace import atomic_write_jsonl
+from deafbench.dependency_security import load_dependency_dispositions
 from deafbench.model_registry import ModelRegistryError, get_model_license
 from deafbench.remote_code_audit import (
     load_remote_code_audit,
@@ -39,6 +40,7 @@ def _load_snapshot_downloader() -> SnapshotDownload:
 
 
 def _licensed_revision() -> str:
+    load_dependency_dispositions()
     model_license = get_model_license(MODEL_ID)
     if not model_license.remote_code_required:
         raise ModelRegistryError("Granite NAR must remain a remote-code model")

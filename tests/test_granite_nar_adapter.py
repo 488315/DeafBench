@@ -169,8 +169,15 @@ def test_registered_revision_accepts_matching_audit(monkeypatch) -> None:
         "load_remote_code_audit",
         lambda model_id: SimpleNamespace(revision="a" * 40),
     )
+    validated: list[bool] = []
+    monkeypatch.setattr(
+        granite_nar,
+        "load_dependency_dispositions",
+        lambda: validated.append(True),
+    )
 
     assert granite_nar._licensed_revision() == "a" * 40
+    assert validated == [True]
 
 
 @pytest.mark.parametrize(

@@ -47,11 +47,12 @@ _DISPOSITION = {
 
 
 def test_packaged_torch_dispositions_bind_both_alerts() -> None:
-    dispositions = load_dependency_dispositions(today=date(2026, 8, 13))
+    dispositions = load_dependency_dispositions()
 
     assert {item.alert_number for item in dispositions} == {15, 16}
     assert {item.status for item in dispositions} == {"tolerable_risk"}
     assert {item.package for item in dispositions} == {"torch"}
+    assert {item.review_by for item in dispositions} == {date(2026, 11, 13)}
 
 
 def test_disposition_rejects_expired_review() -> None:
@@ -66,6 +67,7 @@ def test_disposition_rejects_expired_review() -> None:
         (("dependency_scope",), "runtime", "scope"),
         (("reachability", "first_party"), True, "reachability"),
         (("model", "revision"), "0" * 40, "revision"),
+        (("review_by",), "2026-11-14", "deadline"),
     ],
 )
 def test_disposition_rejects_changed_security_boundary(
