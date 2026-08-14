@@ -43,7 +43,8 @@ def test_whisper_at_docs_do_not_downgrade_setuptools() -> None:
     )
 
     assert 'pip install "setuptools<81"' not in readme
-    assert "Whisper-AT is not currently installable" in readme
+    assert "python -m deafbench.whisper_at_compat" in readme
+    assert "setuptools 83 or newer" in readme
 
 
 def test_wheel_discovery_excludes_nonruntime_trees() -> None:

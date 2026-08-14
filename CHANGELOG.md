@@ -10,9 +10,10 @@
   (`GHSA-h35f-9h28-mq5c`) while retaining Python 3.11 through 3.14 support.
 - Replaced the deprecated table-form project license with the PEP 639 SPDX
   expression and explicit Apache-2.0 license-file declaration.
-- Removed the documented Whisper-AT setuptools downgrade. New Whisper-AT runs
-  are unavailable until its upstream installer no longer requires the removed
-  `pkg_resources` module; existing frozen evidence remains unchanged.
+- Replaced Whisper-AT's build-only `pkg_resources` requirements parser with a
+  hash-verified `pathlib` parser while preserving its pinned source, runtime
+  requirements, adapter, license, and frozen evidence. Fresh Python 3.11
+  environments now install it with setuptools 83 or newer.
 - Patched the installable Open ASR/Zipformer experiment environment from
   PyTorch 2.4.0 to 2.6.0, the first release containing the upstream fix for
   CVE-2025-32434 (`GHSA-53q9-r3pm-6pq6`). The vulnerable runtime could execute
