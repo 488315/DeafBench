@@ -40,7 +40,7 @@ claim. The exact upstream revisions, commands, and evidence are in
 
 ## Models that work with DeafBench
 
-The models below have working adapters in this repository. The eight newer
+The models below have working adapters in this repository. The nine newer
 adapters have completed a 25-sample synthetic-v2 run and a two-row public
 real-speech smoke run, with byte-stable local result manifests under
 `experiments/model-results`. A smoke run proves that the pinned adapter executes
@@ -50,7 +50,7 @@ score.
 | DeafBench model name | Pinned model | Current evidence | License lane |
 | --- | --- | --- | --- |
 | `whisper` | OpenAI Whisper `turbo` | Core v1 and non-speech v1 reports | Runtime model; review upstream terms |
-| `whisper-at` | Whisper-AT `medium.en` | Adapter and benchmark workflow | Research integration; review upstream terms |
+| `whisper-at` | Whisper-AT `medium.en` | Synthetic-v2, real-speech smoke, and non-speech-v1 | Commercial candidate, BSD-2-Clause |
 | `faster-whisper` | `Systran/faster-whisper-small.en` | Frozen Core v1 baseline | Runtime model; review upstream terms |
 | `distil-whisper` | `Systran/faster-distil-whisper-large-v3` | Synthetic-v2 plus real-speech smoke | Commercial candidate, MIT |
 | `qwen3-asr-0.6b` | `Qwen/Qwen3-ASR-0.6B-hf` | Synthetic-v2 plus real-speech smoke | Commercial candidate, Apache-2.0 |
@@ -79,6 +79,7 @@ quality. Core v1 and Non-speech v1 are earlier, separately frozen benchmarks.
 | Model | WER | Strict lexical recall | Canonical semantic recall | Local RTFx | Peak VRAM |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Distil-Whisper large-v3 | 23.8% | 66.1% | 91.9% | 0.80 | CPU |
+| Whisper-AT `medium.en` | 26.2% | 67.7% | 96.8% | 7.34 | 4.46 GiB |
 | Qwen3-ASR 0.6B | 26.6% | 67.7% | 90.3% | 10.47 | 1.52 GiB |
 | Qwen3-ASR 1.7B | 21.0% | 67.7% | 91.9% | 9.89 | 3.86 GiB |
 | Parakeet TDT 0.6B v2 | 22.7% | 64.5% | 91.9% | 71.23 | 4.67 GiB |
@@ -92,6 +93,7 @@ quality. Core v1 and Non-speech v1 are earlier, separately frozen benchmarks.
 | Model | WER | Local RTFx | Peak VRAM |
 | --- | ---: | ---: | ---: |
 | Distil-Whisper large-v3 | 1.73% | 3.27 | CPU |
+| Whisper-AT `medium.en` | 1.73% | 11.19 | 4.46 GiB |
 | Qwen3-ASR 0.6B | 2.31% | 12.27 | 1.72 GiB |
 | Qwen3-ASR 1.7B | 1.16% | 12.43 | 4.05 GiB |
 | Parakeet TDT 0.6B v2 | 2.31% | 91.85 | 4.67 GiB |
@@ -113,7 +115,7 @@ verified.
 | OpenAI Whisper `turbo` | Core v1, 25 samples | 23.4% WER; 88.7% legacy critical-information recall |
 | OpenAI Whisper `turbo` | Non-speech v1, 12 samples | 2.0% WER; 95.0% legacy critical-information recall; 0.0% non-speech recall |
 | Faster-Whisper `small.en` | Frozen Core v1 synthetic baseline, 25 samples | 26.2% WER; 69.4% strict lexical recall; 90.3% canonical semantic recall |
-| Whisper-AT `medium.en` | Adapter and benchmark workflow | No completed result committed |
+| Whisper-AT `medium.en` | Non-speech v1, 12 samples | 2.0% WER; 95.0% strict and canonical critical recall; 0 of 19 expected sound events matched |
 
 The OpenAI Whisper reports are
 [`benchmarks/core-v1/model-a-report.md`](benchmarks/core-v1/model-a-report.md)
@@ -237,8 +239,9 @@ python -m pip install -U openai-whisper
 deafbench benchmark core-v1 --model whisper
 
 # Non-speech v1 with Whisper-AT on Windows
-python -m pip install numba numpy torch tqdm more-itertools tiktoken==0.3.3
-python -m pip install --no-deps whisper-at
+python -m pip install numba numpy torch tqdm more-itertools tiktoken==0.13.0
+python -m pip install "setuptools<81"
+python -m pip install --no-build-isolation --no-deps "whisper-at @ git+https://github.com/YuanGongND/whisper-at.git@17d94d6acd53866390ce70f95afa13507dcb8aef#subdirectory=package/whisper-at"
 deafbench benchmark non-speech-v1 --model whisper-at
 ```
 
