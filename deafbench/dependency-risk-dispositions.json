@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "reviewed_source_sha256": {
+    "__init__.py": "bb0b146ef994d40b86ea97790d4ddf2cf00e05f3205c2c93d8e810f2923ace04",
+    "config.json": "d6c760e672df122eedd873adb77a318b785221b06f9fbe9db08c51a1f8302936",
+    "configuration_granite_speech_nar.py": "bfeeef9fe0ebae2133fc96b04a2fe5e60b8dd2cc82d834dcda71272cb84a4d55",
+    "feature_extraction_granite_speech_nar.py": "627b0cf465ffcaf7d4042fd9287dfa0914c68dd170e46d28b90240592b14e761",
+    "modeling_granite_speech_nar.py": "dd8cfd71523acf5a4220dd35566d56c60e29771fd1c4d30291f72edbb2e47171",
+    "processing_granite_speech_nar.py": "47280a8d34eff709b98c6baa016873cb5a84ff1ec08d853a7de082e489e7c408"
+  },
+  "dispositions": [
+    {
+      "schema_version": 1,
+      "alert_number": 15,
+      "package": "torch",
+      "manifest": "pyproject.toml",
+      "dependency_scope": "development",
+      "installed_version": "2.9.1",
+      "advisory": {
+        "ghsa": "GHSA-qfhq-4f3w-5fph",
+        "cve": "CVE-2025-3001",
+        "affected_apis": ["torch.lstm_cell"]
+      },
+      "status": "tolerable_risk",
+      "reviewed_utc": "2026-08-13",
+      "review_by": "2026-11-13",
+      "model": {
+        "id": "ibm-granite/granite-speech-4.1-2b-nar",
+        "revision": "a1e3416e25ce29ab3852778e54fa8b3bd59c4bf2",
+        "audit_resource": "granite-speech-4.1-2b-nar.json"
+      },
+      "compatible_stack": {
+        "torch": "2.9.1",
+        "torchaudio": "2.9.1",
+        "torchcodec": "0.9.1"
+      },
+      "reachability": {
+        "first_party": false,
+        "audited_remote_code": false
+      }
+    },
+    {
+      "schema_version": 1,
+      "alert_number": 16,
+      "package": "torch",
+      "manifest": "pyproject.toml",
+      "dependency_scope": "development",
+      "installed_version": "2.9.1",
+      "advisory": {
+        "ghsa": "GHSA-rrmf-rvhw-rf47",
+        "cve": "CVE-2025-3000",
+        "affected_apis": ["torch.jit.script"]
+      },
+      "status": "tolerable_risk",
+      "reviewed_utc": "2026-08-13",
+      "review_by": "2026-11-13",
+      "model": {
+        "id": "ibm-granite/granite-speech-4.1-2b-nar",
+        "revision": "a1e3416e25ce29ab3852778e54fa8b3bd59c4bf2",
+        "audit_resource": "granite-speech-4.1-2b-nar.json"
+      },
+      "compatible_stack": {
+        "torch": "2.9.1",
+        "torchaudio": "2.9.1",
+        "torchcodec": "0.9.1"
+      },
+      "reachability": {
+        "first_party": false,
+        "audited_remote_code": false
+      }
+    }
+  ]
+}

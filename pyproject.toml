@@ -115,6 +115,7 @@ exclude = [
 
 [tool.setuptools.package-data]
 "deafbench" = [
+    "dependency-risk-dispositions.json",
     "model-registry.json",
     "licenses/*.txt",
     "licenses/**/*.txt",
