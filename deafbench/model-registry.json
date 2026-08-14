@@ -144,7 +144,7 @@
       "parameter_count": 1299463168,
       "expected_weight_size_bytes": 2599020680,
       "tested_peak_vram_bytes": 2460302848,
-      "supported_runtimes": ["transformers>=4.57.6,<6", "torch"],
+      "supported_runtimes": ["transformers>=5.5.0,<6", "torch"],
       "intended_lane": "commercial_candidate",
       "license_files": ["licenses/Apache-2.0.txt"],
       "notice_files": []
@@ -171,7 +171,7 @@
       "tested_peak_vram_bytes": null,
       "supported_runtimes": [
         "onnxruntime>=1.23,<2",
-        "transformers>=4.57.6,<6",
+        "transformers>=5.5.0,<6",
         "torch"
       ],
       "intended_lane": "commercial_candidate",
