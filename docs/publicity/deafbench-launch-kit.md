@@ -66,8 +66,10 @@ PyPI wheel.
 > package on PyPI. The code, frozen evidence, methodology, project page, and
 > metadata-only Hugging Face card are public.
 >
-> Code: https://github.com/488315/DeafBench  
-> Demo: https://488315.github.io/products/deafbench/  
+> Code: https://github.com/488315/DeafBench
+>
+> Demo: https://488315.github.io/products/deafbench/
+>
 > Install: `python -m pip install "deafbench==0.2.1"`
 
 ## Accessibility-community version
