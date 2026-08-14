@@ -86,8 +86,8 @@ def test_ark_ci_exercises_secure_transformers_floor() -> None:
 
     assert 'python -m pip install "transformers[torch]==5.5.0"' in ark_job
     assert 'python -m pip install ".[ark-onnx-asr,test]"' in ark_job
-    assert "assert transformers.__version__ == '5.5.0'" in ark_job
-    assert "load_native(); load_onnx()" in ark_job
+    assert 'assert transformers.__version__ == "5.5.0"' in ark_job
+    assert "load_native()\n          load_onnx()" in ark_job
     assert "tests/test_ark_asr_adapter.py" in ark_job
     assert "tests/test_ark_asr_worker.py" in ark_job
     assert "tests/test_ark_asr_onnx_adapter.py" in ark_job
