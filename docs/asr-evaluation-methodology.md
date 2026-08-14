@@ -18,6 +18,9 @@ The default DeafBench evaluator reports these corpus-level measurements:
 | Substitutions, insertions, deletions | Orthographic word-alignment counts retained by the compatibility fields. Normalized counts are separately named. |
 | Local RTFx | Total audio seconds divided by inference wall seconds. Higher is faster. |
 
+The legacy `wer` and `cer` fields are aliases of orthographic WER and CER. They
+are not normalized measurements.
+
 WER, CER, and edit counts are accumulated across the corpus rather than
 averaging per-sample percentages. Per-sample orthographic WER and edit counts
 remain available for error analysis.
