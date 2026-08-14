@@ -232,36 +232,39 @@ def test_granite_nar_extra_is_isolated_from_base_installation() -> None:
     assert all("transformers" not in dependency for dependency in dependencies)
 
 
-def test_ark_asr_extra_is_isolated_from_base_installation() -> None:
+@pytest.mark.parametrize(
+    ("extra", "expected"),
+    [
+        (
+            "ark-asr",
+            [
+                "librosa>=0.11,<1.0",
+                "soundfile>=0.13,<1.0",
+                "transformers[torch]>=5.5.0,<6.0.0",
+            ],
+        ),
+        (
+            "ark-onnx-asr",
+            [
+                "librosa>=0.11,<1.0",
+                "onnxruntime>=1.23,<2.0",
+                "soundfile>=0.13,<1.0",
+                "transformers[torch]>=5.5.0,<6.0.0",
+            ],
+        ),
+    ],
+)
+def test_ark_extras_use_secure_isolated_transformers_floor(
+    extra: str,
+    expected: list[str],
+) -> None:
     pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
     metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))
 
     dependencies = metadata["project"]["dependencies"]
-    ark_dependencies = metadata["project"]["optional-dependencies"]["ark-asr"]
+    ark_dependencies = metadata["project"]["optional-dependencies"][extra]
 
-    assert ark_dependencies == [
-        "librosa>=0.11,<1.0",
-        "soundfile>=0.13,<1.0",
-        "transformers[torch]>=5.5.0,<6.0.0",
-    ]
-    assert all("transformers" not in dependency for dependency in dependencies)
-
-
-def test_ark_onnx_asr_extra_uses_secure_transformers_floor() -> None:
-    pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
-    metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))
-
-    dependencies = metadata["project"]["dependencies"]
-    ark_dependencies = metadata["project"]["optional-dependencies"][
-        "ark-onnx-asr"
-    ]
-
-    assert ark_dependencies == [
-        "librosa>=0.11,<1.0",
-        "onnxruntime>=1.23,<2.0",
-        "soundfile>=0.13,<1.0",
-        "transformers[torch]>=5.5.0,<6.0.0",
-    ]
+    assert ark_dependencies == expected
     assert all("transformers" not in dependency for dependency in dependencies)
 
 
