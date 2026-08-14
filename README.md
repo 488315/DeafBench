@@ -125,6 +125,41 @@ reports, so I do not label it as strict or canonical scoring.
 WER does not tell the full accessibility story. DeafBench also measures
 critical information loss and non-speech events that WER misses.
 
+## Accessibility stress testing
+
+[`accessibility-stress-v1`](benchmarks/accessibility-stress-v1/README.md) adds a
+byte-frozen 24-utterance reference set for paired clean and degraded runs. It
+predeclares fixed-SNR street, office, wind, breathing, keyboard, and rustling
+noise;
+noise-only interstitials; 8 kHz telephony; reverberation; long pauses; rate
+variation; overlap; and codec degradation. The evaluator keeps WER edits,
+deletion share, typed critical failures, interstitial hallucinations, caption
+timing drift, and observed local load metrics separate instead of reducing the
+stress run to one number.
+
+This is synthetic stress coverage, not a Deaf or dysarthric speech dataset. I
+will not use rate changes, pauses, or noise to claim demographic performance.
+That evidence requires a separate authorized and consented human-speech lane
+with subgroup reporting and a corpus that is appropriate for that purpose.
+
+The executable local lane requires clean WAV files named for the selected
+reference IDs. `--implemented-only` runs the six transformation families that
+DeafBench can currently materialize and labels the result with the exact sample
+count. It does not count the declared overlap or codec cases as completed.
+
+```powershell
+python -m deafbench stress `
+  --references benchmarks/accessibility-stress-v1/references.jsonl `
+  --clean-audio benchmarks/accessibility-stress-v1/audio-clean `
+  --output benchmarks/accessibility-stress-v1/runs/faster-whisper/local `
+  --model faster-whisper `
+  --implemented-only
+```
+
+The output directory contains hash-bound preparation evidence, clean and
+stressed predictions, and a local result. Generated audio, predictions, and
+runs stay untracked.
+
 ---
 
 ## Quickstart

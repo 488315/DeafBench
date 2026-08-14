@@ -10,13 +10,9 @@ from typing import Any
 
 import numpy as np
 
-
-INTERSTITIAL_NOISE_PROFILES = (
-    "street-noise",
-    "office-chatter",
-    "keyboard-clicks",
-    "breathing",
-    "rustling",
+from deafbench.benchmark.noise import (
+    INTERSTITIAL_NOISE_PROFILES,
+    synthesize_noise,
 )
 
 
@@ -67,46 +63,6 @@ def _mono_float(samples: np.ndarray) -> np.ndarray:
     return converted
 
 
-def _smoothed_noise(rng: np.random.Generator, frames: int, width: int) -> np.ndarray:
-    raw = rng.normal(0.0, 1.0, frames + width - 1)
-    kernel = np.ones(width, dtype=np.float64) / width
-    return np.convolve(raw, kernel, mode="valid")
-
-
-def _profile_noise(
-    profile: str,
-    frames: int,
-    sample_rate: int,
-    rng: np.random.Generator,
-) -> np.ndarray:
-    time_axis = np.arange(frames, dtype=np.float64) / sample_rate
-    if profile == "street-noise":
-        return _smoothed_noise(rng, frames, 96) + 0.2 * rng.normal(size=frames)
-    if profile == "office-chatter":
-        carrier = _smoothed_noise(rng, frames, 24)
-        envelope = 0.55 + 0.45 * np.square(np.sin(2.0 * np.pi * 3.1 * time_axis))
-        return carrier * envelope
-    if profile == "keyboard-clicks":
-        signal = np.zeros(frames, dtype=np.float64)
-        click_count = max(1, round(frames / sample_rate * 8))
-        click_frames = max(1, round(sample_rate * 0.012))
-        for start in rng.integers(0, max(1, frames - click_frames + 1), click_count):
-            stop = min(frames, start + click_frames)
-            envelope = np.exp(-np.linspace(0.0, 7.0, stop - start))
-            signal[start:stop] += rng.choice((-1.0, 1.0)) * envelope
-        return signal
-    if profile == "breathing":
-        carrier = _smoothed_noise(rng, frames, 48)
-        envelope = 0.1 + 0.9 * np.square(np.sin(2.0 * np.pi * 0.32 * time_axis))
-        return carrier * envelope
-    if profile == "rustling":
-        raw = rng.normal(size=frames)
-        high_pass = np.diff(raw, prepend=raw[0])
-        envelope = 0.35 + 0.65 * np.square(np.sin(2.0 * np.pi * 4.7 * time_axis))
-        return high_pass * envelope
-    raise ValueError(f"Unsupported interstitial noise profile: {profile}")
-
-
 def build_interstitial_scene(
     speech_before: np.ndarray,
     speech_after: np.ndarray,
@@ -140,8 +96,12 @@ def build_interstitial_scene(
     noise_frames = round(sample_rate * duration_seconds)
     if noise_frames < 1:
         raise ValueError("duration_seconds must produce at least one frame")
-    rng = np.random.default_rng(seed)
-    noise = _profile_noise(profile, noise_frames, sample_rate, rng)
+    noise = synthesize_noise(
+        profile,
+        frames=noise_frames,
+        sample_rate=sample_rate,
+        seed=seed,
+    )
     noise_rms = float(np.sqrt(np.mean(np.square(noise))))
     if noise_rms <= 0.0:
         raise ValueError("Noise profile produced an empty acoustic signal")

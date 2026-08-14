@@ -92,6 +92,13 @@ def _run_dev_corpus(dev_corpus_args: list[str]) -> int:
     return dev_corpus_main(dev_corpus_args)
 
 
+def _run_stress(stress_args: list[str]) -> int:
+    """Lazy-load the local accessibility stress workflow."""
+    from .benchmark.stress_cli import main as stress_main
+
+    return stress_main(stress_args)
+
+
 def _build_recorder_args(parsed: argparse.Namespace) -> list[str]:
     recorder_args = ["--dataset", parsed.dataset]
     for option, value in (
@@ -110,6 +117,8 @@ def main(args: Optional[List[str]] = None) -> int | None:
         return _run_audit(arguments[1:])
     if arguments[:1] == ["dev-corpus"]:
         return _run_dev_corpus(arguments[1:])
+    if arguments[:1] == ["stress"]:
+        return _run_stress(arguments[1:])
 
     parser = argparse.ArgumentParser(
         prog="deafbench",
@@ -175,6 +184,11 @@ def main(args: Optional[List[str]] = None) -> int | None:
     subparsers.add_parser(
         "dev-corpus",
         help="Materialize the pinned public development cohort.",
+    )
+
+    subparsers.add_parser(
+        "stress",
+        help="Run the local accessibility stress benchmark.",
     )
 
     add_leaderboard_parser(subparsers)
