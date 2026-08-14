@@ -1,5 +1,14 @@
 # DeafBench
 
+[![CI](https://github.com/488315/DeafBench/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/488315/DeafBench/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/deafbench.svg)](https://pypi.org/project/deafbench/)
+[![Python](https://img.shields.io/pypi/pyversions/deafbench.svg)](https://pypi.org/project/deafbench/)
+[![License](https://img.shields.io/github/license/488315/DeafBench.svg)](LICENSE)
+
+[Website](https://488315.github.io/products/deafbench/) ·
+[Latest release](https://github.com/488315/DeafBench/releases/latest) ·
+[PyPI](https://pypi.org/project/deafbench/)
+
 I wrote DeafBench because I am Deaf, I use cochlear implants, and the normal
 ASR score does not always describe whether captions are useful to me. Word
 error rate treats every edit as part of the same total, but a caption can have
