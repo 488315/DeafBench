@@ -5,6 +5,12 @@ def test_report_keeps_dual_critical_metrics_and_word_error_counts():
     metrics = {
         "samples": 1,
         "wer": 50.0,
+        "cer": 25.0,
+        "orthographic_wer": 50.0,
+        "normalized_wer": 25.0,
+        "orthographic_cer": 25.0,
+        "normalized_cer": 12.5,
+        "normalization_policy": "deafbench-asr-normalization-v1",
         "substitutions": 1,
         "insertions": 0,
         "deletions": 0,
@@ -35,6 +41,11 @@ def test_report_keeps_dual_critical_metrics_and_word_error_counts():
     assert "Strict lexical critical recall** | 0.0% (0/1)" in report
     assert "Canonical semantic critical recall** | 100.0% (1/1)" in report
     assert "WER substitutions** | 1" in report
+    assert "Orthographic WER** | 50.0%" in report
+    assert "Normalized WER** | 25.0%" in report
+    assert "Orthographic CER** | 25.0%" in report
+    assert "Normalized CER** | 12.5%" in report
+    assert "`deafbench-asr-normalization-v1`" in report
     assert "| `sample-1` | 50.0% | 1 | 0 | 0 |" in report
 
 

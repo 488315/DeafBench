@@ -32,6 +32,11 @@ def test_compare_command_prints_summary(tmp_path, capsys):
     assert "Samples: 1" in output
     assert "Strict Critical Information" in output
     assert "Canonical Critical Information" in output
+    assert "Orthographic WER" in output
+    assert "Normalized WER" in output
+    assert "Orthographic CER" in output
+    assert "Normalized CER" in output
+    assert "deafbench-asr-normalization-v1" in output
     assert "Non-Speech Information       N/A" in output
 
 

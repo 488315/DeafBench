@@ -25,7 +25,11 @@ def format_terminal_output(metrics: dict) -> str:
         "",
         f"Samples: {metrics['samples']}",
         "",
-        f"WER                       {metrics['wer']:>6.1f}%",
+        f"Orthographic WER          {metrics.get('orthographic_wer', metrics['wer']):>6.1f}%",
+        f"Normalized WER            {metrics.get('normalized_wer', metrics['wer']):>6.1f}%",
+        f"Orthographic CER          {metrics.get('orthographic_cer', metrics.get('cer', 0.0)):>6.1f}%",
+        f"Normalized CER            {metrics.get('normalized_cer', metrics.get('cer', 0.0)):>6.1f}%",
+        f"Normalization policy      {metrics.get('normalization_policy', 'legacy-unspecified')}",
         f"Strict Critical Information    {strict_recall:>6.1f}%",
         f"Canonical Critical Information {canonical_recall:>6.1f}%",
         f"WER edits (S/I/D)         {metrics.get('substitutions', 0)}/"
