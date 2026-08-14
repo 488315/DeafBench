@@ -350,7 +350,10 @@ def test_zipformer_runner_executes_reviewed_upstream_contract(
     )
     assert captured["device"] == 0
     assert captured["policy"] == tmp_path / "evaluation-policy.json"
-    assert captured["dependency_lock"] == zipformer_runner.OPEN_ASR_REQUIREMENTS_LOCK
+    assert (
+        captured["dependency_lock"]
+        == zipformer_runner.OPEN_ASR_REQUIREMENTS_LOCK
+    )
     assert captured["parsed"] == captured["argv"]
     assert runner_module.data_utils.load_data is not None
     assert runner_module.snapshot_download is not None

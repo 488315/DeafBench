@@ -68,7 +68,9 @@ def _iso_date(value: object, field: str) -> date:
     try:
         return date.fromisoformat(value)
     except ValueError as exc:
-        raise DependencyDispositionError(f"invalid disposition {field}") from exc
+        raise DependencyDispositionError(
+            f"invalid disposition {field}"
+        ) from exc
 
 
 def validate_dependency_disposition(
@@ -81,24 +83,38 @@ def validate_dependency_disposition(
     alert_number = record.get("alert_number")
     if alert_number not in _ADVISORIES:
         raise DependencyDispositionError("unexpected disposition alert")
-    if record.get("package") != "torch" or record.get("manifest") != "pyproject.toml":
-        raise DependencyDispositionError("invalid disposition package or manifest")
+    if (
+        record.get("package") != "torch"
+        or record.get("manifest") != "pyproject.toml"
+    ):
+        raise DependencyDispositionError(
+            "invalid disposition package or manifest"
+        )
     if record.get("dependency_scope") != "development":
         raise DependencyDispositionError("invalid disposition scope")
     if record.get("installed_version") != _STACK["torch"]:
-        raise DependencyDispositionError("invalid disposition installed version")
+        raise DependencyDispositionError(
+            "invalid disposition installed version"
+        )
     if record.get("status") != "tolerable_risk":
         raise DependencyDispositionError("invalid disposition status")
 
     advisory = _mapping(record.get("advisory"), "advisory")
     ghsa, cve, affected_apis = _ADVISORIES[alert_number]
-    if advisory != {"ghsa": ghsa, "cve": cve, "affected_apis": list(affected_apis)}:
+    expected_advisory = {
+        "ghsa": ghsa,
+        "cve": cve,
+        "affected_apis": list(affected_apis),
+    }
+    if advisory != expected_advisory:
         raise DependencyDispositionError("invalid disposition advisory")
 
     reviewed_utc = _iso_date(record.get("reviewed_utc"), "reviewed_utc")
     review_by = _iso_date(record.get("review_by"), "review_by")
     if review_by != _REVIEW_BY:
-        raise DependencyDispositionError("invalid disposition review deadline")
+        raise DependencyDispositionError(
+            "invalid disposition review deadline"
+        )
     if review_by <= reviewed_utc or review_by < (today or date.today()):
         raise DependencyDispositionError("dependency disposition expired")
 
@@ -111,7 +127,9 @@ def validate_dependency_disposition(
         raise DependencyDispositionError("invalid disposition audit resource")
     stack = _mapping(record.get("compatible_stack"), "compatible_stack")
     if stack != _STACK:
-        raise DependencyDispositionError("invalid disposition compatible stack")
+        raise DependencyDispositionError(
+            "invalid disposition compatible stack"
+        )
     reachability = _mapping(record.get("reachability"), "reachability")
     if reachability != {"first_party": False, "audited_remote_code": False}:
         raise DependencyDispositionError("invalid disposition reachability")
@@ -127,7 +145,10 @@ def validate_dependency_disposition(
 
 
 def _validate_reviewed_hashes(payload: Mapping[str, Any]) -> None:
-    hashes = _mapping(payload.get("reviewed_source_sha256"), "reviewed_source_sha256")
+    hashes = _mapping(
+        payload.get("reviewed_source_sha256"),
+        "reviewed_source_sha256",
+    )
     if not hashes or any(
         not isinstance(path, str)
         or not isinstance(digest, str)
@@ -141,10 +162,16 @@ def _validate_reviewed_hashes(payload: Mapping[str, Any]) -> None:
     try:
         audit = json.loads(audit_resource.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        raise DependencyDispositionError("remote-code audit is unavailable") from exc
-    audited_hashes = {item["path"]: item["sha256"] for item in audit.get("files", ())}
+        raise DependencyDispositionError(
+            "remote-code audit is unavailable"
+        ) from exc
+    audited_hashes = {
+        item["path"]: item["sha256"] for item in audit.get("files", ())
+    }
     if hashes != audited_hashes:
-        raise DependencyDispositionError("reviewed source differs from remote-code audit")
+        raise DependencyDispositionError(
+            "reviewed source differs from remote-code audit"
+        )
 
 
 def _external_lane(payload: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -162,7 +189,9 @@ def _open_asr_stack(lock_path: Path) -> dict[str, str]:
     try:
         lock_text = lock_path.read_text(encoding="utf-8")
     except OSError as exc:
-        raise DependencyDispositionError("Open-ASR lock is unavailable") from exc
+        raise DependencyDispositionError(
+            "Open-ASR lock is unavailable"
+        ) from exc
     versions = {
         match.group("package"): match.group("version").replace("%2B", "+")
         for match in _LOCK_VERSION.finditer(lock_text)
@@ -196,25 +225,33 @@ def verify_open_asr_dependency_disposition(
         "non_evaluation_affected_files": _OPEN_ASR_AFFECTED_FILES,
     }
     if _external_lane(payload) != expected:
-        raise DependencyDispositionError("Open-ASR disposition differs from runtime")
+        raise DependencyDispositionError(
+            "Open-ASR disposition differs from runtime"
+        )
 
 
 def _load_registry() -> Mapping[str, Any]:
-    resource = files("deafbench").joinpath("dependency-risk-dispositions.json")
+    resource = files("deafbench").joinpath(
+        "dependency-risk-dispositions.json"
+    )
     try:
         payload = json.loads(resource.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        raise DependencyDispositionError("dependency dispositions are unavailable") from exc
+        raise DependencyDispositionError(
+            "dependency dispositions are unavailable"
+        ) from exc
     root = _mapping(payload, "registry")
     if root.get("schema_version") != 1:
-        raise DependencyDispositionError("unsupported disposition registry schema")
+        raise DependencyDispositionError(
+            "unsupported disposition registry schema"
+        )
     return root
 
 
 def load_dependency_dispositions(
     *, today: date | None = None
 ) -> tuple[DependencyDisposition, ...]:
-    """Load all packaged dispositions and reject omissions or duplicate alerts."""
+    """Load packaged dispositions and reject omissions or duplicates."""
     root = _load_registry()
     _validate_reviewed_hashes(root)
     _external_lane(root)
@@ -228,7 +265,9 @@ def load_dependency_dispositions(
     if set(alert_numbers) != set(_ADVISORIES) or len(alert_numbers) != len(
         set(alert_numbers)
     ):
-        raise DependencyDispositionError("incomplete or duplicate dispositions")
+        raise DependencyDispositionError(
+            "incomplete or duplicate dispositions"
+        )
     return dispositions
 
 
@@ -236,12 +275,16 @@ def verify_dependency_disposition_snapshot(
     audit: RemoteCodeAudit,
     snapshot_root: Path,
 ) -> None:
-    """Reject changed or affected remote source before dependency execution."""
+    """Reject changed or affected source before dependency execution."""
     if audit.model_id != _MODEL_ID or audit.revision != _MODEL_REVISION:
-        raise DependencyDispositionError("dependency disposition audit differs")
+        raise DependencyDispositionError(
+            "dependency disposition audit differs"
+        )
     verify_audited_files(audit, snapshot_root)
     affected_apis = {
-        api for item in load_dependency_dispositions() for api in item.affected_apis
+        api
+        for item in load_dependency_dispositions()
+        for api in item.affected_apis
     }
     root = snapshot_root.resolve(strict=True)
     for audited_file in audit.audited_files:
@@ -252,7 +295,8 @@ def verify_dependency_disposition_snapshot(
             source = source_path.read_text(encoding="utf-8")
         except (OSError, UnicodeError) as exc:
             raise DependencyDispositionError(
-                f"audited dependency source is unreadable: {audited_file.path}"
+                "audited dependency source is unreadable: "
+                f"{audited_file.path}"
             ) from exc
         matched = sorted(api for api in affected_apis if api in source)
         if matched:

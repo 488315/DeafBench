@@ -87,7 +87,9 @@ def test_adapter_downloads_exact_registered_revision(monkeypatch, tmp_path) -> N
         lambda model_id: SimpleNamespace(revision=revision),
     )
     monkeypatch.setattr(
-        granite_nar, "verify_dependency_disposition_snapshot", lambda *args: None
+        granite_nar,
+        "verify_dependency_disposition_snapshot",
+        lambda *args: None,
     )
 
     def download(**options):
@@ -119,7 +121,9 @@ def test_adapter_rejects_incomplete_worker_output(monkeypatch, tmp_path) -> None
         lambda model_id: SimpleNamespace(revision=revision),
     )
     monkeypatch.setattr(
-        granite_nar, "verify_dependency_disposition_snapshot", lambda *args: None
+        granite_nar,
+        "verify_dependency_disposition_snapshot",
+        lambda *args: None,
     )
 
     with pytest.raises(ValueError, match="incomplete predictions"):

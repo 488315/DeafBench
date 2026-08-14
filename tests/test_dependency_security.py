@@ -61,7 +61,10 @@ def test_packaged_torch_dispositions_bind_both_alerts() -> None:
 
 def test_disposition_rejects_expired_review() -> None:
     with pytest.raises(DependencyDispositionError, match="expired"):
-        validate_dependency_disposition(_DISPOSITION, today=date(2026, 11, 14))
+        validate_dependency_disposition(
+            _DISPOSITION,
+            today=date(2026, 11, 14),
+        )
 
 
 @pytest.mark.parametrize(
@@ -88,8 +91,12 @@ def test_disposition_rejects_changed_security_boundary(
 
 
 def test_granite_nar_stack_matches_disposition() -> None:
-    metadata = tomllib.loads((_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
-    dependencies = metadata["project"]["optional-dependencies"]["granite-nar-asr"]
+    metadata = tomllib.loads(
+        (_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    )
+    dependencies = metadata["project"]["optional-dependencies"][
+        "granite-nar-asr"
+    ]
     expected = {
         item.split("==", 1)[0]: item.split("==", 1)[1]
         for item in dependencies
@@ -116,7 +123,9 @@ def test_first_party_code_does_not_call_affected_torch_apis() -> None:
 
 
 def test_disposition_audit_hashes_match_remote_code_audit() -> None:
-    dispositions_path = _ROOT / "deafbench" / "dependency-risk-dispositions.json"
+    dispositions_path = (
+        _ROOT / "deafbench" / "dependency-risk-dispositions.json"
+    )
     dispositions = json.loads(dispositions_path.read_text(encoding="utf-8"))
     audit_path = (
         _ROOT
@@ -145,7 +154,10 @@ def test_open_asr_lane_rejects_changed_runtime_lock(tmp_path: Path) -> None:
     lock_path = tmp_path / "requirements.lock.txt"
     lock_path.write_text(changed, encoding="utf-8")
 
-    with pytest.raises(DependencyDispositionError, match="differs from runtime"):
+    with pytest.raises(
+        DependencyDispositionError,
+        match="differs from runtime",
+    ):
         verify_open_asr_dependency_disposition(lock_path)
 
 
@@ -171,7 +183,10 @@ def _snapshot_audit(tmp_path: Path, source: str) -> RemoteCodeAudit:
 
 
 def test_snapshot_verification_accepts_clean_audited_source(tmp_path) -> None:
-    audit = _snapshot_audit(tmp_path, "def transcribe(audio):\n    return audio\n")
+    audit = _snapshot_audit(
+        tmp_path,
+        "def transcribe(audio):\n    return audio\n",
+    )
 
     verify_dependency_disposition_snapshot(audit, tmp_path)
 
@@ -179,5 +194,8 @@ def test_snapshot_verification_accepts_clean_audited_source(tmp_path) -> None:
 def test_snapshot_verification_rejects_affected_api(tmp_path) -> None:
     audit = _snapshot_audit(tmp_path, "result = torch.jit.script(model)\n")
 
-    with pytest.raises(DependencyDispositionError, match="affected.*modeling.py"):
+    with pytest.raises(
+        DependencyDispositionError,
+        match="affected.*modeling.py",
+    ):
         verify_dependency_disposition_snapshot(audit, tmp_path)

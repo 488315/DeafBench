@@ -12,7 +12,9 @@ from time import perf_counter
 from typing import Any
 
 from deafbench.benchmark.models._isolated import RESULT_MARKER
-from deafbench.dependency_security import verify_dependency_disposition_snapshot
+from deafbench.dependency_security import (
+    verify_dependency_disposition_snapshot,
+)
 from deafbench.remote_code_audit import load_remote_code_audit
 
 
