@@ -375,6 +375,14 @@ def test_evaluate_dataset_preserves_sound_only_accessibility_scoring():
     assert metrics["word_errors_by_sample"] == []
 
 
+def test_evaluate_dataset_rejects_empty_normalized_lexical_references():
+    refs = [{"id": "bad-1", "text": "...", "critical": [], "sounds": []}]
+    preds = [{"id": "bad-1", "text": "hallucination"}]
+
+    with pytest.raises(ValueError, match="empty after ASR normalization"):
+        evaluate_dataset(align_records(refs, preds))
+
+
 def test_evaluate_dataset_collects_non_speech_failures():
     refs = [
         {

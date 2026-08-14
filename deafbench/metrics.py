@@ -5,7 +5,6 @@ import jiwer
 from .asr_metrics import (
     NORMALIZATION_POLICY,
     evaluate_conventional_asr,
-    normalize_asr_text,
 )
 from .parser import normalize_text
 from .critical_entities import ENTITY_TYPES, canonical_contains, strict_contains
@@ -407,17 +406,20 @@ def evaluate_speaker_attribution(reference_item: Dict[str, Any], prediction_item
     return normalize_text(str(ref_speaker)) == normalize_text(str(pred_speaker))
 
 
+def _is_sound_only_reference(reference: Dict[str, Any]) -> bool:
+    return not reference.get("text", "").strip() and bool(reference.get("sounds"))
+
+
 def evaluate_dataset(aligned_data: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
     Run full metric evaluation over aligned dataset.
     """
     lexical_pairs = []
     for item in aligned_data:
+        if _is_sound_only_reference(item["reference"]):
+            continue
         reference_text = item["reference"].get("text", "")
-        if normalize_asr_text(reference_text):
-            lexical_pairs.append(
-                (reference_text, item["prediction"].get("text", ""))
-            )
+        lexical_pairs.append((reference_text, item["prediction"].get("text", "")))
     if lexical_pairs:
         conventional_asr = evaluate_conventional_asr(
             [pair[0] for pair in lexical_pairs],
@@ -482,7 +484,7 @@ def evaluate_dataset(aligned_data: List[Dict[str, Any]]) -> Dict[str, Any]:
                 "predicted_text": pred.get("text", ""),
             })
 
-        if normalize_asr_text(ref.get("text", "")):
+        if not _is_sound_only_reference(ref):
             sample_errors = _word_error_counts(
                 ref.get("text", ""), pred.get("text", "")
             )
