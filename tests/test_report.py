@@ -74,6 +74,9 @@ def test_report_labels_local_rtfx_as_environment_dependent() -> None:
     assert "Local throughput (RTFx)** | 12.50x" in report
     assert "audio seconds divided by inference wall seconds" in report
     assert "environment-dependent" in report
+    assert "WER (legacy payload)** | 0.0%" in report
+    assert "Normalized WER" not in report
+    assert "Orthographic CER" not in report
 
 
 @pytest.mark.parametrize("local_rtfx", [0.0, -1.0, float("nan"), True, "fast"])

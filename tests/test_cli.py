@@ -2,7 +2,7 @@ import runpy
 
 import pytest
 
-from deafbench.cli import main
+from deafbench.cli import format_terminal_output, main
 
 
 pytestmark = pytest.mark.functional
@@ -38,6 +38,28 @@ def test_compare_command_prints_summary(tmp_path, capsys):
     assert "Normalized CER" in output
     assert "deafbench-asr-normalization-v1" in output
     assert "Non-Speech Information       N/A" in output
+
+
+def test_terminal_keeps_legacy_wer_without_fabricating_new_metrics() -> None:
+    output = format_terminal_output(
+        {
+            "samples": 1,
+            "wer": 12.5,
+            "critical_recall": 100.0,
+            "matched_critical": 0,
+            "total_critical": 0,
+            "non_speech_recall": None,
+            "matched_sounds": 0,
+            "total_sounds": 0,
+            "critical_failures": [],
+        }
+    )
+
+    assert "WER (legacy payload)" in output
+    assert "12.5%" in output
+    assert "Normalized WER" not in output
+    assert "Orthographic CER" not in output
+    assert "legacy-unspecified" not in output
 
 
 def test_report_command_writes_markdown(tmp_path, capsys):

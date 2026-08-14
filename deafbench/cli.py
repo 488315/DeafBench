@@ -3,7 +3,7 @@ import sys
 from typing import Optional, List
 from .parser import parse_jsonl, align_records
 from .metrics import evaluate_dataset
-from .report import generate_markdown_report
+from .report import conventional_metric_rows, generate_markdown_report
 from .benchmark.models import MODEL_NAMES
 from .leaderboard.cli import add_leaderboard_parser, run_leaderboard
 
@@ -25,16 +25,19 @@ def format_terminal_output(metrics: dict) -> str:
         "",
         f"Samples: {metrics['samples']}",
         "",
-        f"Orthographic WER          {metrics.get('orthographic_wer', metrics['wer']):>6.1f}%",
-        f"Normalized WER            {metrics.get('normalized_wer', metrics['wer']):>6.1f}%",
-        f"Orthographic CER          {metrics.get('orthographic_cer', metrics.get('cer', 0.0)):>6.1f}%",
-        f"Normalized CER            {metrics.get('normalized_cer', metrics.get('cer', 0.0)):>6.1f}%",
-        f"Normalization policy      {metrics.get('normalization_policy', 'legacy-unspecified')}",
+    ]
+    lines.extend(
+        f"{label:<26}{'N/A' if value is None else f'{value:>6.1f}%'}"
+        for label, value in conventional_metric_rows(metrics)
+    )
+    if metrics.get("normalization_policy"):
+        lines.append(f"Normalization policy      {metrics['normalization_policy']}")
+    lines.extend([
         f"Strict Critical Information    {strict_recall:>6.1f}%",
         f"Canonical Critical Information {canonical_recall:>6.1f}%",
         f"WER edits (S/I/D)         {metrics.get('substitutions', 0)}/"
         f"{metrics.get('insertions', 0)}/{metrics.get('deletions', 0)}",
-    ]
+    ])
 
     if metrics.get("non_speech_recall") is not None:
         lines.append(f"Non-Speech Information    {metrics['non_speech_recall']:>6.1f}%")
