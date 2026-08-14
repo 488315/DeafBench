@@ -1,0 +1,101 @@
+{
+  "claim_boundary": "Local reproducibility evidence only. The two-row public smoke is partial, is not a seven-set macro-average, and is not a Hugging Face verified leaderboard result.",
+  "corpora": [
+    {
+      "frozen": true,
+      "manifest_sha256": "b962df9c122870825e75fdd4d628acc1101cff7bfc023d11fe967ed116cf0055",
+      "name": "synthetic-v2"
+    },
+    {
+      "frozen": true,
+      "manifest_sha256": "4615d2d50d6fe8377a5836130c39c9c6daf5b26dec46861bc7fef53208811823",
+      "name": "librispeech-test.clean-two-row-smoke"
+    }
+  ],
+  "decoding": {
+    "beam_size": 5,
+    "compute_type": "int8",
+    "condition_on_previous_text": false,
+    "device": "cpu",
+    "language": "en"
+  },
+  "evaluations": [
+    {
+      "critical_failures": [
+        {
+          "entity_type": "UNCLASSIFIED",
+          "id": "core-007",
+          "term": "192 dot 168 dot 1 dot 25"
+        },
+        {
+          "entity_type": "UNCLASSIFIED",
+          "id": "core-014",
+          "term": "Unreal Engine"
+        },
+        {
+          "entity_type": "UNCLASSIFIED",
+          "id": "core-018",
+          "term": "security update"
+        },
+        {
+          "entity_type": "SSID",
+          "id": "core-019",
+          "term": "Office Guest"
+        },
+        {
+          "entity_type": "CODE",
+          "id": "core-019",
+          "term": "alpha seven nine"
+        }
+      ],
+      "evidence": {
+        "predictions_sha256": "b72851fe51156e69216de5abed799df1c68995eb3f8cc849314c6ce42f5a10b9",
+        "report_sha256": "86e8cd66880ebd8a99010454d5758115d1978986ab74481e28a4c51847586500",
+        "run_metadata_sha256": "85c6247b1ce9b5e0ea9853e00c30028b3a5ff2d98520674235246bd3f2b420c9"
+      },
+      "lane": "synthetic-v2",
+      "metrics": {
+        "canonical_semantic_recall_percent": 91.9,
+        "deletions": 28,
+        "insertions": 5,
+        "local_rtfx": 0.7950968696657275,
+        "median_latency_ms": 7045.378,
+        "peak_vram_bytes": 0,
+        "strict_lexical_recall_percent": 66.1,
+        "substitutions": 35,
+        "wer_percent": 23.8
+      },
+      "sample_count": 25,
+      "scope": "complete"
+    },
+    {
+      "critical_failures": [],
+      "evidence": {
+        "dataset_revision": "b6bdcd0beb34f8975dc659796176d88f43aff502",
+        "official_evaluator_revision": "9585fc39bff55697a2ec1c5f13921b18812bfde8",
+        "official_manifest_sha256": "a585c8278f0c3462506688badcc204a39fc683bda883b11bb8b586635f7a069b",
+        "predictions_sha256": "b18fdcabf97c8de980bca5c2582460fc03a9891cc67ee0bc51e133cb2beae5d1"
+      },
+      "lane": "hugging-face-compatibility-smoke",
+      "metrics": {
+        "deletions": 0,
+        "insertions": 0,
+        "local_rtfx": 3.269670625018443,
+        "median_latency_ms": 10530.877,
+        "peak_vram_bytes": 0,
+        "substitutions": 3,
+        "wer_percent": 1.7341040462427744
+      },
+      "sample_count": 2,
+      "scope": "partial"
+    }
+  ],
+  "evaluator_revision": "6f5b294c07a2d7b37094336cec8e01011556850b",
+  "license_classification": "commercial_candidate",
+  "model": {
+    "model_id": "Systran/faster-distil-whisper-large-v3",
+    "revision": "c3058b475261292e64a0412df1d2681c06260fab"
+  },
+  "schema_version": 1,
+  "status": "smoke_complete"
+}
