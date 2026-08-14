@@ -22,14 +22,41 @@ def _locked_version(package: str, lock_text: str) -> str:
     return match.group(1).split("+", maxsplit=1)[0]
 
 
+def _direct_url_line(package: str, lock_text: str) -> str:
+    match = re.search(
+        rf"(?m)^{re.escape(package)} @ (?P<url>[^\n]+)$",
+        lock_text,
+    )
+    assert match is not None, f"{package} must use a direct URL"
+    return match.group("url")
+
+
 def test_open_asr_torch_runtime_uses_patched_matching_abi() -> None:
     lock_text = _LOCK.read_text(encoding="utf-8")
     torch_version = _locked_version("torch", lock_text)
     torchaudio_version = _locked_version("torchaudio", lock_text)
+    torch_url = _direct_url_line("torch", lock_text)
+    torchaudio_url = _direct_url_line("torchaudio", lock_text)
+    k2_url = _direct_url_line("k2", lock_text)
 
     assert Version(torch_version) >= Version("2.6.0")
     assert torchaudio_version == torch_version
-    assert f".torch{torch_version}-cp312-" in lock_text
     assert "--extra-index-url" not in lock_text
-    assert lock_text.count("download-r2.pytorch.org/whl/cu124/") == 2
-    assert lock_text.count("#sha256=") == 3
+    assert (
+        torch_url
+        == "https://download-r2.pytorch.org/whl/cu124/"
+        "torch-2.6.0%2Bcu124-cp312-cp312-linux_x86_64.whl"
+        "#sha256=a393b506844035c0dac2f30ea8478c343b8e95a429f06f3b3cadfc7f53adb597"
+    )
+    assert (
+        torchaudio_url
+        == "https://download-r2.pytorch.org/whl/cu124/"
+        "torchaudio-2.6.0%2Bcu124-cp312-cp312-linux_x86_64.whl"
+        "#sha256=3e5ffa69606171c74f3e2b969785ead50b782ca657e746aaee1ee7cc88dcfc08"
+    )
+    assert "resolve/da4df24bb5f00061097f24d8a5caab841fa3c7fd/" in k2_url
+    assert f"+cuda12.4.torch{torch_version}-cp312-cp312-" in k2_url
+    assert (
+        k2_url.rsplit("#sha256=", maxsplit=1)[-1]
+        == "e9d703f0599b56dfccba1f659fa172c38e5599808b5ca1b766ab8a724a3d0c21"
+    )
