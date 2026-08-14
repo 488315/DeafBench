@@ -1,5 +1,31 @@
 # Changelog
 
+## Unreleased / v0.2.1
+
+### Security
+
+- Patched the installable Open ASR/Zipformer experiment environment from
+  PyTorch 2.4.0 to 2.6.0, the first release containing the upstream fix for
+  CVE-2025-32434 (`GHSA-53q9-r3pm-6pq6`). The vulnerable runtime could execute
+  attacker-controlled code while loading an untrusted PyTorch checkpoint even
+  when `torch.load(..., weights_only=True)` was requested.
+- Updated the compiled `k2` wheel, TorchAudio, Triton, SymPy, and CUDA runtime
+  pins as one ABI-compatible CUDA 12.4 set. The Python 3.12 resolver now checks
+  the complete environment instead of allowing a patched Torch package to be
+  paired with binaries compiled for Torch 2.4.0.
+- Replaced the global PyTorch extra index with immutable, SHA-256-pinned
+  official Torch and TorchAudio wheel URLs. PyPI remains the normal source for
+  unrelated packages, avoiding the prior cross-index resolution ambiguity.
+- Added a regression test that fails when the Open ASR lock returns to a Torch
+  release below 2.6.0, uses mismatched Torch/TorchAudio versions, selects a
+  `k2` wheel for a different Torch ABI, restores the global extra index, or
+  removes the expected wheel hashes.
+
+This patch changes the reproducible runtime used for future Open ASR baseline
+executions. It does not alter or relabel the frozen v0.2.0 result artifacts,
+does not claim a Hugging Face verified leaderboard result, and does not publish
+v0.2.1 until the security PR and release validation are complete.
+
 ## 2026-08-13 / v0.2.0
 
 DeafBench 0.2.0 turns the repository into a reproducible ASR evaluation
