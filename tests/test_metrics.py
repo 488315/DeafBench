@@ -362,6 +362,19 @@ def test_evaluate_dataset_leaves_non_speech_unscored_without_reference_sounds():
     assert metrics["non_speech_recall"] is None
 
 
+def test_evaluate_dataset_preserves_sound_only_accessibility_scoring():
+    refs = [{"id": "sound-1", "text": "", "critical": [], "sounds": ["[alarm]"]}]
+    preds = [{"id": "sound-1", "text": "", "sounds": ["[alarm]"]}]
+
+    metrics = evaluate_dataset(align_records(refs, preds))
+
+    assert metrics["non_speech_recall"] == 100.0
+    assert metrics["matched_sounds"] == 1
+    assert metrics["orthographic_wer"] is None
+    assert metrics["normalized_wer"] is None
+    assert metrics["word_errors_by_sample"] == []
+
+
 def test_evaluate_dataset_collects_non_speech_failures():
     refs = [
         {
