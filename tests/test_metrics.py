@@ -311,6 +311,13 @@ def test_evaluate_dataset_reports_per_sample_and_aggregate_word_errors():
     assert metrics["substitutions"] == 1
     assert metrics["insertions"] == 1
     assert metrics["deletions"] == 1
+    assert metrics["wer"] == metrics["orthographic_wer"]
+    assert metrics["cer"] == metrics["orthographic_cer"]
+    assert metrics["normalization_policy"] == "deafbench-asr-normalization-v1"
+    assert metrics["normalized_wer"] == metrics["orthographic_wer"]
+    assert metrics["normalized_substitutions"] == 1
+    assert metrics["normalized_insertions"] == 1
+    assert metrics["normalized_deletions"] == 1
     assert metrics["word_errors_by_sample"] == [
         {
             "id": "s1",
@@ -327,6 +334,19 @@ def test_evaluate_dataset_reports_per_sample_and_aggregate_word_errors():
             "deletions": 1,
         },
     ]
+
+
+def test_evaluate_dataset_exposes_normalized_accuracy_without_replacing_wer():
+    refs = [{"id": "s1", "text": "Hello, WORLD", "critical": [], "sounds": []}]
+    preds = [{"id": "s1", "text": "hello world"}]
+
+    metrics = evaluate_dataset(align_records(refs, preds))
+
+    assert metrics["wer"] == 100.0
+    assert metrics["orthographic_wer"] == 100.0
+    assert metrics["normalized_wer"] == 0.0
+    assert metrics["cer"] == metrics["orthographic_cer"]
+    assert metrics["normalized_cer"] == 0.0
 
 
 def test_evaluate_dataset_leaves_non_speech_unscored_without_reference_sounds():
