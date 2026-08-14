@@ -82,7 +82,7 @@ def _run_audit(audit_args: list[str]) -> int:
     """Lazy-load and run the customer-local audit workflow."""
     from .pilot.cli import main as audit_main
 
-    return audit_main(audit_args)
+    return audit_main(audit_args, prog="deafbench audit")
 
 
 def _run_dev_corpus(dev_corpus_args: list[str]) -> int:

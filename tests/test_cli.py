@@ -147,6 +147,14 @@ def test_dev_corpus_command_returns_launcher_status(monkeypatch):
     assert main(["dev-corpus", "materialize"]) == 7
 
 
+def test_audit_help_uses_installed_command_name(capsys):
+    with pytest.raises(SystemExit) as exc_info:
+        main(["audit", "--help"])
+
+    assert exc_info.value.code == 0
+    assert "usage: deafbench audit" in capsys.readouterr().out
+
+
 def test_module_entrypoint_propagates_main_status(monkeypatch):
     monkeypatch.setattr("deafbench.cli.main", lambda _args=None: 7)
 

@@ -20,11 +20,12 @@ def _result(value: object) -> str:
 def main(
     argv: Sequence[str] | None = None,
     *,
+    prog: str = "python -m deafbench.pilot.cli",
     rehearsal_runner: Callable[..., RehearsalResult] = run_synthetic_rehearsal,
     audit_runner: Callable[..., CustomerAuditResult] = run_customer_audit,
     exporter: Callable[..., CustomerExportResult] = create_customer_export,
 ) -> int:
-    parser = argparse.ArgumentParser(prog="python -m deafbench.pilot.cli")
+    parser = argparse.ArgumentParser(prog=prog)
     actions = parser.add_subparsers(dest="action", required=True)
 
     rehearse = actions.add_parser("rehearse")
