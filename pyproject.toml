@@ -121,6 +121,7 @@ exclude = [
     "remote-code-audits/*.json",
 ]
 "deafbench.recorder.data" = ["*.jsonl"]
+"deafbench.whisper_at_compat" = ["manifest.json", "setuptools-83.patch"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
