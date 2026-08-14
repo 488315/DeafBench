@@ -4,6 +4,12 @@
 
 ### Security
 
+- Upgraded the pinned Open ASR runtime and the DeafBench build backend to
+  setuptools 83.0.0 or newer. This closes CVE-2025-47273
+  (`GHSA-5rjg-fvgr-3xxf`) and CVE-2026-59890
+  (`GHSA-h35f-9h28-mq5c`) while retaining Python 3.11 through 3.14 support.
+- Replaced the deprecated table-form project license with the PEP 639 SPDX
+  expression and explicit Apache-2.0 license-file declaration.
 - Patched the installable Open ASR/Zipformer experiment environment from
   PyTorch 2.4.0 to 2.6.0, the first release containing the upstream fix for
   CVE-2025-32434 (`GHSA-53q9-r3pm-6pq6`). The vulnerable runtime could execute

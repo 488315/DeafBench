@@ -5,9 +5,36 @@ import sys
 import tomllib
 
 import pytest
+from packaging.requirements import Requirement
+from packaging.version import Version
 
 
 _PACKAGING_TIMEOUT_SECONDS = 300
+
+
+def test_build_backend_requires_patched_setuptools() -> None:
+    pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+    metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+    requirements = [
+        Requirement(requirement)
+        for requirement in metadata["build-system"]["requires"]
+    ]
+    setuptools = next(
+        requirement
+        for requirement in requirements
+        if requirement.name.casefold() == "setuptools"
+    )
+
+    assert Version("82.0.1") not in setuptools.specifier
+    assert Version("83.0.0") in setuptools.specifier
+
+
+def test_project_uses_spdx_license_metadata() -> None:
+    pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+    metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+
+    assert metadata["project"]["license"] == "Apache-2.0"
+    assert metadata["project"]["license-files"] == ["LICENSE"]
 
 
 def test_wheel_discovery_excludes_nonruntime_trees() -> None:
