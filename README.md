@@ -61,8 +61,42 @@ orthographic and normalized WER/CER fields for the next release; installing
 v0.2.1 from PyPI does not expose those new fields. Read the
 [`ASR evaluation methodology`](docs/asr-evaluation-methodology.md) for the
 normalization and aggregation contract, or continue to the separately labeled
-[model results](#results-for-all-integrated-models) and
+[English accessibility benchmark](#english-accessibility-benchmark) and
 [source-checkout workflows for `main`](#detailed-installation-and-workflows).
+
+### Customer audit on `main`
+
+The customer audit is designed around one case folder containing `audio/` and a
+human-approved `references.csv`. The first run asks for a required case name and
+local authorization details, then keeps its reusable state under `.deafbench/`.
+Later runs reuse that setup automatically.
+
+From a source checkout today:
+
+```bash
+python -m pip install -e ".[audit]"
+deafbench audit ./customer-case
+```
+
+After a release containing this workflow is published, the supported install is:
+
+```bash
+python -m pip install "deafbench[audit]"
+deafbench audit ./customer-case
+```
+
+A successful audit writes `audit-report/index.html`, `audit-report/report.pdf`,
+and aggregate signed evidence, then opens the HTML report when a graphical
+browser is available. The HTML report groups every failed sample by real-world
+failure category, shows REF/HYP word alignment, and gives deterministic
+investigation guidance. Use `deafbench review ./customer-case` to add customer
+context or a consequence-based severity adjustment without replacing the
+original DeafBench severity.
+
+The complete three-model audit uses NVIDIA Parakeet through NeMo. NVIDIA lists
+Linux as the supported operating system for the pinned Parakeet model, so the
+supported Windows path for the complete three-model run is WSL2. The command,
+case layout, HTML/PDF output, and review workflow are otherwise the same.
 
 ## The goal
 
@@ -107,16 +141,14 @@ runtimes, license classifications, attribution requirements, expected download
 sizes, and measured peak VRAM. That registry is operational metadata, not legal
 advice. Model weights are third-party software and are not owned by DeafBench.
 
-## Results for all integrated models
+## English accessibility benchmark
 
-These numbers do not belong in one leaderboard. Synthetic-v2 measures
-accessibility-critical information on 25 generated samples, while the public
-real-speech smoke set has only two rows and proves execution rather than model
-quality. Core v1 and Non-speech v1 are earlier, separately frozen benchmarks.
+Synthetic-v2 measures English accessibility-critical information on 25
+generated samples. Lower WER and peak VRAM are better; higher critical recall
+and local RTFx are better. This table is a separate DeafBench accessibility
+evaluation and is not a Hugging Face Open ASR Leaderboard result.
 
-### Synthetic-v2 accessibility results
-
-| Model | WER | Strict lexical recall | Canonical semantic recall | Local RTFx | Peak VRAM |
+| Model | WER ↓ | Strict critical recall ↑ | Canonical critical recall ↑ | Local RTFx ↑ | Peak VRAM ↓ |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Distil-Whisper large-v3 | 23.8% | 66.1% | 91.9% | 0.80 | CPU |
 | Whisper-AT `medium.en` | 26.2% | 67.7% | 96.8% | 7.34 | 4.46 GiB |

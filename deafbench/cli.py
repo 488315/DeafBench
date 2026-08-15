@@ -86,10 +86,21 @@ def _run_benchmark(benchmark_args: list[str]) -> int:
 
 
 def _run_audit(audit_args: list[str]) -> int:
-    """Lazy-load and run the customer-local audit workflow."""
-    from .pilot.cli import main as audit_main
+    """Lazy-load the customer audit or the retained low-level pilot commands."""
+    if audit_args[:1] and audit_args[0] in {"rehearse", "export", "run", "audit"}:
+        from .pilot.cli import main as pilot_main
 
-    return audit_main(audit_args, prog="deafbench audit")
+        return pilot_main(audit_args, prog="deafbench audit")
+    from .pilot.customer import audit_main
+
+    return audit_main(audit_args)
+
+
+def _run_review(review_args: list[str]) -> int:
+    """Lazy-load the customer finding review workflow."""
+    from .pilot.customer import review_main
+
+    return review_main(review_args)
 
 
 def _run_dev_corpus(dev_corpus_args: list[str]) -> int:
@@ -122,6 +133,8 @@ def main(args: Optional[List[str]] = None) -> int | None:
     arguments = list(args) if args is not None else sys.argv[1:]
     if arguments[:1] == ["audit"]:
         return _run_audit(arguments[1:])
+    if arguments[:1] == ["review"]:
+        return _run_review(arguments[1:])
     if arguments[:1] == ["dev-corpus"]:
         return _run_dev_corpus(arguments[1:])
     if arguments[:1] == ["stress"]:
@@ -185,7 +198,12 @@ def main(args: Optional[List[str]] = None) -> int | None:
 
     subparsers.add_parser(
         "audit",
-        help="Run or verify a customer-local zero-custody audit.",
+        help="Run a customer-local accessibility-critical caption audit.",
+    )
+
+    subparsers.add_parser(
+        "review",
+        help="Review customer context for findings from a completed audit.",
     )
 
     subparsers.add_parser(
