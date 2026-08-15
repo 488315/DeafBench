@@ -1,5 +1,44 @@
 # Changelog
 
+## 2026-08-15 / v0.2.2
+
+### Customer audit usability
+
+- Added the supported `deafbench[audit]` install extra and the top-level
+  `deafbench audit <case-folder>` workflow. First run requires a customer case
+  name, records the local authorization boundary, validates `references.csv`
+  and WAV inputs, and stores reusable state under `.deafbench/`; later runs
+  reuse that setup automatically.
+- Added category-first customer reports in accessible HTML plus a companion PDF.
+  Findings preserve REF/HYP alignment, one primary failure category, related
+  factors, consequence-based severity, sentence-case customer labels, and
+  deterministic investigation guidance. Opening the HTML report is best-effort
+  and never changes audit success.
+- Added `deafbench review <case-folder>` for one-finding-at-a-time customer
+  review. DeafBench preserves its automatic severity, records customer context
+  or a severity adjustment with a required reason, signs review state when the
+  case signing key exists, and regenerates HTML/PDF once when the review ends.
+- Made CPU audit evidence valid by allowing `peak_vram_bytes` to be null across
+  model-run validation, canonical result manifests, signed aggregate exports,
+  and customer report data while retaining numeric validation when VRAM is
+  measured.
+- Hardened report generation and review handling: JiWER 3.x empty-text cases are
+  handled explicitly, PDF output embeds Unicode-capable fonts, negation matching
+  uses token boundaries, saved findings are validated before review, and report
+  replacement rolls back safely if promotion fails.
+- Limited sample-level customer work to the latest successful run. Successful
+  reruns remove older `.deafbench/runs/` work directories while the local
+  authorization record keeps its planned case deletion date.
+- Added a neutral English accessibility benchmark table to the README and kept
+  the synthetic accessibility track separate from the two-row real-speech smoke
+  evidence and Hugging Face compatibility results.
+
+### Validation
+
+- Release validation covers Python 3.11 through 3.14, clean-wheel installation,
+  ARK and Whisper-AT compatibility, customer-artifact source-control scanning,
+  and the existing 90.6% branch-coverage gate.
+
 ## 2026-08-14 / v0.2.1
 
 ### Security

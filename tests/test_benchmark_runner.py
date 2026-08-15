@@ -212,7 +212,7 @@ def test_auto_generates_synthetic_transactional_run(tmp_path: Path) -> None:
     assert metadata == {
         "audio": str(tmp_path / "benchmarks/core-v1/audio-synthetic"),
         "audio_source": "synthetic",
-        "benchmark_version": "0.2.1",
+        "benchmark_version": "0.2.2",
         "dataset": "core-v1",
         "model": "whisper",
         "model_id": "test-model",
