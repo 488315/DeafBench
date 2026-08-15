@@ -25,6 +25,7 @@ Issues = "https://github.com/488315/DeafBench/issues"
 audit = [
     "cryptography>=48.0,<49.0",
     "fpdf2>=2.8.5,<3.0",
+    "matplotlib>=3.10,<4.0",
     "nemo_toolkit[asr]>=2.4,<3",
     "numba>=0.65,<0.67",
     "scipy>=1.15,<2.0",
@@ -97,6 +98,7 @@ test = [
     "cryptography>=48.0,<49.0",
     "fpdf2>=2.8.5,<3.0",
     "kaldialign==0.12.0",
+    "matplotlib>=3.10,<4.0",
     "numpy>=1.26",
     "PyYAML>=6.0,<7.0",
     "pytest>=8.0",

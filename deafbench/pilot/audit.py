@@ -116,14 +116,25 @@ def _evaluator_fingerprint() -> str:
     return digest.hexdigest()
 
 
-def _performance(info: ModelRunInfo) -> dict[str, Real]:
+def _performance(info: ModelRunInfo) -> dict[str, Real | None]:
     performance = info.performance
-    required = ("local_rtfx", "median_latency_ms", "peak_vram_bytes")
+    required = ("local_rtfx", "median_latency_ms")
     if performance is None or any(
-        not isinstance(performance.get(field), Real) for field in required
+        isinstance(performance.get(field), bool)
+        or not isinstance(performance.get(field), Real)
+        for field in required
     ):
         raise ValueError("model run did not report complete local performance")
-    return {field: performance[field] for field in required}
+    peak_vram = performance.get("peak_vram_bytes")
+    if peak_vram is not None and (
+        isinstance(peak_vram, bool) or not isinstance(peak_vram, Real)
+    ):
+        raise ValueError("model run did not report valid peak VRAM")
+    return {
+        "local_rtfx": performance["local_rtfx"],
+        "median_latency_ms": performance["median_latency_ms"],
+        "peak_vram_bytes": peak_vram,
+    }
 
 
 def _critical_failures(

@@ -110,6 +110,17 @@ def test_taxonomy_routes_common_real_world_domains(
     assert finding.recommendation
 
 
+def test_negation_detection_uses_token_boundaries() -> None:
+    finding = classify_failure(
+        expected="do not enter",
+        reference_text="Do not enter the room.",
+        predicted_text="The donation center is open.",
+        error_kinds=("delete",),
+    )
+
+    assert "negation" in finding.related_factors
+
+
 def test_censorship_category_applies_when_no_higher_impact_domain_matches() -> None:
     finding = classify_failure(
         expected="profanity",

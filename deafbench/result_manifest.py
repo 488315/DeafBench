@@ -100,6 +100,8 @@ def _validate_metrics(lane: str, metrics: Mapping[str, Any]) -> None:
         "non_speech_recall_percent",
     }
     for field, value in metrics.items():
+        if field == "peak_vram_bytes" and value is None:
+            continue
         if isinstance(value, bool) or not isinstance(value, Real):
             raise ResultManifestError(f"invalid {field} metric")
         if value < 0 or (

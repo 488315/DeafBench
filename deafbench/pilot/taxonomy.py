@@ -88,9 +88,13 @@ def factor_label(value: str) -> str:
 
 
 def _missing_negation(reference: str, prediction: str) -> bool:
-    reference_terms = {match.group(0).casefold() for match in _negation_terms.finditer(reference)}
-    prediction_folded = prediction.casefold()
-    return any(term not in prediction_folded for term in reference_terms)
+    reference_terms = {
+        match.group(0).casefold() for match in _negation_terms.finditer(reference)
+    }
+    prediction_terms = {
+        match.group(0).casefold() for match in _negation_terms.finditer(prediction)
+    }
+    return bool(reference_terms - prediction_terms)
 
 
 def _decimal_changed(reference: str, prediction: str) -> bool:

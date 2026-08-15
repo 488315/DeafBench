@@ -62,14 +62,21 @@ def _write_json(path: Path, value: Mapping[str, Any]) -> None:
     )
 
 
-def _required_text(prompt: str, input_fn: InputFunction) -> str:
+def _required_text(
+    prompt: str,
+    input_fn: InputFunction,
+    *,
+    stream: TextIO = sys.stdout,
+) -> str:
     while True:
         value = input_fn(prompt).strip()
-        if value:
-            if any(ord(character) < 32 for character in value) or len(value) > 120:
-                raise ValueError("Case name must be plain text no longer than 120 characters")
-            return value
-        print("A case name is required.")
+        if not value:
+            print("A value is required.", file=stream)
+            continue
+        if any(ord(character) < 32 for character in value) or len(value) > 120:
+            print("Enter plain text no longer than 120 characters.", file=stream)
+            continue
+        return value
 
 
 def _yes_no(prompt: str, input_fn: InputFunction, *, default: bool = False) -> bool:
@@ -110,11 +117,12 @@ def _first_run_setup(
     *,
     case_name: str | None,
     input_fn: InputFunction,
+    stream: TextIO = sys.stdout,
 ) -> dict[str, Any]:
     print("DeafBench audit setup")
     print()
     name = case_name.strip() if case_name and case_name.strip() else _required_text(
-        "Case name: ", input_fn
+        "Case name: ", input_fn, stream=stream
     )
     if not _yes_no(
         "Do you own this audio or have permission to evaluate it?",
@@ -194,6 +202,7 @@ def _load_or_setup_case(
     *,
     case_name: str | None,
     input_fn: InputFunction,
+    stream: TextIO = sys.stdout,
 ) -> dict[str, Any]:
     state_path = _state_dir(case_root) / "case.json"
     if not state_path.exists():
@@ -201,6 +210,7 @@ def _load_or_setup_case(
             case_root,
             case_name=case_name,
             input_fn=input_fn,
+            stream=stream,
         )
     state = _read_json(state_path)
     if state.get("schema_version") != 1 or not str(state.get("case_id", "")).startswith("case-"):
@@ -408,6 +418,10 @@ def _load_reviews(state_root: Path) -> dict[str, dict[str, Any]]:
 
 
 def _sign_reviews(state_root: Path, reviews: Mapping[str, Mapping[str, Any]]) -> None:
+    key_path = state_root / "signing-key.pem"
+    if not key_path.exists():
+        return
+
     try:
         from cryptography.hazmat.primitives import serialization
         from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -415,10 +429,6 @@ def _sign_reviews(state_root: Path, reviews: Mapping[str, Mapping[str, Any]]) ->
         raise RuntimeError(
             'Audit signing support is not installed. Run: python -m pip install "deafbench[audit]"'
         ) from exc
-
-    key_path = state_root / "signing-key.pem"
-    if not key_path.exists():
-        return
     key = serialization.load_pem_private_key(key_path.read_bytes(), None)
     if not isinstance(key, Ed25519PrivateKey):
         raise ValueError("Audit signing key is not Ed25519")
@@ -441,6 +451,7 @@ def _require_audit_runtime() -> None:
     required = {
         "cryptography": "cryptography",
         "fpdf": "fpdf2",
+        "matplotlib": "matplotlib",
         "nemo": "nemo_toolkit",
         "numba": "numba",
         "scipy": "scipy",
@@ -457,14 +468,53 @@ def _require_audit_runtime() -> None:
         )
 
 
+def _remove_report_path(path: Path) -> None:
+    if path.is_dir() and not path.is_symlink():
+        shutil.rmtree(path)
+    else:
+        path.unlink(missing_ok=True)
+
+
 def _replace_report_output(staging: Path, output: Path) -> None:
     output.mkdir(parents=True, exist_ok=True)
-    os.replace(staging / "index.html", output / "index.html")
-    os.replace(staging / "report.pdf", output / "report.pdf")
-    old_evidence = output / "evidence"
-    if old_evidence.exists():
-        shutil.rmtree(old_evidence)
-    shutil.move(str(staging / "evidence"), str(old_evidence))
+    backup = output.parent / f".{output.name}-backup-{uuid.uuid4().hex}"
+    backup.mkdir()
+    names = ["index.html", "report.pdf"]
+    if (staging / "evidence").exists():
+        names.append("evidence")
+    backed_up: list[str] = []
+    installed: list[str] = []
+    try:
+        for name in names:
+            source = staging / name
+            destination = output / name
+            if destination.exists():
+                os.replace(destination, backup / name)
+                backed_up.append(name)
+            os.replace(source, destination)
+            installed.append(name)
+    except Exception:
+        for name in reversed(installed):
+            _remove_report_path(output / name)
+        for name in reversed(backed_up):
+            os.replace(backup / name, output / name)
+        raise
+    finally:
+        if backup.exists():
+            shutil.rmtree(backup)
+
+
+def _prune_old_runs(runs_root: Path, keep: Path) -> None:
+    if not runs_root.exists():
+        return
+    keep_resolved = keep.resolve()
+    for candidate in runs_root.iterdir():
+        if candidate.resolve() == keep_resolved:
+            continue
+        if candidate.is_symlink() or candidate.is_file():
+            candidate.unlink(missing_ok=True)
+        elif candidate.is_dir():
+            shutil.rmtree(candidate)
 
 
 def _open_report(path: Path, opener: BrowserOpener, stream: TextIO) -> None:
@@ -499,7 +549,12 @@ def run_audit(
             ) from exc
         exporter = create_customer_export
     root = validate_case_root(Path(case_root))
-    state = _load_or_setup_case(root, case_name=case_name, input_fn=input_fn)
+    state = _load_or_setup_case(
+        root,
+        case_name=case_name,
+        input_fn=input_fn,
+        stream=stream,
+    )
     progress = AuditProgress(stream)
     print("\nDeafBench audit", file=stream)
     print(str(state["case_name"]), file=stream)
@@ -570,6 +625,7 @@ def run_audit(
             "report_generated_at": report_data["generated_at"],
         },
     )
+    _prune_old_runs(state_root / "runs", run_root)
     print("\nAudit complete.", file=stream)
     if not no_open:
         print("Opening report...", file=stream)
@@ -579,10 +635,38 @@ def run_audit(
     return 0
 
 
+def _validated_findings(report_data: Mapping[str, Any]) -> list[dict[str, Any]]:
+    findings = report_data.get("findings")
+    if not isinstance(findings, list):
+        raise ValueError("No completed DeafBench audit is available for review")
+    required = {
+        "finding_id",
+        "primary_category",
+        "reference_text",
+        "predicted_text",
+        "severity",
+    }
+    severities = {"no_real_impact", "minor", "moderate", "major", "critical"}
+    for finding in findings:
+        if not isinstance(finding, dict) or not required.issubset(finding):
+            raise ValueError("Saved DeafBench findings are incomplete; run the audit again")
+        if (
+            not isinstance(finding["finding_id"], str)
+            or not finding["finding_id"].strip()
+            or not isinstance(finding["primary_category"], str)
+            or not finding["primary_category"].strip()
+            or not isinstance(finding["reference_text"], str)
+            or not isinstance(finding["predicted_text"], str)
+            or finding["severity"] not in severities
+        ):
+            raise ValueError("Saved DeafBench findings are invalid; run the audit again")
+    return findings
+
+
 def _apply_reviews(
     report_data: dict[str, Any], reviews: Mapping[str, Mapping[str, Any]]
 ) -> dict[str, Any]:
-    for finding in report_data.get("findings", []):
+    for finding in _validated_findings(report_data):
         finding_id = str(finding.get("finding_id", ""))
         review = dict(reviews.get(finding_id, {}))
         finding["review"] = review
@@ -605,9 +689,7 @@ def run_review(
     state_root = _state_dir(root)
     state = _read_json(state_root / "case.json")
     report_data = _read_json(state_root / "report-data.json")
-    findings = report_data.get("findings")
-    if not isinstance(findings, list):
-        raise ValueError("No completed DeafBench audit is available for review")
+    findings = _validated_findings(report_data)
     reviews = _load_reviews(state_root)
     changed = False
     print("DeafBench review", file=stream)
@@ -649,7 +731,7 @@ def run_review(
                 if raw in allowed:
                     break
                 print("Choose one of the listed severities.", file=stream)
-            reason = _required_text("Reason: ", input_fn)
+            reason = _required_text("Reason: ", input_fn, stream=stream)
             current.update(
                 {
                     "reviewed": True,
@@ -662,7 +744,7 @@ def run_review(
             changed = True
             print("Review saved", file=stream)
         elif action == "3":
-            context = _required_text("Customer context: ", input_fn)
+            context = _required_text("Customer context: ", input_fn, stream=stream)
             current.update(
                 {
                     "reviewed": True,
@@ -691,8 +773,7 @@ def run_review(
     with tempfile.TemporaryDirectory(dir=root, prefix=".deafbench-review-") as temporary:
         staging = Path(temporary)
         write_reports(updated, staging)
-        os.replace(staging / "index.html", output / "index.html")
-        os.replace(staging / "report.pdf", output / "report.pdf")
+        _replace_report_output(staging, output)
     print("\nReview complete.", file=stream)
     print("HTML report updated", file=stream)
     print("PDF report updated", file=stream)

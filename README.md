@@ -69,7 +69,10 @@ normalization and aggregation contract, or continue to the separately labeled
 The customer audit is designed around one case folder containing `audio/` and a
 human-approved `references.csv`. The first run asks for a required case name and
 local authorization details, then keeps its reusable state under `.deafbench/`.
-Later runs reuse that setup automatically.
+Later runs reuse that setup automatically. Sample-level work is retained only for
+the latest successful run; a successful rerun removes older `.deafbench/runs/`
+directories. The local authorization record still carries the planned 14-day
+case deletion date.
 
 From a source checkout today:
 
