@@ -124,6 +124,7 @@ def test_audit_extra_installs_customer_runtime_dependencies() -> None:
     assert {
         "cryptography>=48.0,<49.0",
         "fpdf2>=2.8.5,<3.0",
+        "matplotlib>=3.10,<4.0",
         "nemo_toolkit[asr]>=2.4,<3",
         "numba>=0.65,<0.67",
         "scipy>=1.15,<2.0",

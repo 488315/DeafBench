@@ -11,6 +11,7 @@ from deafbench.pilot.audit import (
     run_customer_audit,
 )
 from deafbench.pilot.export import create_customer_export
+from deafbench.pilot.customer_report import build_report_data
 from deafbench.pilot.zero_custody import ExecutionAttestation
 from deafbench.pilot.export_scan import assert_export_safe
 from deafbench.result_manifest import validate_result_manifest
@@ -62,7 +63,9 @@ def _case(tmp_path: Path) -> Path:
     return root
 
 
-def _runners(*, mutate_input: bool = False):
+def _runners(
+    *, mutate_input: bool = False, peak_vram_bytes: int | None = 1024
+):
     revisions = {
         "Qwen/Qwen3-ASR-1.7B-hf": "bcd2b5b7f32b480ab5790554cfa8347f246a14f3",
         "nvidia/parakeet-tdt-0.6b-v2": "ae9ad07059c7c739ffaf932226a8fe64ae2620b0",
@@ -95,7 +98,7 @@ def _runners(*, mutate_input: bool = False):
                 performance={
                     "local_rtfx": 10.0,
                     "median_latency_ms": 10.0,
-                    "peak_vram_bytes": 1024,
+                    "peak_vram_bytes": peak_vram_bytes,
                 },
             )
 
@@ -294,3 +297,43 @@ def test_customer_audit_results_create_aggregate_only_export(tmp_path: Path) -> 
     assert "sample-001" not in exported_text
     assert "Aurora Guest" not in exported_text
     assert_export_safe(output)
+
+
+def test_customer_audit_cpu_vram_is_nullable_through_export_and_report(
+    tmp_path: Path,
+) -> None:
+    case_root = _case(tmp_path)
+    audit = run_customer_audit(
+        repo_root=REPO_ROOT,
+        case_root=case_root,
+        runners=_runners(peak_vram_bytes=None),
+    )
+
+    for path in audit.result_paths:
+        manifest = validate_result_manifest(
+            json.loads(path.read_text(encoding="utf-8"))
+        )
+        assert manifest["evaluations"][0]["metrics"]["peak_vram_bytes"] is None
+
+    output = tmp_path / "cpu-export"
+    create_customer_export(
+        repo_root=REPO_ROOT,
+        result_paths=list(audit.result_paths),
+        output_dir=output,
+        signing_key=tmp_path / "cpu-signing-key.pem",
+        execution_attestation=ExecutionAttestation("customer_run", True, "d" * 64),
+    )
+    signed = json.loads((output / "manifest.json").read_text(encoding="utf-8"))
+    assert all(
+        model["aggregate_metrics"]["peak_vram_bytes"] is None
+        for model in signed["models"]
+    )
+
+    report_data = build_report_data(
+        case_name="CPU audit",
+        case_id=case_root.name,
+        references_path=case_root / "input" / "references.jsonl",
+        prediction_paths=list(audit.prediction_paths),
+        result_paths=list(audit.result_paths),
+    )
+    assert all(model["peak_vram_bytes"] is None for model in report_data["models"])

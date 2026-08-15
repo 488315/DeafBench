@@ -45,10 +45,56 @@ def _load_json(path: Path) -> dict[str, Any]:
 
 
 def _alignment(reference: str, prediction: str) -> dict[str, Any]:
-    result = jiwer.process_words(
-        reference if reference.strip() else " ",
-        prediction if prediction.strip() else " ",
-    )
+    reference_words_empty = reference.split()
+    hypothesis_words_empty = prediction.split()
+    if not reference_words_empty or not hypothesis_words_empty:
+        if not reference_words_empty and not hypothesis_words_empty:
+            return {
+                "columns": [],
+                "correct": 0,
+                "deletions": 0,
+                "substitutions": 0,
+                "insertions": 0,
+                "wer": 0.0,
+                "error_kinds": (),
+            }
+        if not reference_words_empty:
+            return {
+                "columns": [
+                    {
+                        "reference": "",
+                        "hypothesis": word,
+                        "kind": "insert",
+                        "marker": "I",
+                    }
+                    for word in hypothesis_words_empty
+                ],
+                "correct": 0,
+                "deletions": 0,
+                "substitutions": 0,
+                "insertions": len(hypothesis_words_empty),
+                "wer": float(len(hypothesis_words_empty)),
+                "error_kinds": ("insert",),
+            }
+        return {
+            "columns": [
+                {
+                    "reference": word,
+                    "hypothesis": "",
+                    "kind": "delete",
+                    "marker": "D",
+                }
+                for word in reference_words_empty
+            ],
+            "correct": 0,
+            "deletions": len(reference_words_empty),
+            "substitutions": 0,
+            "insertions": 0,
+            "wer": 1.0,
+            "error_kinds": ("delete",),
+        }
+
+    result = jiwer.process_words(reference, prediction)
     reference_words = result.references[0]
     hypothesis_words = result.hypotheses[0]
     columns: list[dict[str, str]] = []
@@ -180,7 +226,11 @@ def build_report_data(
                 "canonical_recall_percent": float(metrics["canonical_semantic_recall_percent"]),
                 "local_rtfx": float(metrics["local_rtfx"]),
                 "median_latency_ms": float(metrics["median_latency_ms"]),
-                "peak_vram_bytes": float(metrics["peak_vram_bytes"]),
+                "peak_vram_bytes": (
+                    None
+                    if metrics["peak_vram_bytes"] is None
+                    else float(metrics["peak_vram_bytes"])
+                ),
             }
         )
 
@@ -517,6 +567,26 @@ table {{ border-collapse: collapse; width: 100%; }}
 """
 
 
+def _configure_pdf_fonts(pdf: Any) -> None:
+    try:
+        import matplotlib
+    except ModuleNotFoundError as exc:
+        raise RuntimeError(
+            'PDF font support is not installed. Run: python -m pip install "deafbench[audit]"'
+        ) from exc
+
+    font_dir = Path(matplotlib.get_data_path()) / "fonts" / "ttf"
+    fonts = {
+        ("DeafBenchSans", ""): font_dir / "DejaVuSans.ttf",
+        ("DeafBenchSans", "B"): font_dir / "DejaVuSans-Bold.ttf",
+        ("DeafBenchMono", ""): font_dir / "DejaVuSansMono.ttf",
+    }
+    if any(not path.is_file() for path in fonts.values()):
+        raise RuntimeError("DeafBench PDF fonts are unavailable in this installation")
+    for (family, style), path in fonts.items():
+        pdf.add_font(family, style=style, fname=path)
+
+
 def write_pdf(data: Mapping[str, Any], destination: Path) -> None:
     try:
         from fpdf import FPDF
@@ -526,13 +596,14 @@ def write_pdf(data: Mapping[str, Any], destination: Path) -> None:
         ) from exc
 
     pdf = FPDF(format="letter")
+    _configure_pdf_fonts(pdf)
     pdf.set_auto_page_break(auto=True, margin=14)
     pdf.set_title(f"{data['case_name']} - DeafBench audit")
     pdf.set_author("DeafBench")
     pdf.set_creator("DeafBench")
     pdf.set_lang("en-US")
     pdf.add_page()
-    pdf.set_font("Helvetica", "B", 20)
+    pdf.set_font("DeafBenchSans", "B", 20)
     pdf.multi_cell(0, 9, str(data["case_name"]), new_x="LMARGIN", new_y="NEXT")
     pdf.set_font("Helvetica", "", 10)
     pdf.multi_cell(
@@ -613,7 +684,7 @@ def write_pdf(data: Mapping[str, Any], destination: Path) -> None:
                 new_x="LMARGIN",
                 new_y="NEXT",
             )
-            pdf.set_font("Courier", "", 8)
+            pdf.set_font("DeafBenchMono", "", 8)
             pdf.multi_cell(
                 0,
                 4.5,

@@ -141,7 +141,11 @@ def _validate_payload(payload: object) -> dict[str, object]:
             or any(
                 not _is_number(value)
                 for key, value in metrics.items()
-                if key != "critical_failures_by_entity_type"
+                if key not in {"critical_failures_by_entity_type", "peak_vram_bytes"}
+            )
+            or (
+                metrics["peak_vram_bytes"] is not None
+                and not _is_number(metrics["peak_vram_bytes"])
             )
         ):
             raise ValueError("manifest aggregate metric values are invalid")

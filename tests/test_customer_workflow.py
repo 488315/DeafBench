@@ -194,7 +194,11 @@ def test_future_run_reuses_saved_setup_without_prompt(
     )
 
     runs = [path for path in (root / ".deafbench" / "runs").iterdir() if path.is_dir()]
-    assert len(runs) == 2
+    assert len(runs) == 1
+    latest = json.loads(
+        (root / ".deafbench" / "latest-run.json").read_text(encoding="utf-8")
+    )
+    assert Path(latest["run_root"]) == runs[0]
 
 
 def test_missing_references_creates_csv_template(tmp_path: Path) -> None:
@@ -314,6 +318,7 @@ def test_review_preserves_automatic_severity_and_records_customer_reason(
         input_fn=_inputs(
             "2",
             "critical",
+            "invalid\x01reason",
             "This direction is used during an emergency evacuation.",
         ),
         no_open=True,
@@ -329,6 +334,7 @@ def test_review_preserves_automatic_severity_and_records_customer_reason(
     assert finding["severity"] == "major"
     assert finding["effective_severity"] == "critical"
     assert finding["review"]["customer_severity"] == "critical"
+    assert "plain text no longer than 120 characters" in stream.getvalue()
     assert "HTML report updated" in stream.getvalue()
     assert "PDF report updated" in stream.getvalue()
 
@@ -355,8 +361,16 @@ def test_input_helpers_reprompt_or_reject_bad_values() -> None:
     assert customer._yes_no("Continue?", _inputs("maybe", "yes")) is True
     assert customer._yes_no("Continue?", _inputs(""), default=True) is True
     assert customer._classification(_inputs("unknown", "public-domain")) == "public_domain"
-    with pytest.raises(ValueError, match="plain text"):
-        customer._required_text("Case name: ", _inputs("bad\x01name"))
+    stream = io.StringIO()
+    assert (
+        customer._required_text(
+            "Reason: ",
+            _inputs("bad\x01name", "Valid customer context"),
+            stream=stream,
+        )
+        == "Valid customer context"
+    )
+    assert "plain text no longer than 120 characters" in stream.getvalue()
 
 
 def test_critical_type_csv_validation_is_fail_closed() -> None:
@@ -398,7 +412,10 @@ def test_audio_validation_reports_missing_extra_and_invalid_files(tmp_path: Path
     state.mkdir(parents=True)
     references = state / "references.jsonl"
     references.write_text(
-        json.dumps({"id": "sample-001", "text": "hello", "critical": []}) + "\n",
+        json.dumps({"id": "sample-001", "text": "hello", "critical": []})
+        + "\n"
+        + json.dumps({"id": "sample-002", "text": "goodbye", "critical": []})
+        + "\n",
         encoding="utf-8",
     )
 
@@ -411,6 +428,7 @@ def test_audio_validation_reports_missing_extra_and_invalid_files(tmp_path: Path
     with pytest.raises(ValueError) as exc_info:
         customer._validate_inputs(root, references)
     message = str(exc_info.value)
+    assert "missing: sample-002" in message
     assert "extra: extra" in message
     assert "invalid WAV: sample-001" in message
 
@@ -448,6 +466,49 @@ def test_replace_report_output_replaces_old_evidence(tmp_path: Path) -> None:
     assert (output / "report.pdf").read_bytes() == b"new pdf"
     assert not (output / "evidence" / "old.txt").exists()
     assert (output / "evidence" / "manifest.json").read_text(encoding="utf-8") == "new"
+
+
+def test_replace_report_output_rolls_back_if_evidence_install_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    staging = tmp_path / "staging"
+    output = tmp_path / "output"
+    (staging / "evidence").mkdir(parents=True)
+    (staging / "index.html").write_text("new html", encoding="utf-8")
+    (staging / "report.pdf").write_bytes(b"new pdf")
+    (staging / "evidence" / "manifest.json").write_text("new", encoding="utf-8")
+    (output / "evidence").mkdir(parents=True)
+    (output / "index.html").write_text("old html", encoding="utf-8")
+    (output / "report.pdf").write_bytes(b"old pdf")
+    (output / "evidence" / "manifest.json").write_text("old", encoding="utf-8")
+    real_replace = customer.os.replace
+
+    def fail_new_evidence(source: object, destination: object) -> None:
+        if Path(source) == staging / "evidence":
+            raise OSError("simulated evidence install failure")
+        real_replace(source, destination)
+
+    monkeypatch.setattr(customer.os, "replace", fail_new_evidence)
+
+    with pytest.raises(OSError, match="simulated evidence"):
+        customer._replace_report_output(staging, output)
+
+    assert (output / "index.html").read_text(encoding="utf-8") == "old html"
+    assert (output / "report.pdf").read_bytes() == b"old pdf"
+    assert (output / "evidence" / "manifest.json").read_text(encoding="utf-8") == "old"
+
+
+def test_replace_report_output_creates_missing_review_directory(tmp_path: Path) -> None:
+    staging = tmp_path / "staging"
+    output = tmp_path / "missing-output"
+    staging.mkdir()
+    (staging / "index.html").write_text("review html", encoding="utf-8")
+    (staging / "report.pdf").write_bytes(b"review pdf")
+
+    customer._replace_report_output(staging, output)
+
+    assert (output / "index.html").read_text(encoding="utf-8") == "review html"
+    assert (output / "report.pdf").read_bytes() == b"review pdf"
 
 
 def test_review_keep_context_skip_and_quit_paths(
@@ -529,6 +590,29 @@ def test_cli_wrappers_return_status_and_render_errors(
     assert "bad customer input" in capsys.readouterr().err
 
 
+def test_review_rejects_incomplete_saved_findings(tmp_path: Path) -> None:
+    root = tmp_path / "customer-case"
+    state_root = root / ".deafbench"
+    state_root.mkdir(parents=True)
+    (state_root / "case.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "case_id": "case-" + "a" * 32,
+                "case_name": "Audit",
+            }
+        ),
+        encoding="utf-8",
+    )
+    (state_root / "report-data.json").write_text(
+        json.dumps({"findings": [{"finding_id": "incomplete"}]}),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="run the audit again"):
+        customer.run_review(root, input_fn=_inputs(), no_open=True, stream=io.StringIO())
+
+
 def test_existing_review_file_loads_and_signs_with_case_key(tmp_path: Path) -> None:
     from base64 import b64decode
 
@@ -565,10 +649,21 @@ def test_existing_review_file_loads_and_signs_with_case_key(tmp_path: Path) -> N
     public_key.verify(b64decode(signature["signature_base64"]), body)
 
 
-def test_sign_reviews_is_noop_without_case_key(tmp_path: Path) -> None:
+def test_sign_reviews_is_noop_without_case_key(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import builtins
+
     state_root = tmp_path / ".deafbench"
     state_root.mkdir()
+    real_import = builtins.__import__
 
+    def reject_crypto(name: str, *args: object, **kwargs: object) -> object:
+        if name.startswith("cryptography"):
+            raise AssertionError("cryptography should not be imported without a signing key")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", reject_crypto)
     customer._sign_reviews(state_root, {"finding-1": {"reviewed": True}})
 
     assert not (state_root / "reviews-signature.json").exists()
@@ -577,7 +672,11 @@ def test_sign_reviews_is_noop_without_case_key(tmp_path: Path) -> None:
 def test_no_review_changes_leave_reports_untouched(tmp_path: Path) -> None:
     root = tmp_path / "customer-case"
     state_root = root / ".deafbench"
+    output = root / "audit-report"
     state_root.mkdir(parents=True)
+    output.mkdir()
+    (output / "index.html").write_text("original html", encoding="utf-8")
+    (output / "report.pdf").write_bytes(b"original pdf")
     (state_root / "case.json").write_text(
         json.dumps(
             {
@@ -602,3 +701,6 @@ def test_no_review_changes_leave_reports_untouched(tmp_path: Path) -> None:
 
     assert customer.run_review(root, input_fn=_inputs(), no_open=True, stream=stream) == 0
     assert "No review changes saved." in stream.getvalue()
+    assert (output / "index.html").read_text(encoding="utf-8") == "original html"
+    assert (output / "report.pdf").read_bytes() == b"original pdf"
+    assert not (state_root / "reviews.json").exists()

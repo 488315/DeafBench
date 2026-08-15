@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from deafbench.pilot.customer_report import (
+    _alignment,
     build_report_data,
     render_html,
     write_pdf,
@@ -279,11 +280,44 @@ def test_report_data_rejects_mismatched_or_incomplete_model_artifacts(tmp_path: 
         )
 
 
+@pytest.mark.parametrize(
+    ("reference", "prediction", "expected"),
+    [
+        ("", "", {"insertions": 0, "deletions": 0, "wer": 0.0}),
+        ("", "unexpected words", {"insertions": 2, "deletions": 0, "wer": 2.0}),
+        ("expected words", "", {"insertions": 0, "deletions": 2, "wer": 1.0}),
+    ],
+)
+def test_alignment_handles_empty_text_under_jiwer_three(
+    reference: str, prediction: str, expected: dict[str, float | int]
+) -> None:
+    alignment = _alignment(reference, prediction)
+
+    assert alignment["insertions"] == expected["insertions"]
+    assert alignment["deletions"] == expected["deletions"]
+    assert alignment["wer"] == expected["wer"]
+
+
 def test_pdf_is_real_selectable_text_document(tmp_path: Path) -> None:
     pytest.importorskip("fpdf")
     destination = tmp_path / "report.pdf"
 
     write_pdf(_report_data(tmp_path), destination)
+
+    assert destination.read_bytes().startswith(b"%PDF-")
+    assert destination.stat().st_size > 1000
+
+
+def test_pdf_renders_unicode_customer_text(tmp_path: Path) -> None:
+    pytest.importorskip("fpdf")
+    pytest.importorskip("matplotlib")
+    data = _report_data(tmp_path)
+    data["case_name"] = "Café “Málaga” — accessibility audit"
+    data["findings"][0]["reference_text"] = "Call José at 3:15 PM — Γειά σου."
+    data["findings"][0]["predicted_text"] = "Call Jose at 3:50 PM — Γεια σου."
+    destination = tmp_path / "unicode.pdf"
+
+    write_pdf(data, destination)
 
     assert destination.read_bytes().startswith(b"%PDF-")
     assert destination.stat().st_size > 1000
