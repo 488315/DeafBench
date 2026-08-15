@@ -529,6 +529,51 @@ def test_cli_wrappers_return_status_and_render_errors(
     assert "bad customer input" in capsys.readouterr().err
 
 
+def test_existing_review_file_loads_and_signs_with_case_key(tmp_path: Path) -> None:
+    from base64 import b64decode
+
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+
+    from deafbench.pilot.manifest import _load_or_create_key
+
+    state_root = tmp_path / ".deafbench"
+    state_root.mkdir()
+    reviews = {
+        "finding-1": {
+            "reviewed": True,
+            "context": "Used by field technicians.",
+        }
+    }
+    (state_root / "reviews.json").write_text(
+        json.dumps({**reviews, "ignored": "not a review object"}),
+        encoding="utf-8",
+    )
+
+    assert customer._load_reviews(state_root) == reviews
+
+    _load_or_create_key(state_root / "signing-key.pem")
+    customer._sign_reviews(state_root, reviews)
+
+    signature = json.loads(
+        (state_root / "reviews-signature.json").read_text(encoding="utf-8")
+    )
+    assert signature["algorithm"] == "Ed25519"
+    public_key = Ed25519PublicKey.from_public_bytes(
+        b64decode(signature["public_key_base64"])
+    )
+    body = json.dumps(reviews, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    public_key.verify(b64decode(signature["signature_base64"]), body)
+
+
+def test_sign_reviews_is_noop_without_case_key(tmp_path: Path) -> None:
+    state_root = tmp_path / ".deafbench"
+    state_root.mkdir()
+
+    customer._sign_reviews(state_root, {"finding-1": {"reviewed": True}})
+
+    assert not (state_root / "reviews-signature.json").exists()
+
+
 def test_no_review_changes_leave_reports_untouched(tmp_path: Path) -> None:
     root = tmp_path / "customer-case"
     state_root = root / ".deafbench"
