@@ -9,7 +9,7 @@ from math import gcd
 from pathlib import Path
 from statistics import median
 from time import perf_counter
-from typing import Any
+from typing import Any, Callable
 
 from deafbench.benchmark.models import ModelRunInfo, _validated_wavs
 from deafbench.benchmark.workspace import atomic_write_jsonl
@@ -137,6 +137,7 @@ def run_granite_speech(
     output: Path,
     keywords: Sequence[str] = (),
     backend: Any | None = None,
+    progress: Callable[[Path], None] | None = None,
 ) -> ModelRunInfo:
     """Transcribe a complete WAV set with pinned Granite Speech."""
     revision = _licensed_revision()
@@ -197,6 +198,8 @@ def run_granite_speech(
             records.append(
                 {"id": wav_path.stem, "latency_ms": latency_ms, "text": text}
             )
+            if progress is not None:
+                progress(wav_path)
 
     total_latency_seconds = sum(latencies_ms) / 1_000.0
     if total_latency_seconds <= 0:

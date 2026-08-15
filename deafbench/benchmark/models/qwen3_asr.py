@@ -8,7 +8,7 @@ from math import gcd
 from pathlib import Path
 from statistics import median
 from time import perf_counter
-from typing import Any
+from typing import Any, Callable
 
 from deafbench.benchmark.models import ModelRunInfo, _validated_wavs
 from deafbench.benchmark.workspace import atomic_write_jsonl
@@ -119,6 +119,7 @@ def run_qwen3_asr(
     output: Path,
     model_id: str = DEFAULT_MODEL,
     backend: Any | None = None,
+    progress: Callable[[Path], None] | None = None,
 ) -> ModelRunInfo:
     """Transcribe a complete WAV set with a pinned native Qwen3-ASR model."""
     revision = _licensed_revision(model_id)
@@ -179,6 +180,8 @@ def run_qwen3_asr(
                     "text": text,
                 }
             )
+            if progress is not None:
+                progress(wav_path)
 
     atomic_write_jsonl(output, records)
     total_latency_seconds = sum(latencies_ms) / 1_000.0
@@ -208,6 +211,7 @@ def run_qwen3_asr_1_7b(
     audio_dir: Path,
     references: Path,
     output: Path,
+    progress: Callable[[Path], None] | None = None,
 ) -> ModelRunInfo:
     """Run the pinned balanced Qwen3-ASR candidate through the shared adapter."""
     return run_qwen3_asr(
@@ -215,4 +219,5 @@ def run_qwen3_asr_1_7b(
         references,
         output,
         model_id="Qwen/Qwen3-ASR-1.7B-hf",
+        progress=progress,
     )

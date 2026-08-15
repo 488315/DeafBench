@@ -159,6 +159,21 @@ def test_audit_help_is_owned_by_audit_cli(monkeypatch):
     assert calls == [["--help"]]
 
 
+def test_review_command_forwards_case_to_lazy_launcher(monkeypatch):
+    calls = []
+    monkeypatch.setattr("deafbench.cli._run_review", calls.append)
+
+    main(["review", "./customer-case", "--no-open"])
+
+    assert calls == [["./customer-case", "--no-open"]]
+
+
+def test_review_command_returns_launcher_status(monkeypatch):
+    monkeypatch.setattr("deafbench.cli._run_review", lambda _review_args: 9)
+
+    assert main(["review", "./customer-case"]) == 9
+
+
 def test_dev_corpus_command_forwards_nested_action(monkeypatch):
     calls = []
     monkeypatch.setattr("deafbench.cli._run_dev_corpus", calls.append)

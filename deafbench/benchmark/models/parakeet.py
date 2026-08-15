@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from statistics import median
 from time import perf_counter
-from typing import Any
+from typing import Any, Callable
 
 from deafbench.benchmark.models import ModelRunInfo, _validated_wavs
 from deafbench.benchmark.workspace import atomic_write_jsonl
@@ -77,6 +77,7 @@ def run_parakeet(
     references: Path,
     output: Path,
     backend: Any | None = None,
+    progress: Callable[[Path], None] | None = None,
 ) -> ModelRunInfo:
     """Transcribe a complete WAV set from a revision-pinned NeMo archive."""
     revision = _licensed_revision()
@@ -119,6 +120,8 @@ def run_parakeet(
                     "text": _transcription_text(result),
                 }
             )
+            if progress is not None:
+                progress(wav_path)
 
     total_latency_seconds = sum(latencies_ms) / 1_000.0
     if not math.isfinite(total_latency_seconds) or total_latency_seconds <= 0:

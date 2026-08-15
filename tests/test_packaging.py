@@ -114,6 +114,25 @@ def test_wheel_discovery_excludes_nonruntime_trees() -> None:
     } <= excluded
 
 
+def test_audit_extra_installs_customer_runtime_dependencies() -> None:
+    pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+    metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+
+    audit_dependencies = set(
+        metadata["project"]["optional-dependencies"]["audit"]
+    )
+    assert {
+        "cryptography>=48.0,<49.0",
+        "fpdf2>=2.8.5,<3.0",
+        "nemo_toolkit[asr]>=2.4,<3",
+        "numba>=0.65,<0.67",
+        "scipy>=1.15,<2.0",
+        "tqdm>=4.67,<5.0",
+        "torchaudio>=2.8,<3.0",
+        "transformers[torch]>=5.13.0,<6.0.0",
+    } == audit_dependencies
+
+
 def test_benchmark_extra_installs_whisperspeech_runtime_dependencies() -> None:
     pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
     metadata = tomllib.loads(pyproject.read_text(encoding="utf-8"))
