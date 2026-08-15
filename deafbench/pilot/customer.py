@@ -32,7 +32,7 @@ from deafbench.pilot.intake import (
     evaluate_intake,
 )
 from deafbench.pilot.customer_report import build_report_data, write_reports
-from deafbench.pilot.taxonomy import category_label, severity_label
+from deafbench.pilot.taxonomy import category_label, severity_label, severity_values
 from deafbench.pilot.workspace import validate_case_root
 
 
@@ -79,7 +79,13 @@ def _required_text(
         return value
 
 
-def _yes_no(prompt: str, input_fn: InputFunction, *, default: bool = False) -> bool:
+def _yes_no(
+    prompt: str,
+    input_fn: InputFunction,
+    *,
+    default: bool = False,
+    stream: TextIO = sys.stdout,
+) -> bool:
     suffix = " [Y/n]: " if default else " [y/N]: "
     while True:
         value = input_fn(prompt + suffix).strip().casefold()
@@ -89,10 +95,14 @@ def _yes_no(prompt: str, input_fn: InputFunction, *, default: bool = False) -> b
             return True
         if value in {"n", "no"}:
             return False
-        print("Please answer yes or no.")
+        print("Please answer yes or no.", file=stream)
 
 
-def _classification(input_fn: InputFunction) -> str:
+def _classification(
+    input_fn: InputFunction,
+    *,
+    stream: TextIO = sys.stdout,
+) -> str:
     choices = (
         "non_sensitive",
         "synthetic",
@@ -109,7 +119,7 @@ def _classification(input_fn: InputFunction) -> str:
         normalized = value.casefold().replace("-", "_").replace(" ", "_")
         if normalized in ALLOWED_CLASSIFICATIONS:
             return normalized
-        print("Choose one of the listed content classifications.")
+        print("Choose one of the listed content classifications.", file=stream)
 
 
 def _first_run_setup(
@@ -119,23 +129,24 @@ def _first_run_setup(
     input_fn: InputFunction,
     stream: TextIO = sys.stdout,
 ) -> dict[str, Any]:
-    print("DeafBench audit setup")
-    print()
+    print("DeafBench audit setup", file=stream)
+    print(file=stream)
     name = case_name.strip() if case_name and case_name.strip() else _required_text(
         "Case name: ", input_fn, stream=stream
     )
     if not _yes_no(
         "Do you own this audio or have permission to evaluate it?",
         input_fn,
+        stream=stream,
     ):
         raise ValueError("Audit setup requires permission to evaluate the audio")
-    classification = _classification(input_fn)
+    classification = _classification(input_fn, stream=stream)
     prohibited_prompt = (
         "Does this case contain medical records, consumer health data, minors' audio, "
         "payment information, authentication secrets, legal recordings, or other "
         "regulated/high-risk material?"
     )
-    has_prohibited = _yes_no(prohibited_prompt, input_fn)
+    has_prohibited = _yes_no(prohibited_prompt, input_fn, stream=stream)
     prohibited = {key: has_prohibited for key in PROHIBITED_CATEGORIES}
     decision = evaluate_intake(
         sensitivity_classification=classification,
@@ -149,6 +160,7 @@ def _first_run_setup(
         "Run this audit locally without uploading customer audio or enabling remote access?",
         input_fn,
         default=True,
+        stream=stream,
     ):
         raise ValueError("Customer audit requires the local-only execution boundary")
 
@@ -646,7 +658,7 @@ def _validated_findings(report_data: Mapping[str, Any]) -> list[dict[str, Any]]:
         "predicted_text",
         "severity",
     }
-    severities = {"no_real_impact", "minor", "moderate", "major", "critical"}
+    severities = set(severity_values())
     for finding in findings:
         if not isinstance(finding, dict) or not required.issubset(finding):
             raise ValueError("Saved DeafBench findings are incomplete; run the audit again")
@@ -723,7 +735,7 @@ def run_review(
             changed = True
             print("Review saved", file=stream)
         elif action == "2":
-            allowed = ("no_real_impact", "minor", "moderate", "major", "critical")
+            allowed = severity_values()
             while True:
                 raw = input_fn(
                     "New severity (no real impact, minor, moderate, major, critical): "
