@@ -79,6 +79,10 @@ def category_label(value: str) -> str:
     return _category_labels.get(value, value.replace("_", " ").capitalize())
 
 
+def severity_values() -> tuple[str, ...]:
+    return tuple(_severity_labels)
+
+
 def severity_label(value: str) -> str:
     return _severity_labels.get(value, value.replace("_", " ").capitalize())
 

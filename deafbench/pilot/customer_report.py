@@ -20,6 +20,7 @@ from deafbench.pilot.taxonomy import (
     classify_failure,
     factor_label,
     severity_label,
+    severity_values,
 )
 
 
@@ -29,11 +30,7 @@ _model_labels = {
     "ibm-granite/granite-speech-4.1-2b": "Granite Speech 4.1 2B",
 }
 _severity_rank = {
-    "no_real_impact": 0,
-    "minor": 1,
-    "moderate": 2,
-    "major": 3,
-    "critical": 4,
+    value: index for index, value in enumerate(severity_values())
 }
 
 

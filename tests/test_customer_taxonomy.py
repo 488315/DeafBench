@@ -6,6 +6,7 @@ from deafbench.pilot.taxonomy import (
     classify_failure,
     factor_label,
     severity_label,
+    severity_values,
 )
 
 
@@ -137,5 +138,12 @@ def test_customer_labels_are_sentence_case_not_machine_values() -> None:
     assert severity_label("no_real_impact") == "No real impact"
     assert severity_label("critical") == "Critical"
     assert severity_label("future_level") == "Future level"
+    assert severity_values() == (
+        "no_real_impact",
+        "minor",
+        "moderate",
+        "major",
+        "critical",
+    )
     assert factor_label("decimal_point") == "Decimal point"
     assert "_" not in category_label("codes_passwords_login_information")
